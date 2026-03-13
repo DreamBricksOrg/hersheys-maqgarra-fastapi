@@ -293,7 +293,10 @@ class NfceParser:
 
         unit_tag = row.find(attrs={"class": re.compile(r"unidade|txtUM|Un\b|RUN", re.I)})
         if unit_tag:
-            unit = _clean_text(unit_tag.get_text())
+            unit_text = _clean_text(unit_tag.get_text())
+            # Extract just the unit value, removing labels like "UN:" or "Unidade:"
+            m = re.search(r":\s*(\S+)$", unit_text)
+            unit = m.group(1) if m else unit_text
 
         unit_price_tag = row.find(attrs={"class": re.compile(r"vlrUni|VlUnit|unit_price|precoUni|RvlUnit", re.I)})
         if unit_price_tag:
