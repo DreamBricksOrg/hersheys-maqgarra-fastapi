@@ -15,3 +15,18 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 @router.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def page_home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+@router.get("/found-bars", response_class=HTMLResponse, include_in_schema=False)
+async def page_found_bars(request: Request):
+    return templates.TemplateResponse("found-bars.html", {"request": request})
+
+@router.get("/scan-qrcode", response_class=HTMLResponse, include_in_schema=False)
+async def page_scan_qrcode(request: Request):
+    return templates.TemplateResponse("scan-qrcode.html", {"request": request})
+
+@router.get("/more-receipts", response_class=HTMLResponse, include_in_schema=False)
+async def page_more_receipts(request: Request):
+    return templates.TemplateResponse("more-receipts.html", {"request": request})
+
+
+
