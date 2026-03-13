@@ -4,10 +4,14 @@
 <script src="/src/static/js/tag_validation.js"></script>
 
 <body>
-    <header>
-        <img src="/src/static/images/logo_capi.png" alt="" id="logo">
-    </header>
-    <div id="body-content">
+    <div class="header">
+        <div class="header-content">
+            <div class="logo-container">
+                <img src="/src/static/images/logo_capi.png" alt="Logo" id="logo">
+            </div>
+        </div>
+    </div>
+    <div class="content">
         <span>Passe o QR Code</span>
         <div id="reader_container">
             <div id="reader-border"></div>
@@ -15,9 +19,9 @@
         </div>
     </div>
     <img src="/src/static/images/capibarra-mascote-pascoa-hersheys-barra-de-chocolate.webp" alt="" id="capivara">
-    <footer>
-        <img src="/src/static/images/quadrados_inferiores.png" alt="" id="footer_img">
-    </footer>
+    <div class="footer">
+        <img src="/src/static/images/quadrados_inferiores.png" alt="" class="footer_capibarra">
+    </div>
 
     <div style="display: none;" id="modal_error">
         <span style="text-align: center;">TAG NAO HABILITADA</span>

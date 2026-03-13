@@ -16,14 +16,14 @@
 
     }
 
-    header {
+    .header {
         position: fixed;
         height: var(--header-height);
         width: 100%;
         top: 0;
     }
 
-    footer {
+    .footer {
         width: 100%;
         position: fixed;
         left: 0;
@@ -36,7 +36,7 @@
         padding: 5px;
     }
 
-    #body-content {
+    .content {
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -87,7 +87,7 @@
         font-family: 'SharpGroteskPETrialBold-14';
     }
 
-    #footer_img {
+    .footer_capibarra {
         height: 100%;
         width: auto;
     }
