@@ -45,7 +45,7 @@ body {
 }
 
 .header {
-    height: 250px;
+    height: 230px;
     width: 100%;
     display: flex;
     justify-content: center;
@@ -54,7 +54,7 @@ body {
 
 .header-content {
     width: 95%;
-    height: 90%;
+    height: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -66,7 +66,7 @@ body {
 }
 
 .counter-container {
-    width: 25%;
+    min-width: 475px;
     height: 70%;
     margin: 0 3rem;
     display: flex;
@@ -105,10 +105,8 @@ body {
     font-size: 1.2rem;
 }
 
-
-
 .footer{
-    height: 50px;
+    height: 150px;
     width: 100%;
     margin-top: auto;
     position: relative;

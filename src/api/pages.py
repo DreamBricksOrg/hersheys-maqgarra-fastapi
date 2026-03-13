@@ -28,5 +28,10 @@ async def page_scan_qrcode(request: Request):
 async def page_more_receipts(request: Request):
     return templates.TemplateResponse("more-receipts.html", {"request": request})
 
+@router.get("/read-camera", response_class=HTMLResponse, include_in_schema=False)
+async def page_read_camera(request: Request):
+    return templates.TemplateResponse("read-camera.html", {"request": request})
+
+
 
 

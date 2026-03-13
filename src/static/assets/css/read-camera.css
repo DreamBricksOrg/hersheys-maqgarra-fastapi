@@ -35,3 +35,19 @@ button{
     color: var(--light-color);
     font-size: 4rem;
 }
+
+.camera-container{
+    min-width: 960px;
+    max-width: 80%;
+    min-height: 500px;
+    border-radius: 2rem;
+    border: none;
+    padding: 10px 20px;
+    font-size: 2rem;
+    background-color: var(--light-color);
+}
+
+
+.footer{
+   height: 50px !important;
+}

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scanner de QR Code</title>
     <link rel="stylesheet" href="{{ url_for('static', path='assets/css/root.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', path='assets/css/scan-qrcode.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='assets/css/read-camera.css') }}">
 </head>
 <body>
     
@@ -29,14 +29,14 @@
             </div>
         </div>
         <div class="content">
-            <h1>Ler <span>QR </span>CODE</h1> 
-            <input type="text" id="qrcode-input">
+            <h1>Ler <span>CAMERA</span></h1>
+            <div class="camera-container">
+            </div>
         </div>
         <div class="footer">
             <img src="{{ url_for('static', path='assets/images/capivara.png') }}" class="footer-capivara" alt="Img 2">
-            <img src="{{ url_for('static', path='assets/images/coracao.png') }}" class="footer-coracao" alt="Img 1">
         </div>
     </div>
-    <script src="{{ url_for('static', path='assets/js/scan-qrcode.js') }}"></script>
+    <script src="{{ url_for('static', path='assets/js/read-camera.js') }}"></script>
 </body>
 </html>
