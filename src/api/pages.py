@@ -32,6 +32,9 @@ async def page_more_receipts(request: Request):
 async def page_read_camera(request: Request):
     return templates.TemplateResponse("read-camera.html", {"request": request})
 
+@router.get("/associate-tag", response_class=HTMLResponse, include_in_schema=False)
+async def page_associate_tag(request: Request):
+    return templates.TemplateResponse("associate-tag.html", {"request": request})
 
 
 
