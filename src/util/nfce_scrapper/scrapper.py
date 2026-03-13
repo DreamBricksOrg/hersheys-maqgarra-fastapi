@@ -127,3 +127,50 @@ class NfceScrapper:
 
         logger.info("Saved NFC-e data to %s", out_path)
         return out_path
+
+
+if __name__ == "__main__":
+    # Example: How to use the NfceScrapper class
+
+    # Initialize scraper with output directory
+    scraper = NfceScrapper(output_dir="output/nfce", timeout=30)
+
+    # Example NFC-e URLs
+    urls = [
+        "https://www.nfce.fazenda.sp.gov.br/NFCeConsultaPublica/Paginas/ConsultaQRCode.aspx?p=35260243283811004732650010001055941001056011|2|1|1|311111C4E7BB56B70DD3C25F25F29300E2E6AFB5",
+        "https://www.nfce.fazenda.sp.gov.br/qrcode?p=35260347508411227878651020005420661644227626|3|1",
+    ]
+
+    # Scrape each URL
+    for url in urls:
+        print(f"\nScraping: {url[:60]}...")
+
+        # Scrape and get data and status
+        data, status = scraper.scrape(url)
+
+        if status == "OK":
+            # Display scraped information
+            seller = data.get("seller", {})
+            print(f"[OK] Seller: {seller.get('name', 'Unknown')}")
+            print(f"     CNPJ: {seller.get('cnpj', 'N/A')}")
+
+            invoice = data.get("invoice_number", "N/A")
+            series = data.get("series", "N/A")
+            print(f"     Invoice: {invoice} | Series: {series}")
+
+            totals = data.get("totals", {})
+            print(f"     Total: R$ {totals.get('total', 'N/A')}")
+
+            # Display items
+            items = data.get("items", [])
+            if items:
+                print(f"     Items ({len(items)}):")
+                for item in items:
+                    qty = item.get("quantity")
+                    name = item.get("description", "Unknown")[:40]
+                    price = item.get("total_price")
+                    unit = item.get("unit", "UN")
+                    print(f"       - {qty} {unit} x {name}... = R$ {price}")
+        else:
+            # Display error
+            print(f"[ERROR] {status}")
