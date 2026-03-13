@@ -36,5 +36,10 @@ async def page_read_camera(request: Request):
 async def page_associate_tag(request: Request):
     return templates.TemplateResponse("associate-tag.html", {"request": request})
 
+@router.get("/add-manually", response_class=HTMLResponse, include_in_schema=False)
+async def page_add_manually(request: Request):
+    return templates.TemplateResponse("add-manually.html", {"request": request})
+
+
 
 
