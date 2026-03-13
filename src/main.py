@@ -9,7 +9,7 @@ from core.config import settings
 def create_app() -> FastAPI:
     app = FastAPI(title="Hersheys-Maqgarra", version="0.1.7-dev")
 
-    app.mount("/src/static", StaticFiles(directory="src/static"), name="src-static")
+    app.mount("/static", StaticFiles(directory="src/static"), name="static")
     
     app.add_middleware(
         CORSMiddleware,
