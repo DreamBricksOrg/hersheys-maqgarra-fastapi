@@ -4,8 +4,23 @@ const resultModal = document.getElementById('resultModal');
 const nfceResult = document.getElementById('nfceResult');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const addBarrasBtn = document.getElementById('addBarrasBtn');
+const container = document.getElementById('container');
+const btnVoltar = document.getElementById('btn-voltar');
 
 let lastResult = null;
+
+// Garante foco permanente no input (exceto quando modal aberta)
+qrInput.focus();
+container.addEventListener('click', () => {
+    if (resultModal.style.display === 'none' || !resultModal.style.display) {
+        qrInput.focus();
+    }
+});
+container.addEventListener('keydown', () => {
+    if (resultModal.style.display === 'none' || !resultModal.style.display) {
+        qrInput.focus();
+    }
+});
 
 // Ao pressionar Enter no input, inicia o scraping
 qrInput.addEventListener('keydown', async (e) => {
@@ -45,18 +60,24 @@ qrInput.addEventListener('keydown', async (e) => {
     }
 });
 
+function isHersheys(nome) {
+    return (nome || '').toLowerCase().includes('her');
+}
+
 function renderResult(data) {
     const emitente = data.emitente || {};
     const produtos = data.produtos || [];
     const total = data.total || '0';
 
-    let produtosHtml = produtos.map(p => `
-        <tr>
+    let produtosHtml = produtos.map(p => {
+        const highlighted = isHersheys(p.nome);
+        return `
+        <tr class="item-row ${highlighted ? 'item-selected' : ''}">
             <td>${p.nome || ''}</td>
             <td>${p.quantidade || ''} ${p.unidade || ''}</td>
             <td>R$ ${p.total || '0'}</td>
-        </tr>
-    `).join('');
+        </tr>`;
+    }).join('');
 
     nfceResult.innerHTML = `
         <div class="nfce-emitente">
@@ -78,6 +99,14 @@ function renderResult(data) {
             <strong>TOTAL: R$ ${total}</strong>
         </div>
     `;
+
+    // Toggle ao clicar na linha
+    nfceResult.querySelectorAll('.item-row').forEach(row => {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', () => {
+            row.classList.toggle('item-selected');
+        });
+    });
 }
 
 // Fechar modal
@@ -87,13 +116,17 @@ closeModalBtn.addEventListener('click', () => {
     qrInput.focus();
 });
 
-// Adicionar barras (conta produtos)
+// Adicionar barras (conta apenas linhas verdes/selecionadas)
 addBarrasBtn.addEventListener('click', () => {
-    if (lastResult && lastResult.produtos) {
-        const totalBarras = lastResult.produtos.length;
-        addBarras(totalBarras);
+    const selectedRows = nfceResult.querySelectorAll('.item-row.item-selected');
+    if (selectedRows.length > 0) {
+        addBarras(selectedRows.length);
     }
     resultModal.style.display = 'none';
     lastResult = null;
-    qrInput.focus();
+    window.location.href = '/pages/more-receipts';
+});
+
+btnVoltar.addEventListener('click', () => {
+    window.location.href = '/pages/';
 });

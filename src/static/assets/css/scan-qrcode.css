@@ -33,7 +33,7 @@ button{
     border: none;
     background-color: var(--chocolate-color);
     color: var(--light-color);
-    font-size: 4rem;
+    font-size: 3rem;
 }
 
 input{
@@ -215,6 +215,24 @@ input{
     color: var(--chocolate-color);
 }
 
+/* Item rows — seleção verde */
+.item-row {
+    transition: background-color 0.2s;
+}
+
+.item-row:hover {
+    opacity: 0.8;
+}
+
+.item-row.item-selected {
+    background-color: #d4edda;
+}
+
+.item-row.item-selected td {
+    color: #155724;
+    font-weight: bold;
+}
+
 .error-msg {
     font-family: 'SharpGroteskPETrialBook', sans-serif;
     font-size: 1.5rem;
@@ -224,5 +242,5 @@ input{
 }
 
 .footer{
-   height: 50px !important;
+   height: 150px !important;
 }
