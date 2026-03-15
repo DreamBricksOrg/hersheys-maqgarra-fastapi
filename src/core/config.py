@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     #API
     OPENAI_API_KEY: str = Field(..., env="OPENAI_API_KEY") 
     OPENAI_MODEL: str = Field(..., env="OPENAI_MODEL")
+
+    # WebmaniaNFe
+    NF_API_KEY: str = Field("", env="NF_API_KEY")
+    NF_BASE_API: str = Field("https://api.webmania.com.br/2", env="NF_BASE_API")
     
     class Config:
         env_file = ".env"
