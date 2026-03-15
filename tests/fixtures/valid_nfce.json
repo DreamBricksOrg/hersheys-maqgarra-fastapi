@@ -1,0 +1,51 @@
+{
+  "access_key": "35260243283811004732650010001055941001056011",
+  "invoice_number": "105594",
+  "series": "1",
+  "issue_date": "10/02/2026 14:11:44",
+  "authorization_protocol": "135260952993570",
+  "authorization_date": "10/02/2026 14:11:46",
+  "seller": {
+    "name": "Kalunga SA",
+    "cnpj": "43.283.811/0047-32",
+    "address": "Av Imperatriz Leopoldina , 1170 , NA , Vila Leopoldina , Sao Paulo , SP"
+  },
+  "buyer": null,
+  "items": [
+    {
+      "code": "038903",
+      "description": "Bloco desenho A4 branco 180g 66667164 Canson BL 20 FL",
+      "quantity": "1",
+      "unit": "BL",
+      "unit_price": "13.10",
+      "total_price": "13.10"
+    },
+    {
+      "code": "478743",
+      "description": "Papel fotografico A4 230g matte dupla face M230-20 Spiral PT 20 FL",
+      "quantity": "1",
+      "unit": "PT",
+      "unit_price": "34.90",
+      "total_price": "34.90"
+    }
+  ],
+  "totals": {
+    "item_count": 2,
+    "subtotal": null,
+    "discounts": null,
+    "total": "48.00",
+    "total_taxes": null
+  },
+  "payments": [
+    {
+      "method": "Cartão de Crédito",
+      "amount_paid": "48.00",
+      "change": null
+    }
+  ],
+  "is_cancelled": false,
+  "is_denied": false,
+  "is_epec_only": false,
+  "source_url": "https://www.nfce.fazenda.sp.gov.br/NFCeConsultaPublica/Paginas/ConsultaQRCode.aspx?p=35260243283811004732650010001055941001056011|2|1|1|311111C4E7BB56B70DD3C25F25F29300E2E6AFB5",
+  "scraped_at": "2026-03-13T22:11:55.593476+00:00"
+}

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Consulta de NFC-e</title>
+</head>
+<body>
+    <!-- Hidden fields for status checks -->
+    <input id="hdfNotaCancelada" type="hidden" value="false" />
+    <input id="hdfNotaDenegada" type="hidden" value="false" />
+    <input id="hdfNotaEpecApenas" type="hidden" value="false" />
+
+    <!-- Metadata section -->
+    <div id="divInfConsultaNFCe">
+        <p>Acesso em 13/03/2026 às 22:11:55</p>
+        <p><strong>Chave de Acesso:</strong> 35260243283811004732650010001055941001056011</p>
+        <p><strong>Número:</strong> 105594</p>
+        <p><strong>Série:</strong> 1</p>
+        <p><strong>Data e hora de emissão:</strong> 10/02/2026 14:11:44</p>
+        <p><strong>Protocolo de Autorização:</strong> 135260952993570</p>
+        <p><strong>Data e hora da autorização:</strong> 10/02/2026 14:11:46</p>
+    </div>
+
+    <!-- Seller information -->
+    <div id="divInfProdutosEmitente" class="text-center">
+        <h3>Kalunga SA</h3>
+        <p><strong>CNPJ:</strong> 43.283.811/0047-32</p>
+        <p><strong>Razão Social:</strong> Kalunga SA</p>
+        <p><strong>Endereço:</strong> Av Imperatriz Leopoldina , 1170 , NA , Vila Leopoldina , Sao Paulo , SP</p>
+    </div>
+
+    <!-- Items table with proper SEFAZ-style structure -->
+    <table id="tabelaProduto">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Código</th>
+                <th>Descrição</th>
+                <th>Quantidade</th>
+                <th>Unidade</th>
+                <th>Valor Unitário</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="linhaNormal">
+                <td>1</td>
+                <td class="RCod">038903</td>
+                <td class="NomeProduto">Bloco desenho A4 branco 180g 66667164 Canson BL 20 FL</td>
+                <td class="Rqtd">1</td>
+                <td class="RUN">BL</td>
+                <td class="RvlUnit">13.10</td>
+                <td class="valor">13.10</td>
+            </tr>
+            <tr class="linhaShade">
+                <td>2</td>
+                <td class="RCod">478743</td>
+                <td class="NomeProduto">Papel fotografico A4 230g matte dupla face M230-20 Spiral PT 20 FL</td>
+                <td class="Rqtd">1</td>
+                <td class="RUN">PT</td>
+                <td class="RvlUnit">34.90</td>
+                <td class="valor">34.90</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Totals -->
+    <div id="divTotalizadores">
+        <p><strong>Quantidade de itens:</strong> 2</p>
+        <p><strong>Valor total aproximado dos tributos:</strong> Não informado</p>
+        <p><strong>Valor aproximado da Base de Cálculo do ICMS:</strong> Não informado</p>
+        <p><strong>Valor aproximado do ICMS:</strong> Não informado</p>
+        <p><strong>Valor aproximado do PIS:</strong> Não informado</p>
+        <p><strong>Valor aproximado da COFINS:</strong> Não informado</p>
+        <p><strong>Valor Total da NFC-e:</strong> 48.00</p>
+    </div>
+
+    <!-- Payment information -->
+    <div id="divFormasPagamento">
+        <h3>Formas de Pagamento</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Forma de Pagamento</th>
+                    <th>Valor do Pagamento</th>
+                    <th>Troco</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Cartão de Crédito</td>
+                    <td>48.00</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
