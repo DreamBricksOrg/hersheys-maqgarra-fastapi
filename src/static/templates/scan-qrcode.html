@@ -29,9 +29,30 @@
             </div>
         </div>
         <div class="content">
-            <h1>Ler <span>QR </span>CODE</h1> 
-            <input type="text" id="qrcode-input">
+            <h1>Ler <span>QR </span>CODE</h1>
+
+            <!-- Input + spinner wrapper -->
+            <div class="input-wrapper" id="inputWrapper">
+                <input type="text" id="qrcode-input" placeholder="Escaneie o QR Code..." autofocus>
+                <div class="input-spinner" id="inputSpinner" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Processando nota...</p>
+                </div>
+            </div>
         </div>
+
+        <!-- Modal de Resultado -->
+        <div id="resultModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <h2>Nota Fiscal Encontrada</h2>
+                <div id="nfceResult" class="nfce-result"></div>
+                <div class="modal-actions">
+                    <button id="closeModalBtn" class="btn btn-secondary">Fechar</button>
+                    <button id="addBarrasBtn" class="btn btn-primary">Adicionar Barras</button>
+                </div>
+            </div>
+        </div>
+
         <div class="footer">
             <img src="{{ url_for('static', path='assets/images/capivara.png') }}" class="footer-capivara" alt="Img 2">
             <img src="{{ url_for('static', path='assets/images/coracao.png') }}" class="footer-coracao" alt="Img 1">
