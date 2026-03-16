@@ -3,16 +3,32 @@ from pydantic import Field
 from typing import Optional
 
 class Settings(BaseSettings):
+    BASE_URL: str = Field(..., env="BASE_URL")
+    APP_NAME: str = Field("Link Shortener API", env="APP_NAME")
     ENV: str = Field("dev", env="ENV")
     HOST: str = Field("0.0.0.0", env="HOST")
     PORT: int = Field(8000, env="PORT")
+
+    # LogCenter
+    LOG_API: Optional[str] = Field(default=None, env="LOG_API")
+    LOG_API_KEY: Optional[str] = Field(default=None, env="LOG_API_KEY")
+    LOG_PROJECT_ID: Optional[str] = Field(default=None, env="LOG_PROJECT_ID")
+
+    SENTRY_DSN: Optional[str] = Field(default=None, env="SENTRY_DSN")
 
     # Mongo (Atlas ou self-hosted)
     MONGO_URI: str = Field(..., env="MONGO_URI")
     MONGO_DB: str = Field("logcenter", env="MONGO_DB")
     MONGO_DEBUG: bool = Field(False, env="MONGO_DEBUG")
 
-    
+    # Cache
+    REDIS_URL: str = Field(..., env="REDIS_URL")
+
+
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(60 * 24 * 8, env="ACCESS_TOKEN_EXPIRE_MINUTES")
+    JWT_SECRET: str = Field(..., env="JWT_SECRET")
+    JWT_ALGORITHM: str = Field("HS256", env="JWT_ALGORITHM")
+
     #API
     OPENAI_API_KEY: str = Field(..., env="OPENAI_API_KEY") 
     OPENAI_MODEL: str = Field(..., env="OPENAI_MODEL")
