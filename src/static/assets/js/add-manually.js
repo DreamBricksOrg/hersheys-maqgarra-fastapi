@@ -1,169 +1,42 @@
 const openCameraBtn = document.getElementById('openCameraBtn');
-const closeCameraBtn = document.getElementById('closeCameraBtn');
-const cameraModal = document.getElementById('cameraModal');
-const confirmModal = document.getElementById('confirmModal');
+const cameraInput = document.getElementById('cameraInput');
+const successModal = document.getElementById('successModal');
+const qrcodeInput = document.getElementById('qrcode-input');
 
-const video = document.getElementById('cameraVideo');
-const canvas = document.getElementById('cameraCanvas');
-const captureBtn = document.getElementById('captureButton');
-const resultCanvas = document.getElementById('resultCanvas');
-const retakeBtn = document.getElementById('retakeButton');
-const sendBtn = document.getElementById('sendButton');
-
-let currentStream = null;
-let scanner = null;
-let requestAnimFrameId = null;
-let finalExtractedCanvas = null;
-
-// Aguarda OpenCV carregar
-function waitForOpenCv(callback) {
-    const check = setInterval(() => {
-        if (typeof cv !== 'undefined' && cv.Mat) {
-            clearInterval(check);
-            scanner = new jscanify();
-            callback();
-        }
-    }, 100);
-}
-
-// Inicia a câmera
-async function startCamera() {
-    if (currentStream) {
-        currentStream.getTracks().forEach(t => t.stop());
-    }
-
-    try {
-        currentStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: 'environment',
-                width: { ideal: 1920 },
-                height: { ideal: 1080 }
-            }
-        });
-        video.srcObject = currentStream;
-
-        video.onloadedmetadata = () => {
-            video.play();
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            drawHUD();
-        };
-    } catch (err) {
-        console.error("Erro ao acessar a câmera:", err);
-    }
-}
-
-function stopCamera() {
-    if (requestAnimFrameId) cancelAnimationFrame(requestAnimFrameId);
-    if (currentStream) {
-        currentStream.getTracks().forEach(t => t.stop());
-        currentStream = null;
-    }
-    video.srcObject = null;
-}
-
-// Loop do HUD JScanify
-function drawHUD() {
-    if (!scanner || video.paused) return;
-
-    const ctx = canvas.getContext('2d');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    try {
-        const highlighted = scanner.highlightPaper(canvas, { color: 'orange', thickness: 4 });
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(highlighted, 0, 0);
-    } catch (e) { }
-
-    requestAnimFrameId = requestAnimationFrame(drawHUD);
-}
-
-// Abrir modal da câmera
+// Abrir câmera nativa
 openCameraBtn.addEventListener('click', () => {
-    cameraModal.style.display = 'flex';
-    waitForOpenCv(() => startCamera());
+    // Tenta pegar a quantidade caso já digitada
+    const qtd = parseInt(qrcodeInput.value, 10);
+    if (!qtd || qtd < 1 || qtd > 99) {
+        alert("Por favor, informe a quantidade de barras (1 a 99) antes de tirar a foto.");
+        qrcodeInput.focus();
+        return;
+    }
+    cameraInput.click();
 });
 
-// Fechar modal da câmera
-closeCameraBtn.addEventListener('click', () => {
-    cameraModal.style.display = 'none';
-    stopCamera();
-});
+// Quando tira a foto
+cameraInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-// Capturar foto
-captureBtn.addEventListener('click', () => {
-    if (!scanner || !currentStream) return;
-    captureBtn.disabled = true;
-    if (requestAnimFrameId) cancelAnimationFrame(requestAnimFrameId);
-
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = video.videoWidth;
-    tempCanvas.height = video.videoHeight;
-    tempCanvas.getContext('2d').drawImage(video, 0, 0);
-
-    try {
-        finalExtractedCanvas = scanner.extractPaper(tempCanvas, tempCanvas.width, tempCanvas.height);
-    } catch (e) {
-        finalExtractedCanvas = tempCanvas;
+    const qtd = parseInt(qrcodeInput.value, 10);
+    if (!qtd || qtd < 1 || qtd > 99) {
+        alert("Houve um problema com a quantidade informada. Tente novamente.");
+        return;
     }
 
-    // Mostra na modal de confirmação
-    const resCtx = resultCanvas.getContext('2d');
-    const maxW = 800;
-    const scale = Math.min(1.0, maxW / finalExtractedCanvas.width);
-    resultCanvas.width = finalExtractedCanvas.width * scale;
-    resultCanvas.height = finalExtractedCanvas.height * scale;
-    resCtx.drawImage(finalExtractedCanvas, 0, 0, resultCanvas.width, resultCanvas.height);
+    // Apenas acionamos a lógica global de contador de barras.
+    console.log("Mock: Imagem capturada, ignorando upload.");
+    console.log("Adicionando manualmente:", qtd, "barras.");
 
-    video.pause();
-    cameraModal.style.display = 'none';
-    confirmModal.style.display = 'flex';
-    captureBtn.disabled = false;
-});
-
-// Tirar outra
-retakeBtn.addEventListener('click', () => {
-    confirmModal.style.display = 'none';
-    cameraModal.style.display = 'flex';
-    finalExtractedCanvas = null;
-    video.play();
-    drawHUD();
-});
-
-// Enviar nota e Adicionar barras
-sendBtn.addEventListener('click', async () => {
-    if (!finalExtractedCanvas) return;
-
-    sendBtn.disabled = true;
-    sendBtn.innerText = "Salvando...";
-
-    const blob = await new Promise(resolve => {
-        finalExtractedCanvas.toBlob(resolve, 'image/jpeg', 1.0);
-    });
-
-    const formData = new FormData();
-    formData.append("file", blob, "nota_" + Date.now() + ".jpg");
-
-    try {
-        const response = await fetch("/api/upload", {
-            method: "POST",
-            body: formData
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log("Salvo:", data.path);
-            confirmModal.style.display = 'none';
-            stopCamera();
-        } else {
-            throw new Error("Erro no servidor");
-        }
-    } catch (e) {
-        console.error(e);
-    } finally {
-        sendBtn.disabled = false;
-        sendBtn.innerText = "Enviar nota e Adicionar barras";
-    }
+    addBarras(qtd);
+    
+    // Mostra mensagem de sucesso
+    successModal.style.display = 'flex';
+    
+    // Volta para home após 2 segundos
+    setTimeout(() => {
+        window.location.href = "/pages/";
+    }, 2000);
 });

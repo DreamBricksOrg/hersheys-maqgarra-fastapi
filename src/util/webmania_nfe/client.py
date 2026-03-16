@@ -27,7 +27,7 @@ class WebmaniaNfeClient:
         result = client.validate_image(["https://example.com/nota.jpg"])
     """
 
-    def __init__(self, base_url: str, token: str, timeout: int = 30):
+    def __init__(self, base_url: str, token: str, timeout: int = 120):
         self._base_url = base_url.rstrip("/")
         self._token = token
         self._timeout = timeout
@@ -44,7 +44,7 @@ class WebmaniaNfeClient:
     def validate_image(
         self,
         image_urls: list[str],
-        modelo: str = "nfe",
+        modelo: str = "nfce",
         antifraude: bool = False,
     ) -> dict:
         """POST /valida/dfe/imagem — Validate DFe from image URLs."""
@@ -54,6 +54,7 @@ class WebmaniaNfeClient:
             antifraude=antifraude,
         )
         body = payload.model_dump(exclude_none=True)
+        logger.info("[DEBUG CLIENT] Payload para Webmania: %s", body)
         return self._post("/valida/dfe/imagem", json=body)
 
     def validate_xml(self, xml_content: str) -> dict:
@@ -116,17 +117,23 @@ class WebmaniaNfeClient:
 
     def _request(self, method: str, path: str, **kwargs) -> dict:
         url = f"{self._base_url}{path}"
-        logger.debug("%s %s", method, url)
+        logger.info("[DEBUG CLIENT] %s %s", method, url)
+        if 'json' in kwargs:
+            logger.info("[DEBUG CLIENT] JSON body: %s", kwargs['json'])
+        logger.info("[DEBUG CLIENT] Headers: %s", dict(self._session.headers))
 
         try:
             response = self._session.request(
                 method, url, timeout=self._timeout, **kwargs
             )
         except requests.RequestException as exc:
+            logger.error("[DEBUG CLIENT] Request exception: %s", exc)
             raise WebmaniaNetworkError(
                 f"Network error on {method} {url}: {exc}"
             ) from exc
 
+        logger.info("[DEBUG CLIENT] Response status: %s", response.status_code)
+        logger.info("[DEBUG CLIENT] Response body: %s", response.text[:500])
         return self._handle_response(response)
 
     def _handle_response(self, response: requests.Response) -> dict:

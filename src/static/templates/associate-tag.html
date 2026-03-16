@@ -6,11 +6,10 @@
     <title>Associar TAG</title>
     <link rel="stylesheet" href="{{ url_for('static', path='assets/css/root.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='assets/css/associate-tag.css') }}">
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
     
-    <div class="container">
+    <div class="container" id="container">
         <div class="header">
             <div class="header-content">
                 <div class="logo-container">
@@ -32,19 +31,12 @@
         <div class="content">
             <h1>Associar <span>TAG</span></h1>
             
-            <div class="buttons">
-                <button id="switchCameraButton" class="camera-control-btn">
-                    Mudar Câmera
-                </button>
-
-                <button id="backButton" class="camera-control-btn" onclick="window.history.back()">
-                    Voltar
-                </button>
+            <!-- Input wrapper -->
+            <div class="input-wrapper" id="inputWrapper">
+                <input type="text" id="tag-input" placeholder="Aproxime a TAG..." autofocus>
             </div>
 
-            <div class="camera-container" id="cameraWrapper">
-                <div id="qrReader"></div>
-            </div>
+            <button id="btn-voltar">VOLTAR</button>
             
             <!-- Modal TAG encontrada -->
             <div id="tagModal" class="modal-overlay" style="display: none;">

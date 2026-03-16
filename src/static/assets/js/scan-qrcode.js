@@ -72,7 +72,7 @@ function renderResult(data) {
     let produtosHtml = produtos.map(p => {
         const highlighted = isHersheys(p.nome);
         return `
-        <tr class="item-row ${highlighted ? 'item-selected' : ''}">
+        <tr class="item-row ${highlighted ? 'item-selected' : ''}" data-qtd="${p.quantidade || 1}">
             <td>${p.nome || ''}</td>
             <td>${p.quantidade || ''} ${p.unidade || ''}</td>
             <td>R$ ${p.total || '0'}</td>
@@ -89,12 +89,14 @@ function renderResult(data) {
             <span>Data: ${data.data_emissao || 'N/A'}</span>
             <span>Status: <strong>${data.status || 'N/A'}</strong></span>
         </div>
-        <table class="nfce-table">
-            <thead>
-                <tr><th>Produto</th><th>Qtd</th><th>Total</th></tr>
-            </thead>
-            <tbody>${produtosHtml}</tbody>
-        </table>
+        <div class="table-wrapper">
+            <table class="nfce-table">
+                <thead>
+                    <tr><th>Produto</th><th>Qtd</th><th>Total</th></tr>
+                </thead>
+                <tbody>${produtosHtml}</tbody>
+            </table>
+        </div>
         <div class="nfce-total">
             <strong>TOTAL: R$ ${total}</strong>
         </div>
@@ -116,11 +118,20 @@ closeModalBtn.addEventListener('click', () => {
     qrInput.focus();
 });
 
-// Adicionar barras (conta apenas linhas verdes/selecionadas)
+// Adicionar barras (soma a quantidade das linhas verdes/selecionadas)
 addBarrasBtn.addEventListener('click', () => {
     const selectedRows = nfceResult.querySelectorAll('.item-row.item-selected');
     if (selectedRows.length > 0) {
-        addBarras(selectedRows.length);
+        let totalQtd = 0;
+        selectedRows.forEach(row => {
+            const rawQtd = row.getAttribute('data-qtd') || '1';
+            // Troca possível vírgula por ponto para virar float
+            const qtdNum = parseFloat(rawQtd.replace(',', '.')) || 1;
+            totalQtd += qtdNum;
+        });
+        
+        // Garante que é um inteiro arredondado (ex. 5.0 -> 5)
+        addBarras(Math.floor(totalQtd));
     }
     resultModal.style.display = 'none';
     lastResult = null;

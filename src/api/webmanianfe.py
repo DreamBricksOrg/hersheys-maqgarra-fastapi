@@ -48,7 +48,7 @@ def _handle_error(e: Exception):
 class ValidateImageBody(BaseModel):
     imagens: list[str]
     modelo: str = "nfe"
-    pre_validacao: Optional[bool] = None
+    antifraude: bool = False
 
 
 class ValidateXmlBody(BaseModel):
@@ -65,17 +65,20 @@ class SerproBody(BaseModel):
 # ------------------------------------------------------------------
 
 @router.post("/validar/imagem", summary="Validar DFe por imagem")
-async def validate_dfe_image(body: ValidateImageBody):
+def validate_dfe_image(body: ValidateImageBody):
     """Envia URLs de imagens para validação de DFe na API WebmaniaNFe."""
     logger.info("POST /validar/imagem -> %s/valida/dfe/imagem", settings.NF_BASE_API)
     try:
         client = _get_client()
-        return client.validate_image(
+        result = client.validate_image(
             image_urls=body.imagens,
             modelo=body.modelo,
-            pre_validacao=body.pre_validacao,
+            antifraude=body.antifraude,
         )
+        logger.info("[DEBUG] Resposta Webmania: %s", result)
+        return result
     except WebmaniaNfeError as e:
+        logger.error("[DEBUG] Erro Webmania: %s", e)
         _handle_error(e)
 
 

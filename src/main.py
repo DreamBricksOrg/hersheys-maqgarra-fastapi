@@ -12,8 +12,6 @@ from core.config import settings
 def create_app() -> FastAPI:
     app = FastAPI(title="Hersheys-Maqgarra", version="0.1.7-dev")
 
-    app.mount("/static", StaticFiles(directory="src/static"), name="static")
-    
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -25,6 +23,9 @@ def create_app() -> FastAPI:
     app.include_router(router_uploads)
     app.include_router(router_webmanianfe)
     app.include_router(router_nfce)
+
+    app.mount("/static", StaticFiles(directory="src/static"), name="static")
+
     return app
 
 

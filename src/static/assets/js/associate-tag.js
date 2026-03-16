@@ -2,78 +2,49 @@ const tagModal = document.getElementById('tagModal');
 const tagValue = document.getElementById('tagValue');
 const cancelBtn = document.getElementById('cancelButton');
 const associateBtn = document.getElementById('associateButton');
-const switchCameraBtn = document.getElementById('switchCameraButton');
+const tagInput = document.getElementById('tag-input');
+const btnVoltar = document.getElementById('btn-voltar');
+const container = document.getElementById('container');
 
-let html5QrCode = null;
-let useRearCamera = true;
-let scanning = false;
-
-function startScanner() {
-    if (html5QrCode && scanning) {
-        html5QrCode.stop().then(() => {
-            scanning = false;
-            initScanner();
-        }).catch(() => initScanner());
-    } else {
-        initScanner();
+// Garante foco permanente no input (exceto quando modal aberta)
+tagInput.focus();
+container.addEventListener('click', () => {
+    if (tagModal.style.display === 'none' || !tagModal.style.display) {
+        tagInput.focus();
     }
-}
-
-function initScanner() {
-    html5QrCode = new Html5Qrcode("qrReader");
-
-    const config = {
-        fps: 10,
-        qrbox: { width: 300, height: 300 },
-        disableFlip: false,
-    };
-
-    const cameraId = useRearCamera
-        ? { facingMode: "environment" }
-        : { facingMode: "user" };
-
-    html5QrCode.start(
-        cameraId,
-        config,
-        onQrCodeDetected,
-        () => {} // Silencia erros de frames sem QR
-    ).then(() => {
-        scanning = true;
-    }).catch(err => {
-        console.error("Erro ao iniciar câmera:", err);
-    });
-}
-
-function onQrCodeDetected(decodedText) {
-    // Para o scanner ao encontrar QR
-    if (html5QrCode && scanning) {
-        html5QrCode.pause(true);
+});
+container.addEventListener('keydown', () => {
+    if (tagModal.style.display === 'none' || !tagModal.style.display) {
+        tagInput.focus();
     }
+});
+
+// Ao pressionar Enter no input
+tagInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const tagText = tagInput.value.trim();
+    if (!tagText) return;
 
     // Exibe o texto na modal
-    tagValue.innerText = decodedText;
+    tagValue.innerText = tagText;
     tagModal.style.display = 'flex';
-}
+});
 
 function closeModal() {
     tagModal.style.display = 'none';
     tagValue.innerText = '';
-
-    // Retoma o scanner
-    if (html5QrCode && scanning) {
-        html5QrCode.resume();
-    }
+    tagInput.value = '';
+    tagInput.focus();
 }
 
 // Botões da modal
 cancelBtn.addEventListener('click', closeModal);
-associateBtn.addEventListener('click', closeModal);
-
-// Trocar câmera
-switchCameraBtn.addEventListener('click', () => {
-    useRearCamera = !useRearCamera;
-    startScanner();
+associateBtn.addEventListener('click', () => {
+    resetCounters();
+    window.location.href = '/pages/';
 });
 
-// Inicia ao carregar a página
-window.onload = startScanner;
+// Botão voltar
+btnVoltar.addEventListener('click', () => {
+    window.location.href = '/pages/';
+});

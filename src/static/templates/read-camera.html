@@ -6,8 +6,6 @@
     <title>Scanner de QR Code</title>
     <link rel="stylesheet" href="{{ url_for('static', path='assets/css/root.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='assets/css/read-camera.css') }}">
-    <script src="https://docs.opencv.org/4.7.0/opencv.js" async></script>
-    <script src="https://cdn.jsdelivr.net/gh/ColonelParrot/jscanify@master/src/jscanify.min.js"></script>
 </head>
 <body>
     
@@ -38,14 +36,23 @@
                     Voltar
                 </button>
                 <button id="openCameraBtn">Abrir câmera</button>
+                <input type="file" accept="image/*" capture="environment" id="cameraInput" style="display: none;">
             </div>
 
+            <!-- Modal de Loading -->
+            <div id="loadingModal" class="modal-overlay" style="display: none;">
+                <div class="modal-content" style="min-width: 300px; padding: 40px;">
+                    <div class="spinner"></div>
+                    <h2>Processando Imagem...</h2>
+                    <p>Melhorando contraste e recortando</p>
+                </div>
+            </div>
             
             <!-- Modal de Confirmação -->
             <div id="confirmationModal" class="modal-overlay" style="display: none;">
                 <div class="modal-content">
                     <h2>A foto da nota ficou boa?</h2>
-                    <canvas id="resultCanvas"></canvas>
+                    <img id="previewImage" src="" alt="Nota Processada">
                     <div class="modal-actions">
                         <button id="retakeButton" class="btn btn-secondary">Tentar Novamente</button>
                         <button id="confirmButton" class="btn btn-primary">Ficou Boa (Salvar)</button>
@@ -58,20 +65,18 @@
         </div>
     </div>
 
-    <!-- Modal da Câmera -->
-    <div id="cameraModal" class="modal-overlay" style="display: none;">
-        <div class="modal-camera-content">
-            <div class="camera-container" id="cameraWrapper">
-                <video id="cameraVideo" autoplay playsinline></video>
-                <canvas id="cameraCanvas"></canvas>
-                <button id="captureButton" class="capture-btn"></button>
-            </div>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button id="switchCameraButton" class="camera-control-btn">Mudar Câmera</button>
-                <button id="closeCameraBtn" class="camera-control-btn">Fechar Câmera</button>
+    <!-- Modal de Resultado NFC-e -->
+    <div id="resultModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Nota Fiscal Encontrada</h2>
+            <div id="nfceResult" class="nfce-result"></div>
+            <div class="modal-actions">
+                <button id="closeResultModalBtn" class="btn btn-secondary">Fechar</button>
+                <button id="addBarrasBtn" class="btn btn-primary">Adicionar Barras</button>
             </div>
         </div>
     </div>
+
     <script src="{{ url_for('static', path='assets/js/counter.js') }}"></script>
     <script src="{{ url_for('static', path='assets/js/read-camera.js') }}"></script>
 </body>

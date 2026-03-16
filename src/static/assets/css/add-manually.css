@@ -37,8 +37,8 @@ button{
 }
 
 input{
-    width: 10%;
-    height: 2rem;
+    width: 20%;
+    height: 3rem;
     border-radius: 2rem;
     border: none;
     padding: 10px 20px;
@@ -60,99 +60,19 @@ input{
     z-index: 9999;
 }
 
-/* Modal da Câmera */
-.modal-camera-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-}
-
-.camera-container {
-    border-radius: 2rem;
-    border: none;
-    padding: 0;
-    background-color: var(--light-color);
-    position: relative;
-    overflow: hidden;
-}
-
-@media (orientation: landscape) {
-    .camera-container {
-        aspect-ratio: 16 / 9;
-        height: 80vh;
-        max-width: 90vw;
-        width: auto;
-    }
-}
-
-@media (orientation: portrait) {
-    .camera-container {
-        aspect-ratio: 9 / 16;
-        width: 90vw;
-        max-height: 80vh;
-        height: auto;
-    }
-}
-
-#cameraVideo {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 2rem;
-}
-
-#cameraCanvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 2rem;
-    pointer-events: none;
-}
-
-.capture-btn {
-    position: absolute;
-    width: 80px;
-    height: 80px;
+.spinner {
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid var(--chocolate-color);
     border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.5);
-    border: 5px solid white;
-    cursor: pointer;
-    box-shadow: 0 0 10px rgba(0,0,0, 0.5);
-    transition: background-color 0.2s;
-    padding: 0;
-    z-index: 10;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
 }
 
-@media (orientation: landscape) {
-    .capture-btn {
-        right: 30px;
-        top: 50%;
-        transform: translateY(-50%);
-    }
-}
-
-@media (orientation: portrait) {
-    .capture-btn {
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-    }
-}
-
-.capture-btn:active {
-    background-color: rgba(255, 255, 255, 0.8);
-}
-
-.camera-control-btn {
-    font-size: 1.5rem;
-    padding: 15px 30px;
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* Modal de Confirmação da Foto */
@@ -175,11 +95,12 @@ input{
     margin: 0;
 }
 
-#resultCanvas {
+#previewImage {
     max-width: 100%;
     max-height: 50vh;
     border: 2px solid #ccc;
     border-radius: 1rem;
+    object-fit: contain;
 }
 
 .modal-actions {

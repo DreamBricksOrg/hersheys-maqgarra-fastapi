@@ -21,8 +21,9 @@
 
 .buttons{
     display: flex;
-    justify-content: space-between;
-    width: 50%;
+    justify-content: center;
+    width: 100%;
+    gap: 2rem;
 }
 
 @media (orientation: portrait) {
@@ -39,52 +40,25 @@ button{
     border: none;
     background-color: var(--chocolate-color);
     color: var(--light-color);
-    font-size: 4rem;
+    font-size: 2rem;
 }
 
-.camera-container{
-    width: 90vw;
-    max-width: 250px;
-    aspect-ratio: 1 / 1;
+input{
+    width: 100%;
+    height: 3rem;
     border-radius: 2rem;
     border: none;
-    padding: 0;
+    padding: 10px 20px;
     font-size: 2rem;
-    background-color: var(--light-color);
-    position: relative;
-    overflow: hidden;
+    text-align: center;
+}
+
+/* Input Wrapper */
+.input-wrapper {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 0 auto;
-}
-
-#qrReader {
-    width: 100%;
-    height: 100%;
-}
-
-/* Força o vídeo e o canvas do html5-qrcode a preencherem o container sem distorcer */
-#qrReader video,
-#qrReader canvas {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    border-radius: 2rem;
-}
-
-#qrReader svg {
-    border-radius: 2rem;
-}
-
-/* Esconde o botão de permissão padrão da lib */
-#qrReader__dashboard {
-    display: none !important;
-}
-
-.camera-control-btn {
-    font-size: 1rem;
-    padding: 20px 25px;
+    min-height: 3rem;
 }
 
 /* Modal */
