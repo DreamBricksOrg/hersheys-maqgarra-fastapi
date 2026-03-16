@@ -1,0 +1,40 @@
+<html lang="pt-br">
+<link rel="stylesheet" href="/src/static/css/tag_validation.css" />
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script src="/src/static/js/tag_validation.js"></script>
+
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo-container">
+                <img src="/src/static/images/logo_capi.png" alt="Logo" id="logo">
+            </div>
+        </div>
+    </div>
+    <div class="content">
+        <span>Passe o QR Code</span>
+        <div id="reader_container">
+            <div id="reader-border"></div>
+            <div id="reader"></div>
+        </div>
+    </div>
+    <img src="/src/static/images/capibarra-mascote-pascoa-hersheys-barra-de-chocolate.webp" alt="" id="capivara">
+    <div class="footer">
+        <img src="/src/static/images/quadrados_inferiores.png" alt="" class="footer_capibarra">
+    </div>
+
+    <div style="display: none;" id="modal_error">
+        <span style="text-align: center;">TAG NAO HABILITADA</span>
+    </div>
+
+    <div style="display: none;" id="modal_success">
+        <span style="text-align: center;">TAG ESCANEADA COM SUCESSO</span>
+    </div>
+
+    <div style="display: none;" id="modal_alert">
+        <span style="text-align: center;">ERRO AO ESCANEAR TAG TENTE NOVAMENTE</span>
+    </div>
+</body>
+
+
+</html>
