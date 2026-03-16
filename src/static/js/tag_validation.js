@@ -6,29 +6,48 @@ function onScanSuccess(decodedText, decodedResult) {
     const modal_error = document.getElementById("modal_error")
     // handle the scanned code as you like, for example:
     console.log("Code matched = ${decodedText}", decodedResult);
-    fetch("/tags/validate", {
+    fetch(`/api/tags/${decodedText}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(resp => {
+        if (!resp.ok) {
+            throw new Error(`HTTP error: ${resp.status}`)
+        }
+        resp.json()
+    }).then(response => {
+        console.log(response);
+        if (response.available_for_play) {
+            modal_success.style.display = "flex";
+            setTimeout(() => { hideElement(modal_success) }, 2000);
+            deactivateTag(decodedText);
+        }
+        else {
+            modal_error.style.display = "flex";
+            setTimeout(() => { hideElement(modal_error) }, 2000);
+
+        }
+    }).catch(error => {
+        modal_alert.style.display = "flex";
+        setTimeout(() => { hideElement(modal_alert) }, 2000);
+    });
+    html5QrCode.stop();
+}
+
+async function deactivateTag(tag_key) {
+    fetch(`/api/tags/${tag_key}/deactivate`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ code: decodedText })
-    }).then(resp => resp.json())
-        .then(response => {
-            console.log(response);
-            if (response == "Valid") {
-                modal_success.style.display = "flex";
-                setTimeout(() => { hideElement(modal_success) }, 2000);
-            }
-            else if (response == "Invalid") {
-                modal_error.style.display = "flex";
-                setTimeout(() => { hideElement(modal_error) }, 2000);
-
-            }
-        }).catch(error => {
-            modal_alert.style.display = "flex";
-            setTimeout(() => { hideElement(modal_alert) }, 2000);
-        });
-    html5QrCode.stop();
+        body: { "reason": "used_for_play" }
+    }).then(response => {
+        if(!response.ok)
+        {
+            throw new Error(`HTTP error: ${response.status}`)
+        }        
+    });
 }
 
 async function startScan() {
