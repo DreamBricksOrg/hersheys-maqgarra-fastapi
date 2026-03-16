@@ -6,11 +6,11 @@
     justify-content: center;
     width: 100%;
     z-index: 1;
-    gap: 2rem;
+    gap: 1rem;
 }
 
 .content h1{
-    font-size: 4rem;
+    font-size: 2rem;
     font-family: 'SharpGroteskPETrialBook', sans-serif;
     color: var(--light-color);
 }
@@ -25,6 +25,12 @@
     width: 50%;
 }
 
+@media (orientation: portrait) {
+    .buttons {
+        width: 90vw;
+    }
+}
+
 button{
     font-family: 'SharpGroteskPETrialBook', sans-serif;
     border-radius: 2rem;
@@ -37,9 +43,9 @@ button{
 }
 
 .camera-container{
-    min-width: 960px;
-    max-width: 80%;
-    height: 500px;
+    width: 90vw;
+    max-width: 250px;
+    aspect-ratio: 1 / 1;
     border-radius: 2rem;
     border: none;
     padding: 0;
@@ -50,6 +56,7 @@ button{
     display: flex;
     justify-content: center;
     align-items: center;
+    margin: 0 auto;
 }
 
 #qrReader {
@@ -57,11 +64,16 @@ button{
     height: 100%;
 }
 
-/* Força o vídeo interno do html5-qrcode a preencher o container */
-#qrReader video {
+/* Força o vídeo e o canvas do html5-qrcode a preencherem o container sem distorcer */
+#qrReader video,
+#qrReader canvas {
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
+    border-radius: 2rem;
+}
+
+#qrReader svg {
     border-radius: 2rem;
 }
 
@@ -71,7 +83,7 @@ button{
 }
 
 .camera-control-btn {
-    font-size: 1.5rem;
+    font-size: 1rem;
     padding: 20px 25px;
 }
 

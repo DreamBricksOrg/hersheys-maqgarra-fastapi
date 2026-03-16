@@ -6,11 +6,11 @@
     justify-content: center;
     width: 100%;
     z-index: 1;
-    gap: 2rem;
+    gap: 1rem;
 }
 
 .content h1{
-    font-size: 4rem;
+    font-size: 2rem !important;
     font-family: 'SharpGroteskPETrialBook', sans-serif;
     color: var(--light-color);
 }
@@ -33,12 +33,12 @@ button{
     border: none;
     background-color: var(--chocolate-color);
     color: var(--light-color);
-    font-size: 3rem;
+    font-size: 1rem;
 }
 
 input{
-    width: 20%;
-    height: 6rem;
+    width: 10%;
+    height: 2rem;
     border-radius: 2rem;
     border: none;
     padding: 10px 20px;
@@ -69,15 +69,30 @@ input{
 }
 
 .camera-container {
-    min-width: 960px;
-    max-width: 80%;
-    height: 500px;
     border-radius: 2rem;
     border: none;
     padding: 0;
     background-color: var(--light-color);
     position: relative;
     overflow: hidden;
+}
+
+@media (orientation: landscape) {
+    .camera-container {
+        aspect-ratio: 16 / 9;
+        height: 80vh;
+        max-width: 90vw;
+        width: auto;
+    }
+}
+
+@media (orientation: portrait) {
+    .camera-container {
+        aspect-ratio: 9 / 16;
+        width: 90vw;
+        max-height: 80vh;
+        height: auto;
+    }
 }
 
 #cameraVideo {
@@ -103,9 +118,6 @@ input{
 
 .capture-btn {
     position: absolute;
-    right: 30px;
-    top: 50%;
-    transform: translateY(-50%);
     width: 80px;
     height: 80px;
     border-radius: 50%;
@@ -116,6 +128,22 @@ input{
     transition: background-color 0.2s;
     padding: 0;
     z-index: 10;
+}
+
+@media (orientation: landscape) {
+    .capture-btn {
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+}
+
+@media (orientation: portrait) {
+    .capture-btn {
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
 }
 
 .capture-btn:active {
@@ -175,6 +203,4 @@ input{
     background-color: #28a745;
 }
 
-.footer {
-    height: 300px;
-}
+

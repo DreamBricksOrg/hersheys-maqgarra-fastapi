@@ -6,11 +6,11 @@
     justify-content: center;
     width: 100%;
     z-index: 1;
-    gap: 5rem;
+    gap: 3rem;
 }
 
 .content h1{
-    font-size: 4rem;
+    font-size: 2rem;
     font-family: 'SharpGroteskPETrialBook', sans-serif;
     color: var(--light-color);
 }
@@ -21,8 +21,9 @@
 
 .buttons{
     display: flex;
-    justify-content: space-between;
-    width: 50%;
+    justify-content: center;
+    width: 100%;
+    gap: 2rem;
 }
 
 button{
@@ -33,5 +34,5 @@ button{
     border: none;
     background-color: var(--chocolate-color);
     color: var(--light-color);
-    font-size: 4rem;
+    font-size: 2rem;
 }

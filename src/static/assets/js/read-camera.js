@@ -8,6 +8,10 @@ const resultCanvas = document.getElementById('resultCanvas');
 const retakeBtn = document.getElementById('retakeButton');
 const confirmBtn = document.getElementById('confirmButton');
 
+const cameraModal = document.getElementById('cameraModal');
+const openCameraBtn = document.getElementById('openCameraBtn');
+const closeCameraBtn = document.getElementById('closeCameraBtn');
+
 let currentStream = null;
 let useRearCamera = true;
 let scanner = null;
@@ -20,10 +24,24 @@ window.onload = () => {
         if (typeof cv !== 'undefined' && cv.Mat) {
             clearInterval(checkOpenCv);
             scanner = new jscanify();
-            startCamera();
         }
     }, 100);
 };
+
+openCameraBtn.addEventListener('click', () => {
+    cameraModal.style.display = 'flex';
+    startCamera();
+});
+
+closeCameraBtn.addEventListener('click', () => {
+    cameraModal.style.display = 'none';
+    if (requestAnimFrameId) cancelAnimationFrame(requestAnimFrameId);
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
+    }
+    video.pause();
+});
 
 async function startCamera() {
     if (currentStream) {
@@ -108,6 +126,7 @@ captureBtn.addEventListener('click', () => {
     resCtx.drawImage(finalExtractedCanvas, 0, 0, resultCanvas.width, resultCanvas.height);
 
     video.pause();
+    cameraModal.style.display = 'none';
     modal.style.display = 'flex';
     captureBtn.disabled = false;
 });
@@ -115,6 +134,7 @@ captureBtn.addEventListener('click', () => {
 // Tentar novamente
 retakeBtn.addEventListener('click', () => {
     modal.style.display = 'none';
+    cameraModal.style.display = 'flex';
     finalExtractedCanvas = null;
     video.play();
     drawHUD();
@@ -145,8 +165,11 @@ confirmBtn.addEventListener('click', async () => {
             const data = await response.json();
             console.log("Salvo em:", data.path);
             modal.style.display = 'none';
-            video.play();
-            drawHUD();
+            if (requestAnimFrameId) cancelAnimationFrame(requestAnimFrameId);
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
         } else {
             throw new Error("Erro no servidor");
         }
