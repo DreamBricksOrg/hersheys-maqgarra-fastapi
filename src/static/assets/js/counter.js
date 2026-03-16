@@ -46,6 +46,7 @@ function updateCounterDisplay() {
     const tagsEl = document.getElementById('tagsCount');
     if (barrasEl) barrasEl.textContent = getBarras();
     if (tagsEl) tagsEl.textContent = getTags();
+    localStorage.setItem(STORAGE_KEYS.TAGS, Math.floor(getBarras() / 6).toString());
 }
 
 // Atualiza o display assim que o DOM carregar

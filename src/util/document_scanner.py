@@ -1,8 +1,21 @@
 import cv2
 import numpy as np
 import logging
+import time
 
 logger = logging.getLogger(__name__)
+
+MAX_WORK_SIZE = 1500   # resolução de trabalho
+CONTOUR_SIZE = 500     # resolução para detecção de contorno
+
+
+def resize_to_max(image: np.ndarray, max_side: int) -> tuple[np.ndarray, float]:
+    h, w = image.shape[:2]
+    if max(h, w) <= max_side:
+        return image, 1.0
+    scale = max_side / max(h, w)
+    new_w, new_h = int(w * scale), int(h * scale)
+    return cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA), scale
 
 
 def order_points(pts: np.ndarray) -> np.ndarray:
@@ -40,7 +53,9 @@ def four_point_transform(image: np.ndarray, pts: np.ndarray) -> np.ndarray:
 
 
 def find_document_contour(image: np.ndarray):
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Detecta contornos numa versão pequena da imagem (rápido)
+    small, scale = resize_to_max(image, CONTOUR_SIZE)
+    gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     edged = cv2.Canny(blurred, 50, 200)
 
@@ -56,10 +71,12 @@ def find_document_contour(image: np.ndarray):
 
         if len(approx) == 4:
             area = cv2.contourArea(approx)
-            image_area = image.shape[0] * image.shape[1]
+            image_area = small.shape[0] * small.shape[1]
             if area > image_area * 0.1:
+                # Escala as coordenadas de volta para a imagem original
+                pts = (approx.reshape(4, 2).astype("float32")) / scale
                 logger.info("[SCANNER] Document contour found (area=%.1f%%)", (area / image_area) * 100)
-                return approx.reshape(4, 2)
+                return pts
 
     logger.info("[SCANNER] No 4-corner contour found, skipping crop")
     return None
@@ -71,7 +88,7 @@ def remove_shadows(image: np.ndarray) -> np.ndarray:
 
     for plane in rgb_planes:
         dilated = cv2.dilate(plane, np.ones((7, 7), np.uint8))
-        bg = cv2.medianBlur(dilated, 21)
+        bg = cv2.medianBlur(dilated, 11)
         diff = 255 - cv2.absdiff(plane, bg)
         normalized = cv2.normalize(diff, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
         result_planes.append(normalized)
@@ -89,25 +106,28 @@ def enhance_contrast(image: np.ndarray) -> np.ndarray:
 
 
 def process_receipt(input_path: str, output_path: str) -> str:
+    t0 = time.time()
     logger.info("[SCANNER] Processing %s", input_path)
     image = cv2.imread(input_path)
 
     if image is None:
         raise ValueError(f"Could not read image: {input_path}")
 
+    logger.info("[SCANNER] Original size: %dx%d", image.shape[1], image.shape[0])
+
+    # 1. Detectar contornos e recortar a nota
     contour = find_document_contour(image)
 
     if contour is not None:
         image = four_point_transform(image, contour)
         logger.info("[SCANNER] Perspective warp applied")
 
-    image = remove_shadows(image)
-    logger.info("[SCANNER] Shadow removal applied")
-
-    image = enhance_contrast(image)
-    logger.info("[SCANNER] Contrast enhancement applied")
+    # 2. Redimensionar para resolução de trabalho
+    image, _ = resize_to_max(image, MAX_WORK_SIZE)
+    logger.info("[SCANNER] Working size: %dx%d", image.shape[1], image.shape[0])
 
     cv2.imwrite(output_path, image, [cv2.IMWRITE_JPEG_QUALITY, 95])
-    logger.info("[SCANNER] Saved processed image to %s", output_path)
+    logger.info("[SCANNER] Done in %.1fs → %s", time.time() - t0, output_path)
 
     return output_path
+
