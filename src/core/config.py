@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     MONGO_DB: str = Field("logcenter", env="MONGO_DB")
     MONGO_DEBUG: bool = Field(False, env="MONGO_DEBUG")
 
+    # Cache
+    REDIS_URL: str = Field(..., env="REDIS_URL")
+
+
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(60 * 24 * 8, env="ACCESS_TOKEN_EXPIRE_MINUTES")
     JWT_SECRET: str = Field(..., env="JWT_SECRET")
     JWT_ALGORITHM: str = Field("HS256", env="JWT_ALGORITHM")
