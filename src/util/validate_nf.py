@@ -2,20 +2,20 @@ import re
 class validate_nf:
     list_of_codes = []
     list_of_keywords = ["HERSH", "HERSHE", "HERSHEY", "HERSHEYS"]
-    quantity_of_bars = 0
 
     def start_validation(self, json):
-        self.quantity_of_bars = 0
+        results = []
         for item in json["produtos"]:
             sameHash = self.validate_via_hash(item["nome"])
             if sameHash:
-                self.quantity_of_bars += int(item["quantidade"])
+                results.append("valid")
                 continue
             hasKeyWords = self.validate_via_keywords(item["nome"])
             if hasKeyWords:
-                self.quantity_of_bars += int(item["quantidade"])
+                results.append("valid")
                 continue
-        return self.quantity_of_bars
+            results.append("invalid")
+        return results
 
     def validate_via_hash(self, item: str):
         for code in self.list_of_codes:
