@@ -75,7 +75,6 @@ function renderResult(data) {
         <tr class="item-row ${highlighted ? 'item-selected' : ''}" data-qtd="${p.quantidade || 1}">
             <td>${p.nome || ''}</td>
             <td>${p.quantidade || ''} ${p.unidade || ''}</td>
-            <td>R$ ${p.total || '0'}</td>
         </tr>`;
     }).join('');
 
@@ -92,13 +91,10 @@ function renderResult(data) {
         <div class="table-wrapper">
             <table class="nfce-table">
                 <thead>
-                    <tr><th>Produto</th><th>Qtd</th><th>Total</th></tr>
+                    <tr><th>Produto</th><th>Qtd</th></tr>
                 </thead>
                 <tbody>${produtosHtml}</tbody>
             </table>
-        </div>
-        <div class="nfce-total">
-            <strong>TOTAL: R$ ${total}</strong>
         </div>
     `;
 
