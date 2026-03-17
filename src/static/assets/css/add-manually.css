@@ -6,7 +6,7 @@
     justify-content: center;
     width: 100%;
     z-index: 1;
-    gap: 1rem;
+    gap: 0.5rem;
 }
 
 .content h1{
@@ -124,4 +124,42 @@ input{
     background-color: #28a745;
 }
 
+/* Number Control (+/-) */
+.number-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    margin: 20px 0;
+}
 
+.control-btn {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--chocolate-color);
+    color: var(--light-color);
+    font-size: 2rem;
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s;
+    user-select: none;
+    line-height: 0;
+    padding-bottom: 5px; /* Ajuste visual do + e - */
+}
+
+.control-btn:active {
+    transform: scale(0.8);
+}
+
+.qtd-value {
+    font-size: 3rem;
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+    color: var(--light-color);
+    min-width: 80px;
+    text-align: center;
+}

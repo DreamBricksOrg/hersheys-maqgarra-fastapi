@@ -30,7 +30,13 @@
         </div>
         <div class="content">
             <h1>Adicionar <span>Manualmente</span></h1> 
-            <input type="number" id="qrcode-input" oninput="if(this.value.length > 2) this.value = this.value.slice(0, 2);" min="1" max="99">
+            
+            <div class="number-control">
+                <button id="btn-minus" class="control-btn">-</button>
+                <div id="qtd-display" class="qtd-value">0</div>
+                <button id="btn-plus" class="control-btn">+</button>
+            </div>
+
             <button id="openCameraBtn" class="btn">Abrir câmera</button>
             <button id="btn-voltar">VOLTAR</button>
             <input type="file" accept="image/*" capture="environment" id="cameraInput" style="display: none;">
@@ -60,8 +66,8 @@
             <svg viewBox="0 0 24 24" style="width: 80px; height: 80px; fill: #28a745; margin-bottom: 20px;">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
             </svg>
-            <h2>Nota lida com sucesso!</h2>
-            <p>As barras foram adicionadas.</p>
+            <h2>Nota enviada com sucesso!</h2>
+            <p>Foram adicionadas <span id="added-qtd">0</span> barras.</p>
         </div>
     </div>
 
