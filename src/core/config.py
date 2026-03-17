@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = Field(..., env="OPENAI_API_KEY") 
     OPENAI_MODEL: str = Field(..., env="OPENAI_MODEL")
     
+    DEVICE_ID_HEADER: str = Field(..., env="DEVICE_ID_HEADER") 
+    API_KEY_HEADER: str = Field(..., env="API_KEY_HEADER")
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
