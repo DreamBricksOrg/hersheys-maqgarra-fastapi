@@ -12,7 +12,7 @@ class ReceiptOverrideService:
     async def execute(self, receipt_id: str, final_bars: int, reason: str | None) -> ReceiptResponse:
         receipt = await self.receipt_repository.find_by_id(receipt_id)
         if not receipt:
-            raise AppError("receipt_not_found", "Nota não encontrada", 404)
+            raise AppError("Nota não encontrada", "receipt_not_found", 404)
 
         updated = await self.receipt_repository.update_by_id(
             receipt_id,

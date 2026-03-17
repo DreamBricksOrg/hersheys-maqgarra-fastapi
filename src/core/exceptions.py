@@ -1,5 +1,5 @@
 class AppError(Exception):
-    def __init__(self, code: str, message: str, status_code: int = 400, details: dict | None = None):
+    def __init__(self, message: str, code: str = "app_error", status_code: int = 400, details: dict | None = None):
         super().__init__(message)
         self.code = code
         self.message = message

@@ -1,4 +1,6 @@
+from copy import deepcopy
 from datetime import datetime, timezone
+from fastapi import HTTPException
 
 from repositories.raw_payload_repository import RawPayloadRepository
 from repositories.receipt_repository import ReceiptRepository
@@ -27,8 +29,16 @@ class ReceiptQRService:
         self.observability_service = observability_service
 
     async def execute(self, qr_value: str) -> ReceiptResponse:
+        try:
+            raw_payload = self.parser_service.parse_qr(qr_value)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=502, detail=str(exc))
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc))
+
+        response_raw_payload = deepcopy(raw_payload)
+
         await self.observability_service.emit("receipt-qr-received", {"qr_length": len(qr_value)})
-        raw_payload = self.parser_service.parse_qr(qr_value)
         await self.observability_service.emit("receipt-qr-parsed", {"receipt_key": raw_payload.get("chave")})
 
         receipt_key = raw_payload.get("chave")
@@ -36,11 +46,15 @@ class ReceiptQRService:
 
         await self.observability_service.emit("product_matching-started", {"receipt_key": receipt_key})
         items, found_bars = await self.product_matching_service.match_products(raw_payload.get("produtos", []))
-        await self.observability_service.emit("product_matching-finished", {"receipt_key": receipt_key, "found_bars": found_bars})
+        await self.observability_service.emit(
+            "product_matching-finished",
+            {"receipt_key": receipt_key, "found_bars": found_bars},
+        )
 
         review = False
         status = self.receipt_validation_service.build_status(found_bars, review)
         raw_payload_id = await self.raw_payload_repository.create(raw_payload)
+
         payload = {
             "receipt_key": receipt_key,
             "source": "qr",
@@ -50,12 +64,18 @@ class ReceiptQRService:
             "review": review,
             "status": status,
             "raw_payload_id": raw_payload_id,
-            "raw_payload": raw_payload,
+            "raw_payload": response_raw_payload,
             "items": items,
             "session_id": None,
         }
+
         created = await self.receipt_repository.create(payload)
-        await self.observability_service.emit("receipt-validation-finished", {"receipt_id": str(created["_id"]), "status": status})
+
+        await self.observability_service.emit(
+            "receipt-validation-finished",
+            {"receipt_id": str(created["_id"]), "status": status},
+        )
+
         return ReceiptResponse(
             receipt_id=str(created["_id"]),
             receipt_key=created.get("receipt_key"),
@@ -65,7 +85,7 @@ class ReceiptQRService:
             final_bars=created["final_bars"],
             review=created["review"],
             status=created["status"],
-            items=[ReceiptItemResponse(**item) for item in items],
-            raw_payload=raw_payload,
-            session_id=created.get("session_id"),
+            items=[ReceiptItemResponse(**item) for item in created.get("items", [])],
+            raw_payload=created.get("raw_payload"),
+            session_id=str(created["session_id"]) if created.get("session_id") else None,
         )

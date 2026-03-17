@@ -1,7 +1,17 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Annotated
 
-from pydantic import BaseModel, Field
+from bson import ObjectId
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
+
+
+def parse_object_id_to_str(value: Any) -> str:
+    if isinstance(value, ObjectId):
+        return str(value)
+    return str(value)
+
+
+ObjectIdStr = Annotated[str, BeforeValidator(parse_object_id_to_str)]
 
 
 class ReceiptQRRequest(BaseModel):
@@ -25,7 +35,13 @@ class ErrorAuditResponse(BaseModel):
 
 
 class ReceiptResponse(BaseModel):
-    receipt_id: str
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True,
+        json_encoders={ObjectId: str},
+    )
+
+    receipt_id: ObjectIdStr
     receipt_key: str | None = None
     source: str
     timestamp: datetime
@@ -35,8 +51,17 @@ class ReceiptResponse(BaseModel):
     status: str
     items: list[ReceiptItemResponse] = Field(default_factory=list)
     raw_payload: dict[str, Any] | None = None
-    session_id: str | None = None
+    session_id: ObjectIdStr | None = None
     error_audit: ErrorAuditResponse | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def map_mongo_id(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            data = dict(data)
+            if "receipt_id" not in data and "_id" in data:
+                data["receipt_id"] = data["_id"]
+        return data
 
 
 class ReceiptListTagAssociateRequest(BaseModel):

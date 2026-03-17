@@ -11,10 +11,12 @@ from logcenter_sdk.config import LogCenterConfig
 from logcenter_sdk.sender import LogCenterSender
 from logcenter_sdk.middleware import LogCenterAuditMiddleware
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 
+from core.exceptions import AppError
 from core.config import settings
 from api.routes.health import router as health_router
 from api.routes.receipts import router as receipts_router
@@ -114,6 +116,19 @@ def create_app() -> FastAPI:
     app.include_router(receipts_router)
     app.include_router(tags_router)
     app.include_router(pages_router)
+
+    @app.exception_handler(AppError)
+    async def app_error_handler(request: Request, exc: AppError):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": {
+                    "code": exc.code,
+                    "message": exc.message,
+                    "details": exc.details,
+                }
+            },
+        )
 
     return app
 
