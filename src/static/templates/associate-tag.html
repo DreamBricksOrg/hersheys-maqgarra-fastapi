@@ -30,14 +30,19 @@
         </div>
         <div class="content">
             <h1>Associar <span>TAG</span></h1>
-            <p id="remainingText" style="font-family: 'SharpGroteskPETrialBook', sans-serif; font-size: 1.5rem; color: var(--light-color);">Faltam associar <strong id="remainingCount">0</strong> tag(s)</p>
+            <p id="remainingText" style="font-family: 'SharpGroteskPETrialBook', sans-serif; font-size: 1.5rem; color: var(--light-color);">Você tem direito a <strong id="remainingCount">0</strong> tag(s)</p>
             
-            <!-- Input wrapper -->
-            <div class="input-wrapper" id="inputWrapper">
+            <!-- QR Code mockado para levar a user-qrcode.html -->
+            <div class="qrcode-wrapper" id="qrcodeWrapper" style="display: flex; justify-content: center; align-items: center; margin: 2rem 0; background: white; padding: 20px; border-radius: 20px;">
+                <img id="dynamicQRCode" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=http://localhost:8000/pages/user-qrcode" alt="QR Code" style="width: 300px; height: 300px;">
+            </div>
+
+            <!-- Input wrapper hidden to avoid breaking JS -->
+            <div class="input-wrapper" id="inputWrapper" style="display: none;">
                 <input type="text" id="tag-input" placeholder="Aproxime a TAG..." autofocus inputmode="none">
             </div>
 
-            <button id="btn-voltar">VOLTAR</button>
+            <button id="btn-voltar">INÍCIO</button>
             
             <!-- Modal TAG encontrada -->
             <div id="tagModal" class="modal-overlay" style="display: none;">

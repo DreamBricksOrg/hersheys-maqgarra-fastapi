@@ -1,0 +1,174 @@
+/* ========== Page Layout ========== */
+.page-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem 1.5rem;
+    gap: 1.5rem;
+    text-align: center;
+}
+
+/* ========== Title ========== */
+.title {
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    font-size: 1.5rem;
+    color: var(--light-color);
+    line-height: 1.4;
+    max-width: 340px;
+}
+
+.title b {
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+}
+
+.highlight {
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+    font-size: 2rem;
+    color: var(--warning-color);
+}
+
+/* ========== Carousel ========== */
+.carousel-section {
+    width: 100%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.carousel {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 1rem;
+    width: 100%;
+    padding: 0.5rem 0;
+    scrollbar-width: none;
+}
+
+.carousel::-webkit-scrollbar {
+    display: none;
+}
+
+.carousel-slide {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.qr-container {
+    background: #fff;
+    border-radius: 1.25rem;
+    padding: 1.25rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.longpress-hotspot {
+    position: absolute;
+    width: 75px;
+    height: 75px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    cursor: pointer;
+}
+
+.qr-container.scanned img {
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+}
+
+.qr-container .scanned-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+}
+
+.qr-container.scanned .scanned-overlay {
+    display: flex;
+}
+
+.scanned-overlay span {
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+    font-size: 1.75rem;
+    color: var(--chocolate-color);
+    text-transform: uppercase;
+    transform: rotate(-30deg);
+    letter-spacing: 0.1em;
+    opacity: 0.85;
+}
+
+.qr-container img {
+    width: 220px;
+    height: 220px;
+    display: block;
+    pointer-events: none;
+    -webkit-touch-callout: none;
+}
+
+.qr-label {
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+    font-size: 1rem;
+    color: var(--light-color);
+    opacity: 0.85;
+}
+
+/* ========== Carousel Dots ========== */
+.carousel-dots {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.dot.active {
+    background: var(--warning-color);
+    transform: scale(1.3);
+}
+
+/* ========== Queue Position ========== */
+.queue-label {
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    font-size: 1.25rem;
+    color: var(--light-color);
+    margin: 0;
+}
+
+.queue-number-box {
+    background: #fff;
+    border-radius: 1.25rem;
+    padding: 1rem 2.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    min-width: 120px;
+}
+
+.queue-number {
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+    font-size: 3rem;
+    color: var(--chocolate-color);
+    line-height: 1;
+}
