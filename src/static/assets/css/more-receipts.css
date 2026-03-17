@@ -36,3 +36,32 @@ button{
     color: var(--light-color);
     font-size: 2rem;
 }
+
+/* Modals */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+.modal-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 1rem;
+    text-align: center;
+    max-width: 90%;
+    width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+.modal-content h2 {
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+    color: var(--chocolate-color);
+    margin: 0;
+    font-size: 2.2rem;
+}

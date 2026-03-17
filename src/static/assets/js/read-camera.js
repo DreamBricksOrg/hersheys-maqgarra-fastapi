@@ -107,13 +107,20 @@ confirmBtn.addEventListener('click', async () => {
 
     } catch (err) {
         console.error(err);
-        nfceResult.innerHTML = `<p class="error-msg">❌ ${err.message}</p>`;
         modal.style.display = 'none';
-        resultModal.style.display = 'flex';
+        document.getElementById('errorModal').style.display = 'flex';
     } finally {
         confirmBtn.disabled = false;
         confirmBtn.innerText = "Ficou Boa (Salvar)";
     }
+});
+
+// Error modal buttons
+document.getElementById('retryBtn').addEventListener('click', () => {
+    document.getElementById('errorModal').style.display = 'none';
+});
+document.getElementById('addManualBtn').addEventListener('click', () => {
+    window.location.href = '/pages/add-manually';
 });
 
 function isHersheys(nome) {
@@ -142,7 +149,7 @@ function renderResult(data) {
         <div class="nfce-info">
             <span>Nota: ${data.numero || 'N/A'} | Série: ${data.serie || 'N/A'}</span>
             <span>Data: ${data.data_emissao || 'N/A'}</span>
-            <span>Status: <strong>${data.status || 'N/A'}</strong></span>
+            <span>Chave: <strong>${data.chave || 'N/A'}</strong></span>
         </div>
         <div class="table-wrapper">
             <table class="nfce-table">

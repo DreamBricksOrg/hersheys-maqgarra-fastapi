@@ -184,6 +184,7 @@ input{
     font-family: 'SharpGroteskPETrialBook', sans-serif;
     font-size: 1.2rem;
     color: #444;
+    word-break: break-all;
 }
 
 .table-wrapper {

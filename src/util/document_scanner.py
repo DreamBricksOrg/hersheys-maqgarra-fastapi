@@ -105,6 +105,27 @@ def enhance_contrast(image: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(enhanced, cv2.COLOR_LAB2BGR)
 
 
+def quick_enhance(image: np.ndarray) -> np.ndarray:
+    # 1. White balance — faz o papel ficar branco (~2ms)
+    result = image.copy()
+    for i in range(3):  # B, G, R
+        channel = result[:, :, i]
+        white_ref = np.percentile(channel, 95)
+        if white_ref > 0:
+            scale = 255.0 / white_ref
+            result[:, :, i] = np.clip(channel * scale, 0, 255).astype(np.uint8)
+    image = result
+
+    # 2. Contraste + brilho (suave)
+    image = cv2.convertScaleAbs(image, alpha=1.1, beta=5)
+
+    # 3. Unsharp mask leve para nitidez do texto
+    blurred = cv2.GaussianBlur(image, (0, 0), 3)
+    image = cv2.addWeighted(image, 1.25, blurred, -0.25, 0)
+
+    return image
+
+
 def process_receipt(input_path: str, output_path: str) -> str:
     t0 = time.time()
     logger.info("[SCANNER] Processing %s", input_path)
@@ -125,6 +146,9 @@ def process_receipt(input_path: str, output_path: str) -> str:
     # 2. Redimensionar para resolução de trabalho
     image, _ = resize_to_max(image, MAX_WORK_SIZE)
     logger.info("[SCANNER] Working size: %dx%d", image.shape[1], image.shape[0])
+
+    # 3. Melhorias rápidas (contraste + nitidez, ~10ms total)
+    image = quick_enhance(image)
 
     cv2.imwrite(output_path, image, [cv2.IMWRITE_JPEG_QUALITY, 95])
     logger.info("[SCANNER] Done in %.1fs → %s", time.time() - t0, output_path)

@@ -49,8 +49,7 @@ qrInput.addEventListener('keydown', async (e) => {
         resultModal.style.display = 'flex';
     } catch (err) {
         console.error(err);
-        nfceResult.innerHTML = `<p class="error-msg">❌ ${err.message}</p>`;
-        resultModal.style.display = 'flex';
+        document.getElementById('errorModal').style.display = 'flex';
     } finally {
         // Volta o input
         inputSpinner.style.display = 'none';
@@ -58,6 +57,15 @@ qrInput.addEventListener('keydown', async (e) => {
         qrInput.value = '';
         qrInput.focus();
     }
+});
+
+// Error modal buttons
+document.getElementById('retryBtn').addEventListener('click', () => {
+    document.getElementById('errorModal').style.display = 'none';
+    qrInput.focus();
+});
+document.getElementById('addManualBtn').addEventListener('click', () => {
+    window.location.href = '/pages/add-manually';
 });
 
 function isHersheys(nome) {
@@ -86,7 +94,7 @@ function renderResult(data) {
         <div class="nfce-info">
             <span>Nota: ${data.numero || 'N/A'} | Série: ${data.serie || 'N/A'}</span>
             <span>Data: ${data.data_emissao || 'N/A'}</span>
-            <span>Status: <strong>${data.status || 'N/A'}</strong></span>
+            <span>Chave: <strong>${data.chave || 'N/A'}</strong></span>
         </div>
         <div class="table-wrapper">
             <table class="nfce-table">
