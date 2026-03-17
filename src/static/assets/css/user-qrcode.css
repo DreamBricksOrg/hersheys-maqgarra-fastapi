@@ -1,3 +1,23 @@
+/* ========== Logo & Capivara ========== */
+body {
+    height: auto;
+}
+
+.page-logo {
+    width: 150px;
+    z-index: 10;
+    align-self: flex-start;
+}
+
+.page-capivara {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%) scale(0.30);
+    transform-origin: center left;
+    z-index: -1;
+}
+
 /* ========== Page Layout ========== */
 .page-wrapper {
     display: flex;
@@ -13,10 +33,10 @@
 /* ========== Title ========== */
 .title {
     font-family: 'SharpGroteskPETrialBook', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     color: var(--light-color);
     line-height: 1.4;
-    max-width: 340px;
+    text-transform: uppercase;
 }
 
 .title b {
@@ -25,7 +45,7 @@
 
 .highlight {
     font-family: 'SharpGroteskPETrialBold', sans-serif;
-    font-size: 2rem;
+    font-size: 1.3rem;
     color: var(--warning-color);
 }
 
@@ -107,7 +127,7 @@
 
 .scanned-overlay span {
     font-family: 'SharpGroteskPETrialBold', sans-serif;
-    font-size: 1.75rem;
+    font-size: 1.3rem;
     color: var(--chocolate-color);
     text-transform: uppercase;
     transform: rotate(-30deg);
@@ -150,15 +170,22 @@
     transform: scale(1.3);
 }
 
-/* ========== Queue Position ========== */
-.queue-label {
+/* ========== Número (top) ========== */
+.numero-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.numero-label {
     font-family: 'SharpGroteskPETrialBook', sans-serif;
-    font-size: 1.25rem;
+    font-size: 1.3rem; 
     color: var(--light-color);
     margin: 0;
 }
 
-.queue-number-box {
+.numero-box {
     background: #fff;
     border-radius: 1.25rem;
     padding: 1rem 2.5rem;
@@ -166,9 +193,67 @@
     min-width: 120px;
 }
 
-.queue-number {
+.numero-value {
     font-family: 'SharpGroteskPETrialBold', sans-serif;
-    font-size: 3rem;
+    font-size: 1.5rem;
     color: var(--chocolate-color);
     line-height: 1;
+}
+
+/* ========== Posição (bottom, inline) ========== */
+.posicao-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+}
+
+.posicao-container p {
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    font-size: 1.3rem;
+    color: var(--light-color);
+    margin: 0;
+    white-space: nowrap;
+}
+
+.posicao-box {
+    background: #fff;
+    border-radius: 1.25rem;
+    padding: 0.5rem 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.posicao-value {
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+    font-size: 1.5rem;
+    color: var(--chocolate-color);
+    line-height: 1;
+}
+
+button{
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    border-radius: 1rem;
+    cursor: pointer;
+    padding: 10px 10px;
+    border: none;
+    background-color: var(--chocolate-color);
+    color: var(--light-color);
+    font-size: 1.3rem;
+}
+
+/* ========== Footer ========== */
+.page-footer {
+    justify-content: center;
+    width: 100%;
+    position: relative;
+    margin-top: auto;
+}
+
+.footer-coracao {
+    position: absolute;
+    bottom: 0;
+    right: 50%;
+    transform: translateX(50%) scale(0.45);
+    transform-origin: bottom center;
+    z-index: -1;
 }

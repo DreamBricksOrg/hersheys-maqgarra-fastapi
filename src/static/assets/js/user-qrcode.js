@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const chancesEl = document.getElementById('chancesCount');
     const carousel = document.getElementById('carousel');
     const dotsContainer = document.getElementById('carouselDots');
-    const queueNumberEl = document.getElementById('queueNumber');
+    const numeroEl = document.getElementById('numeroValue');
+    const posicaoEl = document.getElementById('posicaoValue');
 
     // Update title with number of chances
     chancesEl.textContent = tagsCount;
@@ -40,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const label = document.createElement('span');
         label.className = 'qr-label';
-        label.textContent = `QR Code ${i} de ${tagsCount}`;
 
         slide.appendChild(qrBox);
         slide.appendChild(label);
@@ -72,14 +72,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     slides.forEach(slide => observer.observe(slide));
 
-    // Mocked queue position
-    const queuePosition = Math.floor(Math.random() * 50) + 1;
-    queueNumberEl.textContent = queuePosition;
+    // Mocked values
+    const numero = Math.floor(Math.random() * 900) + 100;
+    numeroEl.textContent = numero;
 
-    // Long-press (3s) on center hotspot to toggle scanned state
+    const posicao = Math.floor(Math.random() * 50) + 1;
+    posicaoEl.textContent = posicao;
+
+    // Long-press (2s) on center hotspot to toggle scanned state
     function setupLongPress(hotspot, container) {
         let timer = null;
-        const HOLD_MS = 3000;
+        const HOLD_MS = 2000;
 
         function startHold() {
             timer = setTimeout(() => {

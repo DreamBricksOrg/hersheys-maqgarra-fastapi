@@ -8,10 +8,21 @@
     <link rel="stylesheet" href="{{ url_for('static', path='assets/css/user-qrcode.css') }}">
 </head>
 <body>
+
     <div class="page-wrapper" id="pageWrapper">
+    <img src="{{ url_for('static', path='assets/images/titulo.png') }}" class="page-logo" alt="Logo">
+    <img src="{{ url_for('static', path='assets/images/capivara2.png') }}" class="page-capivara" alt="Capivara">
+
+
+        <div class="numero-container">
+            <p class="numero-label">Seu <b>número</b> é</p>
+            <div class="numero-box">
+                <span class="numero-value" id="numeroValue">--</span>
+            </div>
+        </div>
 
         <h1 class="title" id="title">
-            Você ganhou <span class="highlight" id="chancesCount">0</span> chances de jogar na <b>CAPIGARRA</b>
+            Você ganhou <span class="highlight" id="chancesCount">0</span> chance(s) de jogar na <b>CAPIGARRA!</b>
         </h1>
 
         <!-- Carrossel de QR Codes -->
@@ -20,13 +31,24 @@
             <div class="carousel-dots" id="carouselDots"></div>
         </div>
 
-        <!-- Posição na fila -->
-        <p class="queue-label">Seu lugar na fila é</p>
-        <div class="queue-number-box" id="queueBox">
-            <span class="queue-number" id="queueNumber">--</span>
+        <div class="posicao-container">
+            <p>Sua <b>POSIÇÃO</b> é:</p>
+            <div class="posicao-box">
+                <span class="posicao-value" id="posicaoValue">--</span>
+            </div>
         </div>
 
+        <div class="buttons">
+            <button class="button" onclick="window.location.reload()">RECARREGAR</button>
+            <button class="button">ME AVISE</button>
+        </div>
+    
     </div>
+
+     <div class="page-footer">
+        <img src="{{ url_for('static', path='assets/images/coracao.png') }}" class="footer-coracao" alt="Coração">
+    </div>
+    
 
     <script src="{{ url_for('static', path='assets/js/user-qrcode.js') }}"></script>
 </body>
