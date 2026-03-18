@@ -1,16 +1,18 @@
 from fastapi import APIRouter, Depends
 
-from api.dependencies import get_queue_intake_service, get_queue_service, get_settings, require_auth
-from schemas.queue import QueueIntakeRequest, QueueIntakeResponse, QueueMobileViewResponse
-from services.queue_intake_service import QueueIntakeService
+from api.dependencies import get_queue_intake_service, get_queue_service, require_auth
+from core.config import settings
 from schemas.auth import AuthContext
 from schemas.queue import (
     QueueCompleteRequest,
     QueueCompleteResponse,
     QueueCurrentResponse,
+    QueueIntakeRequest,
+    QueueIntakeResponse,
     QueueJoinRequest,
     QueueJoinResponse,
     QueueListResponse,
+    QueueMobileViewResponse,
     QueueNextResponse,
     QueueSkipRequest,
     QueueSkipResponse,
@@ -18,9 +20,23 @@ from schemas.queue import (
     QueueValidateRequest,
     QueueValidateResponse,
 )
+from services.queue_intake_service import QueueIntakeService
 from services.queue_service import QueueService
 
 router = APIRouter(prefix="/api/queue", tags=["queue"])
+
+
+@router.post("/intake", response_model=QueueIntakeResponse)
+async def intake_queue_from_receipt(
+    payload: QueueIntakeRequest,
+    auth: AuthContext = Depends(require_auth),
+    service: QueueIntakeService = Depends(get_queue_intake_service),
+) -> QueueIntakeResponse:
+    return await service.execute(
+        receipt_id=payload.receipt_id,
+        total_plays=payload.total_plays,
+        phone=payload.phone,
+    )
 
 
 @router.post("/join", response_model=QueueJoinResponse)
@@ -46,6 +62,16 @@ async def list_active_queue(
     service: QueueService = Depends(get_queue_service),
 ) -> QueueListResponse:
     return await service.list_active()
+
+
+@router.get("/mobile/{player_id}", response_model=QueueMobileViewResponse)
+async def get_mobile_queue_view(
+    player_id: str,
+    auth: AuthContext = Depends(require_auth),
+    service: QueueService = Depends(get_queue_service),
+) -> QueueMobileViewResponse:
+    data = await service.get_mobile_view(player_id, settings.BASE_URL)
+    return QueueMobileViewResponse(**data)
 
 
 @router.get("/{player_id}", response_model=QueueStateResponse)
@@ -90,25 +116,3 @@ async def skip_current_queue_player(
     service: QueueService = Depends(get_queue_service),
 ) -> QueueSkipResponse:
     return await service.skip_current(payload.reason)
-
-@router.post("/intake", response_model=QueueIntakeResponse)
-async def intake_queue_from_receipt(
-    payload: QueueIntakeRequest,
-    auth: AuthContext = Depends(require_auth),
-    service: QueueIntakeService = Depends(get_queue_intake_service),
-) -> QueueIntakeResponse:
-    return await service.execute(
-        receipt_id=payload.receipt_id,
-        total_plays=payload.total_plays,
-        phone=payload.phone,
-    )
-
-@router.get("/mobile/{player_id}", response_model=QueueMobileViewResponse)
-async def get_mobile_queue_view(
-    player_id: str,
-    auth: AuthContext = Depends(require_auth),
-    service: QueueService = Depends(get_queue_service),
-    settings=Depends(get_settings),
-) -> QueueMobileViewResponse:
-    data = await service.get_mobile_view(player_id, settings.BASE_URL)
-    return QueueMobileViewResponse(**data)

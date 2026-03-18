@@ -1,5 +1,4 @@
 from core.exceptions import AppError
-from repositories.receipt_repository import ReceiptRepository
 from repositories.session_repository import SessionRepository
 from repositories.tag_repository import TagRepository
 from schemas.tags import TagAssociateResponse, TagResponse
@@ -9,29 +8,26 @@ from services.observability_service import ObservabilityService
 class TagAssociationService:
     def __init__(
         self,
-        receipt_repository: ReceiptRepository,
         session_repository: SessionRepository,
         tag_repository: TagRepository,
         observability_service: ObservabilityService,
     ):
-        self.receipt_repository = receipt_repository
         self.session_repository = session_repository
         self.tag_repository = tag_repository
         self.observability_service = observability_service
 
-    async def execute(self, session_id: str | None, receipt_ids: list[str] | None, tags: list[str]) -> TagAssociateResponse:
-        if not session_id and not receipt_ids:
-            raise AppError("invalid_request", "session_id ou receipt_ids é obrigatório", 422)
+    async def execute(self, session_id: str, tags: list[str]) -> TagAssociateResponse:
+        session = await self.session_repository.find_by_id(session_id)
+        if not session:
+            raise AppError("session_not_found", "Sessão não encontrada", 404, {"session_id": session_id})
 
-        if session_id:
-            session = await self.session_repository.find_by_id(session_id)
-            if not session:
-                raise AppError("session_not_found", "Sessão não encontrada", 404)
-            resolved_receipt_ids = session.get("receipt_ids", [])
-        else:
-            resolved_receipt_ids = receipt_ids or []
-            session = await self.session_repository.create(receipt_ids=resolved_receipt_ids)
-            session_id = str(session["_id"])
+        if not tags:
+            raise AppError("invalid_request", "É necessário informar ao menos uma tag", 422)
+
+        if len(tags) != len(set(tags)):
+            raise AppError("duplicate_tags", "Existem tags duplicadas na requisição", 422, {"tags": tags})
+
+        validated_tags: list[dict] = []
 
         for tag_key in tags:
             tag = await self.tag_repository.find_by_key(tag_key)
@@ -48,11 +44,23 @@ class TagAssociationService:
             if status == "invalid":
                 await self.observability_service.emit(
                     "tag-association-failed",
-                    {"tag_key": tag_key, "reason": "not_available"},
+                    {"tag_key": tag_key, "reason": "timeout"},
                 )
                 raise AppError(
-                    "tag_not_available",
-                    "Uma ou mais tags ainda não foram liberadas para uso",
+                    "tag_invalid",
+                    "Uma ou mais tags expiraram ou ficaram inválidas",
+                    409,
+                    {"tags": [tag_key]},
+                )
+
+            if status == "valid":
+                await self.observability_service.emit(
+                    "tag-association-failed",
+                    {"tag_key": tag_key, "reason": "already_associated"},
+                )
+                raise AppError(
+                    "tag_already_associated",
+                    "Uma ou mais tags já estão associadas",
                     409,
                     {"tags": [tag_key]},
                 )
@@ -64,7 +72,7 @@ class TagAssociationService:
                 )
                 raise AppError(
                     "tag_already_used",
-                    "Uma ou mais tags já estão em uso",
+                    "Uma ou mais tags já foram usadas",
                     409,
                     {"tags": [tag_key]},
                 )
@@ -72,18 +80,41 @@ class TagAssociationService:
             if status != "available":
                 await self.observability_service.emit(
                     "tag-association-failed",
-                    {"tag_key": tag_key, "reason": "unexpected_status", "status": status},
+                    {"tag_key": tag_key, "reason": "invalid_state", "status": status},
                 )
                 raise AppError(
                     "tag_invalid_state",
-                    "Uma ou mais tags estão em um estado inválido para associação",
+                    "Uma ou mais tags estão em estado inválido para associação",
                     409,
                     {"tags": [tag_key], "status": status},
                 )
 
-        used_tags = await self.tag_repository.mark_used_many(tags)
-        await self.receipt_repository.mark_used_many(resolved_receipt_ids)
-        await self.session_repository.attach_tags(session_id, [item["tag_key"] for item in used_tags])
+            existing_session_id = tag.get("session_id")
+            if existing_session_id and str(existing_session_id) != session_id:
+                await self.observability_service.emit(
+                    "tag-association-failed",
+                    {
+                        "tag_key": tag_key,
+                        "reason": "belongs_to_another_session",
+                        "session_id": str(existing_session_id),
+                    },
+                )
+                raise AppError(
+                    "tag_belongs_to_another_session",
+                    "Uma ou mais tags já pertencem a outra sessão",
+                    409,
+                    {"tags": [tag_key]},
+                )
+
+            validated_tags.append(tag)
+
+        associated = await self.tag_repository.associate_many(session_id, tags)
+
+        await self.session_repository.attach_tags(
+            session_id,
+            [str(item["_id"]) for item in associated],
+        )
+
         await self.observability_service.emit(
             "tag-association-created",
             {"session_id": session_id, "tags": tags},
@@ -91,7 +122,6 @@ class TagAssociationService:
 
         return TagAssociateResponse(
             session_id=session_id,
-            receipt_ids=resolved_receipt_ids,
-            tags=[TagResponse.model_validate(item) for item in used_tags],
+            tags=[TagResponse.model_validate(item) for item in associated],
             associated=True,
         )

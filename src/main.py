@@ -22,6 +22,7 @@ from api.routes.health import router as health_router
 from api.routes.receipts import router as receipts_router
 from api.routes.tags import router as tags_router
 from api.routes.queue import router as queue_router
+from api.routes.sessions import router as sessions_router
 from api.pages import router as pages_router
 
 
@@ -118,6 +119,7 @@ def create_app() -> FastAPI:
     app.include_router(tags_router)
     app.include_router(pages_router)
     app.include_router(queue_router)
+    app.include_router(sessions_router)
 
     @app.exception_handler(AppError)
     async def app_error_handler(request: Request, exc: AppError):
