@@ -1,6 +1,8 @@
 from pydantic_settings import BaseSettings
 from pydantic import Field
 from typing import Optional
+from pathlib import Path
+
 
 class Settings(BaseSettings):
     BASE_URL: str = Field(..., env="BASE_URL")
@@ -8,6 +10,9 @@ class Settings(BaseSettings):
     ENV: str = Field("dev", env="ENV")
     HOST: str = Field("0.0.0.0", env="HOST")
     PORT: int = Field(8000, env="PORT")
+    API_KEY_HEADER: str = Field("x-api-key", env="API_KEY_HEADER")
+    DEVICE_ID_HEADER: str = Field("x-device-id", env="DEVICE_ID_HEADER")
+    UPLOAD_DIR: Path = Path("/app/src/static/upload", env="UPLOAD_DIR")
 
     # LogCenter
     LOG_API: Optional[str] = Field(default=None, env="LOG_API")

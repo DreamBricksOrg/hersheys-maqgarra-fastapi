@@ -2,7 +2,13 @@ from fastapi import APIRouter, Depends
 
 from api.dependencies import get_tag_association_service, get_tag_state_service, require_auth
 from schemas.auth import AuthContext
-from schemas.tags import TagAssociateRequest, TagAssociateResponse, TagDeactivateRequest, TagStatusResponse
+from schemas.tags import (
+    TagActivateRequest,
+    TagAssociateRequest,
+    TagAssociateResponse,
+    TagDeactivateRequest,
+    TagStatusResponse,
+)
 from services.tag_association_service import TagAssociationService
 from services.tag_state_service import TagStateService
 
@@ -25,6 +31,16 @@ async def get_tag_state(
     service: TagStateService = Depends(get_tag_state_service),
 ) -> TagStatusResponse:
     return await service.get_state(tag_key)
+
+
+@router.post("/{tag_key}/activate", response_model=TagStatusResponse)
+async def activate_tag(
+    tag_key: str,
+    payload: TagActivateRequest,
+    auth: AuthContext = Depends(require_auth),
+    service: TagStateService = Depends(get_tag_state_service),
+) -> TagStatusResponse:
+    return await service.activate(tag_key, payload.reason)
 
 
 @router.post("/{tag_key}/deactivate", response_model=TagStatusResponse)

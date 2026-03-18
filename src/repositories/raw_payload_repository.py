@@ -1,3 +1,4 @@
+from copy import deepcopy
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 
@@ -6,5 +7,6 @@ class RawPayloadRepository:
         self.collection = db.raw_payload
 
     async def create(self, payload: dict) -> str:
-        result = await self.collection.insert_one(payload)
+        payload_to_insert = deepcopy(payload)
+        result = await self.collection.insert_one(payload_to_insert)
         return str(result.inserted_id)

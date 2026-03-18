@@ -35,20 +35,63 @@ class TagAssociationService:
 
         for tag_key in tags:
             tag = await self.tag_repository.find_by_key(tag_key)
-            if not tag:
-                await self.observability_service.emit("tag-association-failed", {"tag_key": tag_key, "reason": "not_found"})
-                raise AppError("tag_not_found", "Tag não encontrada", 404, {"tag_key": tag_key})
-            if tag.get("status") == "valid":
-                await self.observability_service.emit("tag-association-failed", {"tag_key": tag_key, "reason": "already_used"})
-                raise AppError("tag_already_used", "Uma ou mais tags já estão em uso", 409, {"tags": [tag_key]})
 
-        activated = await self.tag_repository.activate_many(tags)
+            if not tag:
+                await self.observability_service.emit(
+                    "tag-association-failed",
+                    {"tag_key": tag_key, "reason": "not_found"},
+                )
+                raise AppError("tag_not_found", "Tag não encontrada", 404, {"tag_key": tag_key})
+
+            status = tag.get("status")
+
+            if status == "invalid":
+                await self.observability_service.emit(
+                    "tag-association-failed",
+                    {"tag_key": tag_key, "reason": "not_available"},
+                )
+                raise AppError(
+                    "tag_not_available",
+                    "Uma ou mais tags ainda não foram liberadas para uso",
+                    409,
+                    {"tags": [tag_key]},
+                )
+
+            if status == "used":
+                await self.observability_service.emit(
+                    "tag-association-failed",
+                    {"tag_key": tag_key, "reason": "already_used"},
+                )
+                raise AppError(
+                    "tag_already_used",
+                    "Uma ou mais tags já estão em uso",
+                    409,
+                    {"tags": [tag_key]},
+                )
+
+            if status != "available":
+                await self.observability_service.emit(
+                    "tag-association-failed",
+                    {"tag_key": tag_key, "reason": "unexpected_status", "status": status},
+                )
+                raise AppError(
+                    "tag_invalid_state",
+                    "Uma ou mais tags estão em um estado inválido para associação",
+                    409,
+                    {"tags": [tag_key], "status": status},
+                )
+
+        used_tags = await self.tag_repository.mark_used_many(tags)
         await self.receipt_repository.mark_used_many(resolved_receipt_ids)
-        await self.session_repository.attach_tags(session_id, [item["tag_key"] for item in activated])
-        await self.observability_service.emit("tag-association-created", {"session_id": session_id, "tags": tags})
+        await self.session_repository.attach_tags(session_id, [item["tag_key"] for item in used_tags])
+        await self.observability_service.emit(
+            "tag-association-created",
+            {"session_id": session_id, "tags": tags},
+        )
+
         return TagAssociateResponse(
             session_id=session_id,
             receipt_ids=resolved_receipt_ids,
-            tags=[TagResponse(tag_key=item["tag_key"], status=item["status"]) for item in activated],
+            tags=[TagResponse.model_validate(item) for item in used_tags],
             associated=True,
         )

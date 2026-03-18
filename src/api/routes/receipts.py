@@ -46,7 +46,7 @@ async def get_receipt(
     repo = ReceiptRepository(db)
     receipt = await repo.find_by_id(receipt_id)
     if not receipt:
-        raise AppError("receipt_not_found", "Nota não encontrada", 404)
+        raise AppError("Nota não encontrada", "receipt_not_found", 404)
     return ReceiptResponse(
         receipt_id=str(receipt["_id"]),
         receipt_key=receipt.get("receipt_key"),
