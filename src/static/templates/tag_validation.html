@@ -1,13 +1,16 @@
 <html lang="pt-br">
-<link rel="stylesheet" href="/src/static/css/tag_validation.css" />
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-<script src="/src/static/js/tag_validation.js"></script>
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', path='assets/css/tag_validation.css') }}" />
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="{{ url_for('static', path='assets/js/tag_validation.js') }}"></script>
+</head>
 
 <body>
     <div class="header">
         <div class="header-content">
             <div class="logo-container">
-                <img src="/src/static/images/logo_capi.png" alt="Logo" id="logo">
+                <img src="{{ url_for('static', path='assets/images/logo_capi.png') }}" alt="Logo" id="logo">
+
             </div>
         </div>
     </div>
@@ -18,9 +21,9 @@
             <div id="reader"></div>
         </div>
     </div>
-    <img src="/src/static/images/capibarra-mascote-pascoa-hersheys-barra-de-chocolate.webp" alt="" id="capivara">
+    <img src="" alt="" id="capivara">
     <div class="footer">
-        <img src="/src/static/images/quadrados_inferiores.png" alt="" class="footer_capibarra">
+        <img src="{{ url_for('static', path='assets/images/quadrados_inferiores.png') }}" alt="" class="footer_capibarra">
     </div>
 
     <div style="display: none;" id="modal_error">

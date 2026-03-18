@@ -55,3 +55,7 @@ class TagStateService:
             available_for_play=False,
             last_updated_at=updated.get("last_updated_at"),
         )
+
+    async def list_tags(self, amount: int) -> list[str]:
+        tags = await self.tag_repository.find_by_status(limit=amount)
+        return [t["tag_key"] for t in tags]

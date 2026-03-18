@@ -66,7 +66,7 @@ async function startScan() {
     html5QrCode.start({ facingMode: "user" }, config, onScanSuccess);
 }
 document.addEventListener('DOMContentLoaded', function () {
-    setTimeout(startScan(), 3000);
+    setTimeout(startScan, 3000);
 }, false);
 
 function hideElement(element) {

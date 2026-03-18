@@ -14,6 +14,9 @@ from logcenter_sdk.middleware import LogCenterAuditMiddleware
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from api.uploads import router as router_uploads
+from api.webmanianfe import router as router_webmanianfe
+from api.nfce import router as router_nfce
 from fastapi.responses import JSONResponse
 
 from core.exceptions import AppError
@@ -111,11 +114,15 @@ def create_app() -> FastAPI:
         app.add_middleware(SentryAsgiMiddleware)
 
     app.mount("/src/static", StaticFiles(directory="src/static"), name="src-static")
+    app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
     app.include_router(health_router)
     app.include_router(receipts_router)
     app.include_router(tags_router)
     app.include_router(pages_router)
+    app.include_router(router_uploads)
+    app.include_router(router_webmanianfe)
+    app.include_router(router_nfce)
 
     @app.exception_handler(AppError)
     async def app_error_handler(request: Request, exc: AppError):
@@ -129,6 +136,7 @@ def create_app() -> FastAPI:
                 }
             },
         )
+
 
     return app
 

@@ -8,6 +8,7 @@ from schemas.tags import (
     TagAssociateResponse,
     TagDeactivateRequest,
     TagStatusResponse,
+    TagListResponse,
 )
 from services.tag_association_service import TagAssociationService
 from services.tag_state_service import TagStateService
@@ -31,6 +32,16 @@ async def get_tag_state(
     service: TagStateService = Depends(get_tag_state_service),
 ) -> TagStatusResponse:
     return await service.get_state(tag_key)
+
+
+@router.get("", response_model=TagListResponse)
+async def list_tags(
+    amount: int,
+    auth: AuthContext = Depends(require_auth),
+    service: TagStateService = Depends(get_tag_state_service),
+) -> TagListResponse:
+    tags = await service.list_tags(amount)
+    return TagListResponse(tags=tags)
 
 
 @router.post("/{tag_key}/activate", response_model=TagStatusResponse)
