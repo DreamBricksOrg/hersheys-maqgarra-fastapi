@@ -3,7 +3,29 @@
 const STORAGE_KEYS = {
     BARRAS: 'counter_barras',
     TAGS: 'counter_tags',
+    RECEIPT_IDS: 'receipt_ids',
 };
+
+// ── Receipt IDs ──────────────────────────────────────────────────────────────
+
+function getReceiptIds() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.RECEIPT_IDS) || '[]');
+}
+
+function addReceiptId(receiptId) {
+    if (!receiptId) return;
+    const ids = getReceiptIds();
+    if (!ids.includes(receiptId)) {
+        ids.push(receiptId);
+        localStorage.setItem(STORAGE_KEYS.RECEIPT_IDS, JSON.stringify(ids));
+    }
+}
+
+function clearReceiptIds() {
+    localStorage.removeItem(STORAGE_KEYS.RECEIPT_IDS);
+}
+
+// ── Barras / Tags ─────────────────────────────────────────────────────────────
 
 function getBarras() {
     return parseInt(localStorage.getItem(STORAGE_KEYS.BARRAS) || '0', 10);

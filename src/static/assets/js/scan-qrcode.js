@@ -179,7 +179,9 @@ addBarrasBtn.addEventListener('click', async () => {
             const err = await saveResp.json().catch(() => ({}));
             console.error('[DEBUG] Erro ao salvar:', err.detail);
         } else {
-            console.log('[DEBUG] Nota salva:', await saveResp.json());
+            const receipt = await saveResp.json();
+            console.log('[DEBUG] Nota salva:', receipt);
+            addReceiptId(receipt.receipt_id);
         }
 
         addBarras(totalBars);
