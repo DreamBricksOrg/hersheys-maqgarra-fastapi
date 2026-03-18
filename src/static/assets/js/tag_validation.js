@@ -7,7 +7,7 @@ function onScanSuccess(decodedText, decodedResult) {
     // handle the scanned code as you like, for example:
     console.log("Code matched = ${decodedText}", decodedResult);
     fetch(`/api/tags/${decodedText}`, {
-        method: 'POST',
+        method: 'GET',
         headers: {
             'Content-Type': 'application/json'
         }
@@ -15,7 +15,7 @@ function onScanSuccess(decodedText, decodedResult) {
         if (!resp.ok) {
             throw new Error(`HTTP error: ${resp.status}`)
         }
-        resp.json()
+        return resp.json()
     }).then(response => {
         console.log(response);
         if (response.available_for_play) {
@@ -63,7 +63,7 @@ async function startScan() {
     html5QrCode.start({ facingMode: "user" }, config, onScanSuccess);
 }
 document.addEventListener('DOMContentLoaded', function () {
-    setTimeout(startScan(), 3000);
+    setTimeout(startScan, 3000);
 }, false);
 
 function hideElement(element) {
