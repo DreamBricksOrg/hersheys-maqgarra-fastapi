@@ -24,3 +24,10 @@ class ReceiptRepository:
     async def mark_used_many(self, receipt_ids: list[str]) -> None:
         object_ids = [ObjectId(item) for item in receipt_ids]
         await self.collection.update_many({"_id": {"$in": object_ids}}, {"$set": {"status": "used"}})
+
+    async def attach_session_id(self, receipt_id: str, session_id: str) -> dict | None:
+        await self.collection.update_one(
+            {"_id": ObjectId(receipt_id)},
+            {"$set": {"session_id": ObjectId(session_id)}},
+        )
+        return await self.find_by_id(receipt_id)

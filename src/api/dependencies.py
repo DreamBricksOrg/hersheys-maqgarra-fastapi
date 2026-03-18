@@ -20,7 +20,9 @@ from services.receipt_qr_service import ReceiptQRService
 from services.receipt_validation_service import ReceiptValidationService
 from services.tag_association_service import TagAssociationService
 from services.tag_state_service import TagStateService
-
+from repositories.queue_repository import QueueRepository
+from services.queue_service import QueueService
+from services.queue_intake_service import QueueIntakeService
 
 async def get_database() -> AsyncIOMotorDatabase:
     return await get_db()
@@ -80,3 +82,29 @@ def get_tag_association_service(db: AsyncIOMotorDatabase = Depends(get_database)
 
 def get_tag_state_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> TagStateService:
     return TagStateService(TagRepository(db))
+
+def get_queue_repository(db: AsyncIOMotorDatabase = Depends(get_database)) -> QueueRepository:
+    return QueueRepository(db)
+
+
+def get_queue_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> QueueService:
+    return QueueService(
+        queue_repository=QueueRepository(db),
+        session_repository=SessionRepository(db),
+        observability_service=ObservabilityService(AuditRepository(db)),
+    )
+
+
+def get_queue_intake_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> QueueIntakeService:
+    return QueueIntakeService(
+        receipt_repository=ReceiptRepository(db),
+        session_repository=SessionRepository(db),
+        queue_repository=QueueRepository(db),
+        queue_service=QueueService(
+            queue_repository=QueueRepository(db),
+            session_repository=SessionRepository(db),
+            observability_service=ObservabilityService(AuditRepository(db)),
+        ),
+        observability_service=ObservabilityService(AuditRepository(db)),
+        mobile_base_url=settings.BASE_URL,
+    )
