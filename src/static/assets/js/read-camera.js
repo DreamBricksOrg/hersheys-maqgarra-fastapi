@@ -12,6 +12,12 @@ const nfceResult = document.getElementById('nfceResult');
 const closeResultModalBtn = document.getElementById('closeResultModalBtn');
 const addBarrasBtn = document.getElementById('addBarrasBtn');
 
+const errorModal = document.getElementById('errorModal');
+const errorTitle = document.getElementById('errorTitle');
+const errorSubtitle = document.getElementById('errorSubtitle');
+const errorDefaultActions = document.getElementById('errorDefaultActions');
+const errorDuplicateActions = document.getElementById('errorDuplicateActions');
+
 let currentFile = null;       // arquivo original da câmera
 let processedCdn = null;      // URL CDN da imagem processada
 let processedPath = null;     // path do servidor da imagem processada
@@ -22,6 +28,28 @@ const AUTH_HEADERS = {
     "x-api-key": "capibarra-tablet-01",
     "x-device-id": "tablet-01"
 };
+
+function showError(title, subtitle, isDuplicate) {
+    errorTitle.textContent = title || 'Erro ao ler nota';
+    if (subtitle) {
+        errorSubtitle.textContent = subtitle;
+        errorSubtitle.style.display = 'block';
+    } else {
+        errorSubtitle.style.display = 'none';
+    }
+    errorDefaultActions.style.display = isDuplicate ? 'none' : 'flex';
+    errorDuplicateActions.style.display = isDuplicate ? 'flex' : 'none';
+    errorModal.style.display = 'flex';
+}
+
+async function parseApiError(resp) {
+    try {
+        const body = await resp.json();
+        if (body?.error) return body.error;
+        if (body?.detail) return { message: body.detail };
+    } catch (_) { /* ignore parse failure */ }
+    return null;
+}
 
 // Acionar input nativo
 openCameraBtn.addEventListener('click', () => cameraInput.click());
@@ -67,7 +95,7 @@ cameraInput.addEventListener('change', async (e) => {
     } catch (err) {
         console.error(err);
         loadingModal.style.display = 'none';
-        document.getElementById('errorModal').style.display = 'flex';
+        showError('Erro ao processar imagem', err.message);
     }
 });
 
@@ -88,8 +116,8 @@ confirmBtn.addEventListener('click', async () => {
         });
 
         if (!webmaniaResp.ok) {
-            const err = await webmaniaResp.json().catch(() => ({}));
-            throw new Error(err.detail || "Erro ao validar nota");
+            const apiErr = await parseApiError(webmaniaResp);
+            throw new Error(apiErr?.message || "Erro ao validar nota");
         }
 
         webmaniaData = await webmaniaResp.json();
@@ -102,7 +130,10 @@ confirmBtn.addEventListener('click', async () => {
             body: JSON.stringify({ produtos: webmaniaData.produtos || [] })
         });
 
-        if (!matchResp.ok) throw new Error("Erro ao verificar produtos");
+        if (!matchResp.ok) {
+            const apiErr = await parseApiError(matchResp);
+            throw new Error(apiErr?.message || "Erro ao verificar produtos");
+        }
 
         const matchData = await matchResp.json();
         matchedItems = matchData.items;
@@ -115,13 +146,24 @@ confirmBtn.addEventListener('click', async () => {
     } catch (err) {
         console.error(err);
         loadingModal.style.display = 'none';
-        document.getElementById('errorModal').style.display = 'flex';
+        showError('Erro ao validar nota', err.message);
     }
 });
 
 // Error modal buttons
+function resetErrorModal() {
+    errorModal.style.display = 'none';
+    errorTitle.textContent = 'Erro ao ler nota';
+    errorSubtitle.style.display = 'none';
+    errorDefaultActions.style.display = 'flex';
+    errorDuplicateActions.style.display = 'none';
+}
+
 document.getElementById('retryBtn').addEventListener('click', () => {
-    document.getElementById('errorModal').style.display = 'none';
+    resetErrorModal();
+});
+document.getElementById('dismissBtn').addEventListener('click', () => {
+    resetErrorModal();
 });
 document.getElementById('addManualBtn').addEventListener('click', () => {
     window.location.href = '/pages/add-manually';
@@ -191,6 +233,8 @@ addBarrasBtn.addEventListener('click', async () => {
     resultModal.style.display = 'none';
     loadingModal.style.display = 'flex';
 
+    let saveSuccess = false;
+
     try {
         // Aprende nomes novos (itens selecionados que não eram matched originalmente)
         const learnPromises = finalItems
@@ -217,22 +261,31 @@ addBarrasBtn.addEventListener('click', async () => {
         });
 
         if (!resp.ok) {
-            const err = await resp.json().catch(() => ({}));
-            throw new Error(err.detail || "Erro ao salvar nota");
+            const apiErr = await parseApiError(resp);
+            const code = apiErr?.code || '';
+            const message = apiErr?.message || 'Erro ao salvar nota';
+
+            if (code === 'receipt_duplicate') {
+                throw { title: 'Nota duplicada', subtitle: message, isDuplicate: true };
+            }
+            throw { title: 'Erro ao salvar nota', subtitle: message };
         }
 
         const receipt = await resp.json();
         console.log("[DEBUG] Nota salva:", receipt);
         addReceiptId(receipt.receipt_id);
         addBarras(totalBars);
+        saveSuccess = true;
 
     } catch (err) {
         console.error("[DEBUG] Erro ao salvar nota:", err);
+        loadingModal.style.display = 'none';
+        showError(err.title || 'Erro ao salvar nota', err.subtitle || err.message, !!err.isDuplicate);
     } finally {
         loadingModal.style.display = 'none';
         matchedItems = null;
         webmaniaData = null;
         currentFile = null;
-        window.location.href = '/pages/more-receipts';
+        if (saveSuccess) window.location.href = '/pages/more-receipts';
     }
 });

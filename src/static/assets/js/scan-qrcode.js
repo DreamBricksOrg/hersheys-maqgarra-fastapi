@@ -16,6 +16,34 @@ const AUTH_HEADERS = {
     'x-device-id': 'tablet-01'
 };
 
+const errorModal = document.getElementById('errorModal');
+const errorTitle = document.getElementById('errorTitle');
+const errorSubtitle = document.getElementById('errorSubtitle');
+const errorDefaultActions = document.getElementById('errorDefaultActions');
+const errorDuplicateActions = document.getElementById('errorDuplicateActions');
+
+function showError(title, subtitle, isDuplicate) {
+    errorTitle.textContent = title || 'Erro ao ler nota';
+    if (subtitle) {
+        errorSubtitle.textContent = subtitle;
+        errorSubtitle.style.display = 'block';
+    } else {
+        errorSubtitle.style.display = 'none';
+    }
+    errorDefaultActions.style.display = isDuplicate ? 'none' : 'flex';
+    errorDuplicateActions.style.display = isDuplicate ? 'flex' : 'none';
+    errorModal.style.display = 'flex';
+}
+
+async function parseApiError(resp) {
+    try {
+        const body = await resp.json();
+        if (body?.error) return body.error;
+        if (body?.detail) return { message: body.detail };
+    } catch (_) { /* ignore parse failure */ }
+    return null;
+}
+
 // Foco permanente no input (exceto quando modal aberta)
 qrInput.focus();
 container.addEventListener('click', () => {
@@ -44,8 +72,8 @@ qrInput.addEventListener('keydown', async (e) => {
         });
 
         if (!scrapeResp.ok) {
-            const err = await scrapeResp.json().catch(() => ({}));
-            throw new Error(err.detail || 'Erro ao processar nota');
+            const apiErr = await parseApiError(scrapeResp);
+            throw new Error(apiErr?.message || 'Erro ao processar nota');
         }
 
         scrapedData = await scrapeResp.json();
@@ -58,7 +86,10 @@ qrInput.addEventListener('keydown', async (e) => {
             body: JSON.stringify({ produtos: scrapedData.produtos || [] }),
         });
 
-        if (!matchResp.ok) throw new Error('Erro ao verificar produtos');
+        if (!matchResp.ok) {
+            const apiErr = await parseApiError(matchResp);
+            throw new Error(apiErr?.message || 'Erro ao verificar produtos');
+        }
 
         const matchData = await matchResp.json();
         matchedItems = matchData.items;
@@ -69,7 +100,7 @@ qrInput.addEventListener('keydown', async (e) => {
 
     } catch (err) {
         console.error(err);
-        document.getElementById('errorModal').style.display = 'flex';
+        showError('Erro ao processar nota', err.message);
     } finally {
         inputSpinner.style.display = 'none';
         qrInput.style.display = 'block';
@@ -79,8 +110,20 @@ qrInput.addEventListener('keydown', async (e) => {
 });
 
 // Error modal buttons
+function resetErrorModal() {
+    errorModal.style.display = 'none';
+    errorTitle.textContent = 'Erro ao ler nota';
+    errorSubtitle.style.display = 'none';
+    errorDefaultActions.style.display = 'flex';
+    errorDuplicateActions.style.display = 'none';
+}
+
 document.getElementById('retryBtn').addEventListener('click', () => {
-    document.getElementById('errorModal').style.display = 'none';
+    resetErrorModal();
+    qrInput.focus();
+});
+document.getElementById('dismissBtn').addEventListener('click', () => {
+    resetErrorModal();
     qrInput.focus();
 });
 document.getElementById('addManualBtn').addEventListener('click', () => {
@@ -151,6 +194,8 @@ addBarrasBtn.addEventListener('click', async () => {
 
     resultModal.style.display = 'none';
 
+    let saveSuccess = false;
+
     try {
         // Learn: nomes novos selecionados manualmente
         const learnPromises = finalItems
@@ -176,23 +221,30 @@ addBarrasBtn.addEventListener('click', async () => {
         });
 
         if (!saveResp.ok) {
-            const err = await saveResp.json().catch(() => ({}));
-            console.error('[DEBUG] Erro ao salvar:', err.detail);
-        } else {
-            const receipt = await saveResp.json();
-            console.log('[DEBUG] Nota salva:', receipt);
-            addReceiptId(receipt.receipt_id);
+            const apiErr = await parseApiError(saveResp);
+            const code = apiErr?.code || '';
+            const message = apiErr?.message || 'Erro ao salvar nota';
+
+            if (code === 'receipt_duplicate') {
+                throw { title: 'Nota duplicada', subtitle: message, isDuplicate: true };
+            }
+            throw { title: 'Erro ao salvar nota', subtitle: message };
         }
 
+        const receipt = await saveResp.json();
+        console.log('[DEBUG] Nota salva:', receipt);
+        addReceiptId(receipt.receipt_id);
         addBarras(totalBars);
+        saveSuccess = true;
 
     } catch (err) {
         console.error('[DEBUG] Erro:', err);
+        showError(err.title || 'Erro ao salvar nota', err.subtitle || err.message, !!err.isDuplicate);
     } finally {
         scrapedData = null;
         matchedItems = null;
         qrUrl = null;
-        window.location.href = '/pages/more-receipts';
+        if (saveSuccess) window.location.href = '/pages/more-receipts';
     }
 });
 
