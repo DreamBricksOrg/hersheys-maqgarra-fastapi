@@ -1,0 +1,139 @@
+    * {
+        box-sizing: border-box;
+    }
+
+    :root {
+        --header-height: 15svh;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100svh;
+        background-image: url('/src/static/images/background.png');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 100% 100%;
+
+    }
+
+    .header {
+        position: fixed;
+        height: var(--header-height);
+        width: 100%;
+        top: 0;
+    }
+
+    .footer {
+        width: 100%;
+        position: fixed;
+        left: 0;
+        bottom: 0;
+    }
+
+    #logo {
+        height: 100%;
+        width: auto;
+        padding: 5px;
+    }
+
+    .content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100svh;
+        gap: 20px;
+    }
+
+    #reader {
+        width: 80%;
+        /* height: 80%; */
+    }
+
+    #reader-border {
+        background-image: url(/src/static/images/fundo_qr_code_chocolate.png);
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 100% 100%;
+        position: absolute;
+        inset: 0;
+    }
+
+    /* #reader video {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: fill;
+    } */
+
+    #reader_container {
+        width: 50svw;
+        height: 50svh;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    @font-face {
+        font-family: 'SharpGroteskPETrialBold-14';
+        /* A name to be used later in your CSS */
+        src: url('/src/static/fonts/SharpGroteskPETrialBold-14-BF646589ddc1331.ttf');
+    }
+
+    span {
+        color: white;
+        font-size: 64;
+        font-family: 'SharpGroteskPETrialBold-14';
+    }
+
+    .footer_capibarra {
+        height: 100%;
+        width: auto;
+    }
+
+    #capivara {
+        position: fixed;
+        height: auto;
+        bottom: -20svh;
+        left: -7svw;
+        z-index: 100;
+        width: clamp(260px, 25svw, 320px);
+    }
+
+    #btn_scan {
+        width: 20svw;
+        height: 5svh;
+        border-radius: 50px;
+        background-color: #532e26;
+        border: 0px;
+        color: white;
+        font-size: 30px;
+    }
+
+    #modal_alert,
+    #modal_success,
+    #modal_error {
+        color: white;
+        position: fixed;
+        width: 80%;
+        height: 65%;
+        margin: 0 auto;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        justify-content: center;
+        align-items: center;
+    }
+
+    #modal_success {
+        background: linear-gradient(39deg, #22c3a6 0%, #2bb673 34%, #07d514 100%);
+    }
+
+    #modal_alert {
+        background: linear-gradient(28deg, rgba(246, 113, 31, 1) 0%, rgba(255, 171, 24, 1) 67%);
+    }
+
+    #modal_error {
+        background: linear-gradient(39deg, #c32258 0%, #b62b3b 34%, #d50707 100%);
+    }
