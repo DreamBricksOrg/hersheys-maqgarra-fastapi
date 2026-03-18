@@ -1,0 +1,35 @@
+.content{
+    display: flex;
+    flex:1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    z-index: 1;
+    gap: 1rem;
+}
+
+
+.buttons{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    gap: 2rem;
+}
+
+@media (orientation: portrait) {
+    .buttons {
+        width: 90vw;
+    }
+}
+
+button{
+    border-radius: 2rem;
+    cursor: pointer;
+    padding: 10px 20px;
+    border: none;
+    background-color: var(--chocolate-color);
+    color: var(--light-color);
+    font-size: 2rem;
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+}

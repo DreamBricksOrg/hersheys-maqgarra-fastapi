@@ -32,9 +32,17 @@ async def page_more_receipts(request: Request):
 async def page_read_camera(request: Request):
     return templates.TemplateResponse("read-camera.html", {"request": request})
 
+@router.get("/tag-type", response_class=HTMLResponse, include_in_schema=False)
+async def page_tag_validation(request: Request):
+    return templates.TemplateResponse("tag-type.html", {"request": request})
+
 @router.get("/associate-tag", response_class=HTMLResponse, include_in_schema=False)
 async def page_associate_tag(request: Request):
     return templates.TemplateResponse("associate-tag.html", {"request": request})
+
+@router.get("/associate-tag-physical", response_class=HTMLResponse, include_in_schema=False)
+async def page_associate_tag(request: Request):
+    return templates.TemplateResponse("associate-tag-physical.html", {"request": request})
 
 @router.get("/add-manually", response_class=HTMLResponse, include_in_schema=False)
 async def page_add_manually(request: Request):
