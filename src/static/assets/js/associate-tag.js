@@ -58,5 +58,6 @@ updateRemaining();
 
 btnVoltar.addEventListener('click', () => {
     resetCounters();
+    clearReceiptIds();
     window.location.href = '/pages/';
 });
