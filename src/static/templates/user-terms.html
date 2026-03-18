@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Termos</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='assets/css/root.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='assets/css/user-terms.css') }}">
+</head>
+
+<body>
+
+    <div class="page-wrapper" id="pageWrapper">
+        <img src="{{ url_for('static', path='assets/images/titulo.png') }}" class="page-logo" alt="Logo">
+
+        <div>
+            <span class="terms-title">TERMOS E CONDIÇÕES</span>
+        </div>
+        <div id="terms_container">
+            <span>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ac at placerat auctor at urna sed velit
+                varius iaculis eu. Convallis vulputate diam finibus elit maecenas in. Dapibus nisl fusce amet turpis. A
+                cras consequat sed lacus in mi et efficitur turpis sed quis in lorem. Nunc auctor iaculis ex lectus quis
+                rutrum ante eget urna diam.
+                <br>
+                Mattis purus ut erat fringilla ultrices neque tincidunt. Condimentum donec a et aliquam non nam
+                pellentesque accumsan duis nunc ut fermentum nunc posuere. Eget leo velit ipsum ut id nec tincidunt
+                nibh. Eget mattis at nisi sollicitudin nibh magna purus nam leo amet. Nullam a quis phasellus vel etiam
+                mauris massa gravida erat sed.
+                <br>
+                Fermentum dui cursus porttitor elit tempus. Hendrerit euismod ex lorem quis nulla justo vitae ante sit
+                nec suspendisse suspendisse. Tincidunt rutrum at vel gravida tempus nullam ultrices.
+                <br>
+                Et lorem neque rutrum tortor rutrum lacus id pellentesque orci sem sem. Vulputate est bibendum
+                scelerisque vestibulum eget risus imperdiet condimentum duis at vestibulum tellus. Turpis dolor quam ut
+                hendrerit vehicula egestas convallis a felis. Quam in purus lacinia cras gravida vel donec quis ac purus
+                sit vulputate ipsum.
+                <br>
+                Dictum suscipit maecenas porttitor vulputate sit sit ut nibh diam facilisis ipsum. Ornare condimentum
+                non vestibulum urna donec in amet quam. Donec hendrerit mauris nunc quam at. Et fringilla nibh nec
+                maecenas. Scelerisque vulputate amet amet non fermentum vestibulum posuere id porttitor a condimentum.
+                Ipsum imperdiet sapien nunc fusce ornare donec nisi in condimentum aliquet amet. Non libero ipsum luctus
+                tellus sed felis ante vel pretium vestibulum proin metus tellus morbi. In luctus feugiat finibus
+                turpis.</span>
+        </div>
+        <div class="buttons">
+            <button class="button" id="btn_termos">Li e aceito os termos e condições</button>
+            <button class="button" id="btn_voltar" style="width: 100px;">Voltar</button>
+        </div>
+
+    </div>
+
+    <div class="page-footer">
+        <img src="{{ url_for('static', path='assets/images/coracao.png') }}" class="footer-coracao" alt="Coração">
+    </div>
+
+
+    <script src="{{ url_for('static', path='assets/js/user-terms.js') }}"></script>
+</body>
+
+</html>

@@ -1,0 +1,108 @@
+/* ========== Logo & Capivara ========== */
+body {
+    height: auto;
+}
+
+.page-logo {
+    width: 150px;
+    z-index: 10;
+    align-self: flex-start;
+}
+
+.page-capivara {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%) scale(0.30);
+    transform-origin: center left;
+    z-index: -1;
+}
+
+/* ========== Page Layout ========== */
+.page-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem 1.5rem;
+    gap: 1.5rem;
+    text-align: center;
+}
+
+.terms-title {
+    font-family: 'SharpGrotesk-Medium20';
+    color: #fff;
+    font-size: 35px;
+}
+
+/* =========== Termos ============*/
+
+#terms_container {
+    background-color: white;
+    width: 70svw;
+    height: 55svh;
+    display: block;
+    border-radius: 10px;
+    padding: 20px;
+    overflow-y: auto;
+    font-size: 10px;
+    text-align: start;
+}
+
+#terms_container>* {
+    font-family: "arial";
+    display: inline-block;
+    white-space: pre-line;
+    color: #000000;
+}
+
+/* ========== Title ========== */
+.title {
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    font-size: 1.3rem;
+    color: var(--light-color);
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+.title b {
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+}
+
+button {
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    border-radius: 1rem;
+    cursor: pointer;
+    padding: 10px 10px;
+    border: none;
+    background-color: var(--chocolate-color);
+    color: var(--light-color);
+    font-size: 1.3rem;
+}
+
+.buttons {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    gap: 1rem;
+    align-items: center;
+}
+
+/* ========== Footer ========== */
+.page-footer {
+    justify-content: center;
+    width: 100%;
+    position: relative;
+    margin-top: auto;
+}
+
+.footer-coracao {
+    position: absolute;
+    bottom: 0;
+    right: 50%;
+    transform: translateX(50%) scale(0.45);
+    transform-origin: bottom center;
+    z-index: -1;
+}

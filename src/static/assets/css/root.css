@@ -26,6 +26,16 @@
     src: url('../fonts/SharpGroteskPETrialBook.ttf');
 }
 
+@font-face {
+    font-family: 'SharpGrotesk-Medium20';
+    src: url('../fonts/SharpGrotesk-Medium20.otf');
+}
+
+@font-face {
+    font-family: 'SharpGroteskPETrial-Bold15';
+    src: url('../fonts/SharpGrotesk-Bold15.otf');
+}
+
 body {
     font-family: 'SharpGroteskPETrialBold', sans-serif;
     background-color: var(--light-color);
