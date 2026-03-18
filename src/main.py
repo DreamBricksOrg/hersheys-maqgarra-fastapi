@@ -114,11 +114,15 @@ def create_app() -> FastAPI:
         app.add_middleware(SentryAsgiMiddleware)
 
     app.mount("/src/static", StaticFiles(directory="src/static"), name="src-static")
+    app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
     app.include_router(health_router)
     app.include_router(receipts_router)
     app.include_router(tags_router)
     app.include_router(pages_router)
+    app.include_router(router_uploads)
+    app.include_router(router_webmanianfe)
+    app.include_router(router_nfce)
 
     @app.exception_handler(AppError)
     async def app_error_handler(request: Request, exc: AppError):
@@ -133,11 +137,6 @@ def create_app() -> FastAPI:
             },
         )
 
-    app.include_router(router_uploads)
-    app.include_router(router_webmanianfe)
-    app.include_router(router_nfce)
-
-    app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
     return app
 

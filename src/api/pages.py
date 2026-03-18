@@ -43,6 +43,10 @@ async def page_add_manually(request: Request):
 @router.get("/user-qrcode", response_class=HTMLResponse, include_in_schema=False)
 async def page_user_qrcode(request: Request):
     return templates.TemplateResponse("user-qrcode.html", {"request": request})
+    
+@router.get("/tag-validation", response_class=HTMLResponse, include_in_schema=False)
+async def page_tag_validation(request: Request):
+    return templates.TemplateResponse("tag_validation.html", {"request": request})
 
 
 
