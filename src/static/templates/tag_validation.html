@@ -1,7 +1,6 @@
 <html lang="pt-br">
 <link rel="stylesheet" href="/src/static/css/tag_validation.css" />
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-<script src="/src/static/js/tag_validation.js"></script>
 
 <body>
     <div class="header">
@@ -12,14 +11,51 @@
         </div>
     </div>
     <div class="content">
-        <span>Passe o QR Code</span>
-        <div id="reader_container">
-            <div id="reader-border"></div>
-            <div id="reader"></div>
+        <div>
+            <span>Próximo da fila</span>
+            <div id="display-next-inline">
+                <span class="player-count">10000</span>
+            </div>
+        </div>
+        <div style="display: flex; width: 100%; height: 50%;">
+            <div id="Qr-reader-container">
+                <div id="reader_container">
+                    <div id="reader-border"></div>
+                    <div id="reader"></div>
+                </div>
+            </div>
+            <div id="queue_container">
+                <div class="queue_background">
+                    <div style="max-height: 100%; overflow-y: auto; border-radius: 20px;">
+                        <table id="queue_table">
+                            <colgroup>
+                                <col style="width: 15%;">
+                                <col style="width: 45%;">
+                                <col style="width: 5%;">
+                                <col style="width: 35%;">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Código</th>
+                                    <th>-</th>
+                                    <th>Tags</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 20px">
+            <button id="btn_scan">Escanear</button>
+            <button id="btn_next">Próximo Jogador</button>
         </div>
     </div>
-    <img src="/src/static/images/capibarra-mascote-pascoa-hersheys-barra-de-chocolate.webp" alt="" id="capivara">
     <div class="footer">
+        <img src="/src/static/images/capivara.png" alt="" id="capivara">
         <img src="/src/static/images/quadrados_inferiores.png" alt="" class="footer_capibarra">
     </div>
 
@@ -36,5 +72,5 @@
     </div>
 </body>
 
-
 </html>
+<script src="/src/static/js/tag_validation.js"></script>
