@@ -1,10 +1,10 @@
 import json
-
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 
 from api.dependencies import (
     get_database,
     get_receipt_image_service,
+    get_receipt_manual_service,
     get_receipt_override_service,
     get_receipt_qr_service,
     require_auth,
@@ -15,6 +15,7 @@ from schemas.receipts import ReceiptOverrideRequest, ReceiptQRRequest, ReceiptRe
 from core.exceptions import AppError
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from services.receipt_image_service import ReceiptImageService
+from services.receipt_manual_service import ReceiptManualService
 from services.receipt_override_service import ReceiptOverrideService
 from services.receipt_qr_service import ReceiptQRService
 
@@ -49,6 +50,16 @@ async def validate_receipt_by_image(
     return await service.execute(image, parsed_webmania, parsed_items, processed_path)
 
 
+@router.post("/manual", response_model=ReceiptResponse)
+async def create_manual_receipt(
+    image: UploadFile = File(...),
+    found_bars: int = Form(...),
+    auth: AuthContext = Depends(require_auth),
+    service: ReceiptManualService = Depends(get_receipt_manual_service),
+) -> ReceiptResponse:
+    return await service.execute(image, found_bars)
+
+
 @router.get("/{receipt_id}", response_model=ReceiptResponse)
 async def get_receipt(
     receipt_id: str,
@@ -81,3 +92,4 @@ async def override_receipt(
     service: ReceiptOverrideService = Depends(get_receipt_override_service),
 ) -> ReceiptResponse:
     return await service.execute(payload.receipt_id, payload.final_bars, payload.reason)
+

@@ -16,6 +16,7 @@ from services.observability_service import ObservabilityService
 from services.parser_service import ParserService
 from services.product_matching_service import ProductMatchingService
 from services.receipt_image_service import ReceiptImageService
+from services.receipt_manual_service import ReceiptManualService
 from services.receipt_override_service import ReceiptOverrideService
 from services.receipt_qr_service import ReceiptQRService
 from services.receipt_validation_service import ReceiptValidationService
@@ -78,6 +79,13 @@ def get_receipt_image_service(db: AsyncIOMotorDatabase = Depends(get_database)) 
 
 def get_receipt_override_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> ReceiptOverrideService:
     return ReceiptOverrideService(ReceiptRepository(db), ObservabilityService(AuditRepository(db)))
+
+
+def get_receipt_manual_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> ReceiptManualService:
+    return ReceiptManualService(
+        receipt_repository=ReceiptRepository(db),
+        observability_service=ObservabilityService(AuditRepository(db)),
+    )
 
 
 def get_tag_association_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> TagAssociationService:
