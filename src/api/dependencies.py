@@ -14,6 +14,7 @@ from services.api_key_auth_service import ApiKeyAuthService
 from services.observability_service import ObservabilityService
 from services.parser_service import ParserService
 from services.product_matching_service import ProductMatchingService
+from services.redis_service import RedisService
 from services.receipt_image_service import ReceiptImageService
 from services.receipt_override_service import ReceiptOverrideService
 from services.receipt_qr_service import ReceiptQRService
@@ -45,10 +46,11 @@ def get_receipt_qr_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> 
     observability = ObservabilityService(AuditRepository(db))
     return ReceiptQRService(
         parser_service=ParserService(),
-        product_matching_service=ProductMatchingService(db),
-        receipt_validation_service=ReceiptValidationService(ReceiptRepository(db)),
+        product_matching_service=ProductMatchingService(db, RedisService()),
+        receipt_validation_service=ReceiptValidationService(ReceiptRepository(db), RedisService()),
         receipt_repository=ReceiptRepository(db),
         raw_payload_repository=RawPayloadRepository(db),
+        redisService = RedisService(),
         observability_service=observability,
     )
 
@@ -57,10 +59,11 @@ def get_receipt_image_service(db: AsyncIOMotorDatabase = Depends(get_database)) 
     observability = ObservabilityService(AuditRepository(db))
     return ReceiptImageService(
         parser_service=ParserService(),
-        product_matching_service=ProductMatchingService(db),
-        receipt_validation_service=ReceiptValidationService(ReceiptRepository(db)),
+        product_matching_service=ProductMatchingService(db, RedisService()),
+        receipt_validation_service=ReceiptValidationService(ReceiptRepository(db), RedisService()),
         receipt_repository=ReceiptRepository(db),
         raw_payload_repository=RawPayloadRepository(db),
+        redisService = RedisService(),
         observability_service=observability,
     )
 
