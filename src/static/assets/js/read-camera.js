@@ -68,8 +68,13 @@ cameraInput.addEventListener('change', async (e) => {
 confirmBtn.addEventListener('click', async () => {
     if (!currentProcessedCdn) return;
 
-    confirmBtn.disabled = true;
-    confirmBtn.innerText = "Validando NFC-e...";
+    // Replace button with loader
+    const modalActions = confirmBtn.closest('.modal-actions');
+    const loader = document.createElement('div');
+    loader.className = 'loader';
+    loader.id = 'confirmLoader';
+    modalActions.style.display = 'none';
+    modalActions.parentNode.insertBefore(loader, modalActions.nextSibling);
 
     try {
         const imageUrl = window.location.origin + currentProcessedCdn;
@@ -110,8 +115,10 @@ confirmBtn.addEventListener('click', async () => {
         modal.style.display = 'none';
         document.getElementById('errorModal').style.display = 'flex';
     } finally {
-        confirmBtn.disabled = false;
-        confirmBtn.innerText = "Ficou Boa (Salvar)";
+        // Restore buttons
+        const loaderEl = document.getElementById('confirmLoader');
+        if (loaderEl) loaderEl.remove();
+        modalActions.style.display = 'flex';
     }
 });
 
