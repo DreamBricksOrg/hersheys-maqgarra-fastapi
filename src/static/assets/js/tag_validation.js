@@ -10,8 +10,8 @@ function onScanSuccess(decodedText, decodedResult) {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            'capibarra-tablet-01': 'capibarra-tablet-01',
-            'tablet-01': 'tablet-01'
+            'x-api-key': 'capibarra-tablet-01',
+            'x-device-id': 'tablet-01'
         }
     }).then(resp => {
         if (!resp.ok) {
@@ -42,8 +42,8 @@ async function deactivateTag(tag_key) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'capibarra-tablet-01': 'capibarra-tablet-01',
-            'tablet-01': 'tablet-01'
+            'x-api-key': 'capibarra-tablet-01',
+            'x-device-id': 'tablet-01'
         },
         body: JSON.stringify({ "reason": "used_for_play" })
     }).then(response => {

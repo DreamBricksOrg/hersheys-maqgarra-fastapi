@@ -31,7 +31,7 @@ class ReceiptImageService:
         self.raw_payload_repository = raw_payload_repository
         self.observability_service = observability_service
 
-    async def execute(self, image: UploadFile) -> ReceiptResponse:
+    async def execute(self, image: UploadFile, webmania_data: dict | None = None) -> ReceiptResponse:
         suffix = Path(image.filename or "receipt.jpg").suffix or ".jpg"
         file_name = f"{uuid4().hex}{suffix}"
         output_path = settings.UPLOAD_DIR / file_name
@@ -42,7 +42,14 @@ class ReceiptImageService:
         await self.observability_service.emit("receipt-image-erro-uploaded", {"file_name": file_name, "file_size": len(content)})
         await self.observability_service.emit("receipt-image-erro-stored", {"image_path": str(output_path)})
 
-        raw_payload = self.parser_service.parse_image(str(output_path))
+        if webmania_data:
+            # Usa o JSON da Webmania diretamente como raw_payload
+            raw_payload = dict(webmania_data)
+            raw_payload.setdefault("image_path", str(output_path))
+        else:
+            # Fallback: placeholder (sem integração com terceiros)
+            raw_payload = self.parser_service.parse_image(str(output_path))
+
         await self.observability_service.emit("product_matching-started", {"image_path": str(output_path)})
         items, found_bars = await self.product_matching_service.match_products(raw_payload.get("produtos", []))
         await self.observability_service.emit("product_matching-finished", {"image_path": str(output_path), "found_bars": found_bars})
@@ -65,7 +72,7 @@ class ReceiptImageService:
             "image_path": str(output_path),
         }
         created = await self.receipt_repository.create(payload)
-        await self.observability_service.emit("receipt-image-erro-audited", {"receipt_id": str(created["_id"]), "image_path": str(output_path)})
+        await self.observability_service.emit("receipt-image-audited", {"receipt_id": str(created["_id"]), "image_path": str(output_path)})
 
         return ReceiptResponse(
             receipt_id=str(created["_id"]),
@@ -76,7 +83,7 @@ class ReceiptImageService:
             final_bars=created["final_bars"],
             review=created["review"],
             status=created["status"],
-            items=[],
+            items=items,
             raw_payload=raw_payload,
             session_id=None,
             error_audit=ErrorAuditResponse(image_path=str(output_path)),

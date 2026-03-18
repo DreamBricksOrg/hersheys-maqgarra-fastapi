@@ -12,8 +12,10 @@ const nfceResult = document.getElementById('nfceResult');
 const closeResultModalBtn = document.getElementById('closeResultModalBtn');
 const addBarrasBtn = document.getElementById('addBarrasBtn');
 
-let lastResult = null;
-let currentProcessedCdn = null;
+let lastReceiptResult = null;   // ReceiptResponse do backend
+let webmaniaData = null;        // JSON da Webmania
+let currentFile = null;         // Arquivo original da câmera
+let processedCdn = null;        // URL CDN da imagem processada pelo scanner
 
 // Acionar input nativo
 openCameraBtn.addEventListener('click', () => {
@@ -23,102 +25,90 @@ openCameraBtn.addEventListener('click', () => {
 // Tentar novamente (reabre input)
 retakeBtn.addEventListener('click', () => {
     modal.style.display = 'none';
-    cameraInput.value = ''; // reseta
+    cameraInput.value = '';
+    currentFile = null;
+    processedCdn = null;
+    webmaniaData = null;
     cameraInput.click();
 });
 
-// Quando o usuário tira a foto ou escolhe da galeria
+// Passo 1: foto capturada → processa com document_scanner → preview
 cameraInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Mostrar modal de loading
+    currentFile = file;
+    processedCdn = null;
+    webmaniaData = null;
+
     loadingModal.style.display = 'flex';
     modal.style.display = 'none';
 
     try {
-        const formData = new FormData();
-        formData.append("file", file);
+        const uploadForm = new FormData();
+        uploadForm.append("file", file);
 
-        // Upload para endpoint de processamento (CamScanner like)
-        const response = await fetch("/api/upload/process", {
+        const uploadResponse = await fetch("/api/upload/process", {
             method: "POST",
-            body: formData
+            body: uploadForm
         });
 
-        if (!response.ok) throw new Error("Erro ao processar imagem");
-        const data = await response.json();
+        if (!uploadResponse.ok) throw new Error("Erro ao processar imagem");
+        const uploadData = await uploadResponse.json();
 
-        // Salvar URL da imagem processada
-        currentProcessedCdn = data.processed_cdn;
+        processedCdn = uploadData.processed_cdn;
 
-        // Mostrar no modal de confirmação
-        previewImage.src = currentProcessedCdn + "?t=" + Date.now(); // cache bust
+        // Mostrar preview no modal de confirmação
+        previewImage.src = processedCdn + "?t=" + Date.now();
         loadingModal.style.display = 'none';
         modal.style.display = 'flex';
 
     } catch (err) {
         console.error(err);
-        alert("Erro ao processar a nota: " + err.message);
         loadingModal.style.display = 'none';
+        document.getElementById('errorModal').style.display = 'flex';
     }
 });
 
-// Confirmar foto processada e enviar pra Webmania
+// Passo 2: "Enviar" → chama Webmania com URL processada → abre modal NFC-e
 confirmBtn.addEventListener('click', async () => {
-    if (!currentProcessedCdn) return;
+    if (!processedCdn) return;
 
-    // Replace button with loader
-    const modalActions = confirmBtn.closest('.modal-actions');
-    const loader = document.createElement('div');
-    loader.className = 'loader';
-    loader.id = 'confirmLoader';
-    modalActions.style.display = 'none';
-    modalActions.parentNode.insertBefore(loader, modalActions.nextSibling);
+    modal.style.display = 'none';
+    loadingModal.style.display = 'flex';
 
     try {
-        const imageUrl = window.location.origin + currentProcessedCdn;
-        const payloadJson = {
-            imagens: [imageUrl],
-            modelo: "nfce",
-            antifraude: false
-        };
+        const imageUrl = window.location.origin + processedCdn;
+        console.log("[DEBUG] Chamando Webmania com:", imageUrl);
 
-        console.log("[DEBUG] Payload enviado:", JSON.stringify(payloadJson, null, 2));
-        
-        const nfceResponse = await fetch("/api/webmanianfe/validar/imagem", {
+        const webmaniaResponse = await fetch("/api/webmanianfe/validar/imagem", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payloadJson)
+            body: JSON.stringify({
+                imagens: [imageUrl],
+                modelo: "nfce",
+                antifraude: false
+            })
         });
 
-        console.log("[DEBUG] Response status:", nfceResponse.status, nfceResponse.statusText);
-
-        if (!nfceResponse.ok) {
-            const errText = await nfceResponse.text();
-            console.error("[DEBUG] Response body (erro):", errText);
-            let detail = "Erro ao validar NFC-e";
-            try { detail = JSON.parse(errText).detail || detail; } catch(e) {}
+        if (!webmaniaResponse.ok) {
+            const errText = await webmaniaResponse.text();
+            let detail = "Erro ao validar nota na Webmania";
+            try { detail = JSON.parse(errText).detail || detail; } catch (e) {}
             throw new Error(detail);
         }
 
-        lastResult = await nfceResponse.json();
-        console.log("[DEBUG] Validação sucesso:", JSON.stringify(lastResult, null, 2));
+        webmaniaData = await webmaniaResponse.json();
+        console.log("[DEBUG] Webmania retornou:", JSON.stringify(webmaniaData, null, 2));
 
-        // Sucesso -> exibe resultados
-        modal.style.display = 'none';
-        renderResult(lastResult);
+        loadingModal.style.display = 'none';
+        renderNfceResult(webmaniaData);
         resultModal.style.display = 'flex';
 
     } catch (err) {
         console.error(err);
-        modal.style.display = 'none';
+        loadingModal.style.display = 'none';
         document.getElementById('errorModal').style.display = 'flex';
-    } finally {
-        // Restore buttons
-        const loaderEl = document.getElementById('confirmLoader');
-        if (loaderEl) loaderEl.remove();
-        modalActions.style.display = 'flex';
     }
 });
 
@@ -134,19 +124,21 @@ function isHersheys(nome) {
     return (nome || '').toLowerCase().includes('her');
 }
 
-function renderResult(data) {
+// Renderiza o JSON da Webmania no modal NFC-e
+function renderNfceResult(data) {
     const emitente = data.emitente || {};
     const produtos = data.produtos || [];
-    const total = data.total || '0';
 
-    let produtosHtml = produtos.map(p => {
-        const highlighted = isHersheys(p.nome);
-        return `
-        <tr class="item-row ${highlighted ? 'item-selected' : ''}" data-qtd="${p.quantidade || 1}">
-            <td>${p.nome || ''}</td>
-            <td>${p.quantidade || ''} ${p.unidade || ''}</td>
-        </tr>`;
-    }).join('');
+    const produtosHtml = produtos.length > 0
+        ? produtos.map(p => {
+            const highlighted = isHersheys(p.nome);
+            return `
+            <tr class="item-row ${highlighted ? 'item-selected' : ''}" data-qtd="${p.quantidade || 1}">
+                <td>${p.nome || ''}</td>
+                <td>${p.quantidade || ''} ${p.unidade || ''}</td>
+            </tr>`;
+        }).join('')
+        : '<tr><td colspan="2">Nenhum produto encontrado</td></tr>';
 
     nfceResult.innerHTML = `
         <div class="nfce-emitente">
@@ -180,23 +172,77 @@ function renderResult(data) {
 // Fechar modal de resultado
 closeResultModalBtn.addEventListener('click', () => {
     resultModal.style.display = 'none';
-    lastResult = null;
+    webmaniaData = null;
+    lastReceiptResult = null;
 });
 
-// Adicionar barras (soma a quantidade das linhas verdes/selecionadas)
-addBarrasBtn.addEventListener('click', () => {
-    const selectedRows = nfceResult.querySelectorAll('.item-row.item-selected');
-    if (selectedRows.length > 0) {
+// Passo 3: "Adicionar Barras" → salva no backend com imagem + JSON Webmania
+addBarrasBtn.addEventListener('click', async () => {
+    if (!currentFile || !webmaniaData) {
+        // Sem dados Webmania: adiciona barras manualmente das linhas selecionadas
+        const selectedRows = nfceResult.querySelectorAll('.item-row.item-selected');
         let totalQtd = 0;
         selectedRows.forEach(row => {
-            const rawQtd = row.getAttribute('data-qtd') || '1';
-            const qtdNum = parseFloat(rawQtd.replace(',', '.')) || 1;
-            totalQtd += qtdNum;
+            totalQtd += parseFloat((row.getAttribute('data-qtd') || '1').replace(',', '.')) || 1;
         });
-        
-        addBarras(Math.floor(totalQtd));
+        if (totalQtd > 0) addBarras(Math.floor(totalQtd));
+
+        resultModal.style.display = 'none';
+        webmaniaData = null;
+        window.location.href = '/pages/more-receipts';
+        return;
     }
+
+    // Desabilitar botão durante o envio
+    addBarrasBtn.disabled = true;
+    loadingModal.style.display = 'flex';
     resultModal.style.display = 'none';
-    lastResult = null;
-    window.location.href = '/pages/more-receipts';
+
+    try {
+        const formData = new FormData();
+        formData.append("image", currentFile);
+        formData.append("webmania_payload", JSON.stringify(webmaniaData));
+
+        console.log("[DEBUG] Salvando nota em /api/receipts/image...");
+
+        const receiptResponse = await fetch("/api/receipts/image", {
+            method: "POST",
+            headers: {
+                "x-api-key": "capibarra-tablet-01",
+                "x-device-id": "tablet-01"
+            },
+            body: formData
+        });
+
+        if (!receiptResponse.ok) {
+            const errText = await receiptResponse.text();
+            let detail = "Erro ao salvar nota";
+            try { detail = JSON.parse(errText).detail || detail; } catch (e) {}
+            throw new Error(detail);
+        }
+
+        lastReceiptResult = await receiptResponse.json();
+        console.log("[DEBUG] Nota salva:", JSON.stringify(lastReceiptResult, null, 2));
+
+        // Adiciona barras: usa found_bars ou linhas selecionadas
+        const selectedRows = nfceResult.querySelectorAll('.item-row.item-selected');
+        if (selectedRows.length > 0) {
+            let totalQtd = 0;
+            selectedRows.forEach(row => {
+                totalQtd += parseFloat((row.getAttribute('data-qtd') || '1').replace(',', '.')) || 1;
+            });
+            addBarras(Math.floor(totalQtd));
+        } else {
+            addBarras(lastReceiptResult.found_bars || 0);
+        }
+
+    } catch (err) {
+        console.error(err);
+    } finally {
+        addBarrasBtn.disabled = false;
+        loadingModal.style.display = 'none';
+        webmaniaData = null;
+        lastReceiptResult = null;
+        window.location.href = '/pages/more-receipts';
+    }
 });

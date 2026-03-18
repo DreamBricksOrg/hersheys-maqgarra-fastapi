@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, File, UploadFile
+import json
+
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 
 from api.dependencies import (
     get_database,
@@ -31,10 +33,12 @@ async def validate_receipt_by_qr(
 @router.post("/image", response_model=ReceiptResponse)
 async def validate_receipt_by_image(
     image: UploadFile = File(...),
+    webmania_payload: str = Form(None),
     auth: AuthContext = Depends(require_auth),
     service: ReceiptImageService = Depends(get_receipt_image_service),
 ) -> ReceiptResponse:
-    return await service.execute(image)
+    parsed_webmania = json.loads(webmania_payload) if webmania_payload else None
+    return await service.execute(image, parsed_webmania)
 
 
 @router.get("/{receipt_id}", response_model=ReceiptResponse)
