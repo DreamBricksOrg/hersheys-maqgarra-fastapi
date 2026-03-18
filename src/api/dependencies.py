@@ -5,6 +5,7 @@ from core.config import settings
 from db.utils import get_db
 from repositories.api_key_repository import ApiKeyRepository
 from repositories.audit_repository import AuditRepository
+from repositories.bars_name_repository import BarsNameRepository
 from repositories.raw_payload_repository import RawPayloadRepository
 from repositories.receipt_repository import ReceiptRepository
 from repositories.session_repository import SessionRepository
@@ -30,6 +31,16 @@ def get_observability_service(db: AsyncIOMotorDatabase = Depends(get_database)) 
     return ObservabilityService(AuditRepository(db))
 
 
+def get_bars_name_repository(db: AsyncIOMotorDatabase = Depends(get_database)) -> BarsNameRepository:
+    return BarsNameRepository(db)
+
+
+def get_product_matching_service(
+    repo: BarsNameRepository = Depends(get_bars_name_repository),
+) -> ProductMatchingService:
+    return ProductMatchingService(repo)
+
+
 async def require_auth(
     db: AsyncIOMotorDatabase = Depends(get_database),
     api_key: str | None = Header(default=None, alias=settings.API_KEY_HEADER),
@@ -45,7 +56,7 @@ def get_receipt_qr_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> 
     observability = ObservabilityService(AuditRepository(db))
     return ReceiptQRService(
         parser_service=ParserService(),
-        product_matching_service=ProductMatchingService(db),
+        product_matching_service=ProductMatchingService(BarsNameRepository(db)),
         receipt_validation_service=ReceiptValidationService(ReceiptRepository(db)),
         receipt_repository=ReceiptRepository(db),
         raw_payload_repository=RawPayloadRepository(db),
@@ -57,7 +68,7 @@ def get_receipt_image_service(db: AsyncIOMotorDatabase = Depends(get_database)) 
     observability = ObservabilityService(AuditRepository(db))
     return ReceiptImageService(
         parser_service=ParserService(),
-        product_matching_service=ProductMatchingService(db),
+        product_matching_service=ProductMatchingService(BarsNameRepository(db)),
         receipt_validation_service=ReceiptValidationService(ReceiptRepository(db)),
         receipt_repository=ReceiptRepository(db),
         raw_payload_repository=RawPayloadRepository(db),

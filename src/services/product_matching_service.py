@@ -1,12 +1,12 @@
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from repositories.bars_name_repository import BarsNameRepository
 
 
 class ProductMatchingService:
-    def __init__(self, db: AsyncIOMotorDatabase):
-        self.collection = db.bars_names
+    def __init__(self, bars_name_repository: BarsNameRepository):
+        self.bars_name_repository = bars_name_repository
 
     async def match_products(self, produtos: list[dict]) -> tuple[list[dict], int]:
-        known_names = [doc["name"].lower() async for doc in self.collection.find({}, {"name": 1})]
+        known_names = await self.bars_name_repository.find_all_names()
         matched_items: list[dict] = []
         total_bars = 0
 
@@ -14,7 +14,7 @@ class ProductMatchingService:
             name = str(produto.get("nome", "")).strip()
             quantity_raw = produto.get("quantidade", 0)
             try:
-                quantity = int(float(quantity_raw))
+                quantity = int(float(str(quantity_raw)))
             except (ValueError, TypeError):
                 quantity = 0
 
@@ -30,3 +30,7 @@ class ProductMatchingService:
             })
 
         return matched_items, total_bars
+
+    async def learn(self, name: str) -> tuple[dict, bool]:
+        """Adiciona nome ao banco se não existir. Retorna (doc, created)."""
+        return await self.bars_name_repository.add_name(name)

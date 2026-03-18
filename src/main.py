@@ -24,6 +24,7 @@ from core.config import settings
 from api.routes.health import router as health_router
 from api.routes.receipts import router as receipts_router
 from api.routes.tags import router as tags_router
+from api.routes.products import router as products_router
 from api.pages import router as pages_router
 
 
@@ -119,6 +120,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(receipts_router)
     app.include_router(tags_router)
+    app.include_router(products_router)
     app.include_router(pages_router)
     app.include_router(router_uploads)
     app.include_router(router_webmanianfe)
