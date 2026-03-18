@@ -3,15 +3,54 @@ const remainingCount = document.getElementById('remainingCount');
 
 let totalTags = getTags() || 0;
 
-function updateRemaining() {
+async function updateRemaining() {
     if (remainingCount) {
         remainingCount.textContent = totalTags;
     }
 
     const dynamicQRCode = document.getElementById('dynamicQRCode');
-    if (dynamicQRCode) {
-        const baseUrl = window.location.origin;
-        dynamicQRCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${baseUrl}/pages/user-qrcode?tags=${totalTags}`;
+    if (dynamicQRCode && totalTags > 0) {
+        try {
+            const response = await fetch(`/api/tags?amount=${totalTags}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'capibarra-tablet-01': 'capibarra-tablet-01',
+                    'tablet-01': 'tablet-01'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Activating each tag as requested
+            for (const tagKey of data.tags) {
+                try {
+                    await fetch(`/api/tags/${tagKey}/activate`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'capibarra-tablet-01': 'capibarra-tablet-01',
+                            'tablet-01': 'tablet-01'
+                        },
+                        body: JSON.stringify({ reason: "associated_for_play" })
+                    });
+                } catch (activationError) {
+                    console.error(`Failed to activate tag ${tagKey}:`, activationError);
+                }
+            }
+
+            const tagKeys = data.tags.join(','); // Create comma-separated string
+
+            const baseUrl = window.location.origin;
+            const targetUrl = `${baseUrl}/pages/user-qrcode?tags=${tagKeys}`;
+            dynamicQRCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(targetUrl)}`;
+        } catch (error) {
+            console.error("Failed to fetch tags for QR Code:", error);
+        }
     }
 }
 

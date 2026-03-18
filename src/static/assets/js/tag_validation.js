@@ -9,7 +9,9 @@ function onScanSuccess(decodedText, decodedResult) {
     fetch(`/api/tags/${decodedText}`, {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'capibarra-tablet-01': 'capibarra-tablet-01',
+            'tablet-01': 'tablet-01'
         }
     }).then(resp => {
         if (!resp.ok) {
@@ -39,9 +41,11 @@ async function deactivateTag(tag_key) {
     fetch(`/api/tags/${tag_key}/deactivate`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'capibarra-tablet-01': 'capibarra-tablet-01',
+            'tablet-01': 'tablet-01'
         },
-        body: { "reason": "used_for_play" }
+        body: JSON.stringify({ "reason": "used_for_play" })
     }).then(response => {
         if(!response.ok)
         {

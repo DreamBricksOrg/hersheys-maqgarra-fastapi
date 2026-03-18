@@ -62,3 +62,7 @@ class TagAssociateResponse(BaseModel):
     receipt_ids: list[ObjectIdStr] = Field(default_factory=list)
     tags: list[TagResponse]
     associated: bool
+
+
+class TagListResponse(BaseModel):
+    tags: list[str]

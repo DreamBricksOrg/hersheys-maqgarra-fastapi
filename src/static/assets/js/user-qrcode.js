@@ -1,18 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
-    const tagsCount = parseInt(params.get('tags')) || 1;
-
     const chancesEl = document.getElementById('chancesCount');
     const carousel = document.getElementById('carousel');
     const dotsContainer = document.getElementById('carouselDots');
     const numeroEl = document.getElementById('numeroValue');
     const posicaoEl = document.getElementById('posicaoValue');
 
+    // Expected tags format: ?tags=KEY1,KEY2,KEY3
+    const tagsParam = params.get('tags');
+    const tagsArray = tagsParam ? tagsParam.split(',') : ['QRCODE-1'];
+    const tagsCount = tagsArray.length;
+
     // Update title with number of chances
     chancesEl.textContent = tagsCount;
 
-    // Generate mocked QR codes
-    for (let i = 1; i <= tagsCount; i++) {
+    // Generate real QR codes based on tags keys
+    tagsArray.forEach((tagKey, index) => {
+        const i = index + 1;
         // Slide
         const slide = document.createElement('div');
         slide.className = 'carousel-slide';
@@ -21,8 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
         qrBox.className = 'qr-container';
 
         const img = document.createElement('img');
-        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=QRCODE-${i}`;
-        img.alt = `QR Code ${i}`;
+        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${tagKey}`;
+        img.alt = `QR Code ${tagKey}`;
         qrBox.appendChild(img);
 
         const overlay = document.createElement('div');
@@ -55,7 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
             target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
         });
         dotsContainer.appendChild(dot);
-    }
+        dotsContainer.appendChild(dot);
+    });
 
     // Track active slide via IntersectionObserver
     const slides = carousel.querySelectorAll('.carousel-slide');
@@ -79,10 +84,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const posicao = Math.floor(Math.random() * 50) + 1;
     posicaoEl.textContent = posicao;
 
-    // Long-press (2s) on center hotspot to toggle scanned state
+    // Long-press (1s) on center hotspot to toggle scanned state
     function setupLongPress(hotspot, container) {
         let timer = null;
-        const HOLD_MS = 2000;
+        const HOLD_MS = 1000;
 
         function startHold() {
             timer = setTimeout(() => {
