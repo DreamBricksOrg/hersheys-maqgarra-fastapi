@@ -21,12 +21,12 @@ class TagUsageService:
         status = tag.get("status")
 
         if status == "invalid":
-            raise AppError("tag_invalid", "Tag inválida ou expirada", 409, {"tag_key": tag_key})
+            raise AppError("tag_invalid", "Tag inválida", 409, {"tag_key": tag_key})
 
         if status == "available":
             raise AppError("tag_not_associated", "Tag ainda não foi associada", 409, {"tag_key": tag_key})
 
-        if status == "used":
+        if status == "used" and tag.get("delivery_mode") != "physical":
             raise AppError("tag_already_used", "Tag já foi usada", 409, {"tag_key": tag_key})
 
         if status != "valid":
@@ -36,7 +36,10 @@ class TagUsageService:
 
         await self.observability_service.emit(
             "tag-used",
-            {"tag_key": tag_key},
+            {
+                "tag_key": tag_key,
+                "delivery_mode": updated.get("delivery_mode") if updated else None,
+            },
         )
 
         return TagResponse.model_validate(updated)

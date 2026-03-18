@@ -23,6 +23,7 @@ class TagRepository:
         status: str | None = None,
         session_id: str | None = None,
         tag_key: str | None = None,
+        delivery_mode: str | None = None,
     ) -> list[dict]:
         query: dict = {}
 
@@ -32,6 +33,8 @@ class TagRepository:
             query["session_id"] = ObjectId(session_id)
         if tag_key:
             query["tag_key"] = tag_key
+        if delivery_mode:
+            query["delivery_mode"] = delivery_mode
 
         cursor = self.collection.find(query).sort("tag_key", 1)
         return await cursor.to_list(length=None)
@@ -39,6 +42,7 @@ class TagRepository:
     async def create(
         self,
         tag_key: str,
+        delivery_mode: str,
         status: str = "available",
         session_id: str | None = None,
         invalid_reason: str | None = None,
@@ -47,6 +51,7 @@ class TagRepository:
 
         payload = {
             "tag_key": tag_key,
+            "delivery_mode": delivery_mode,
             "status": status,
             "session_id": ObjectId(session_id) if session_id else None,
             "last_updated_at": now,
@@ -63,6 +68,7 @@ class TagRepository:
         status: str | None = None,
         session_id: str | None = None,
         invalid_reason: str | None = None,
+        delivery_mode: str | None = None,
         clear_session_id: bool = False,
     ) -> dict | None:
         update_data: dict = {
@@ -80,6 +86,9 @@ class TagRepository:
         if invalid_reason is not None:
             update_data["invalid_reason"] = invalid_reason
 
+        if delivery_mode is not None:
+            update_data["delivery_mode"] = delivery_mode
+
         await self.collection.update_one(
             {"_id": ObjectId(tag_id)},
             {"$set": update_data},
@@ -90,11 +99,26 @@ class TagRepository:
         result = await self.collection.delete_one({"_id": ObjectId(tag_id)})
         return result.deleted_count > 0
 
-    async def associate_many(self, session_id: str, tag_keys: list[str]) -> list[dict]:
+    async def activate(self, tag_key: str, reason: str | None = None) -> dict | None:
+        now = datetime.now(timezone.utc)
+        await self.collection.update_one(
+            {"tag_key": tag_key},
+            {
+                "$set": {
+                    "status": "available",
+                    "invalid_reason": None,
+                    "last_updated_at": now,
+                }
+            },
+            upsert=False,
+        )
+        return await self.find_by_key(tag_key)
+
+    async def associate_many(self, session_id: str, tags: list[str]) -> list[dict]:
         updated: list[dict] = []
         now = datetime.now(timezone.utc)
 
-        for tag_key in tag_keys:
+        for tag_key in tags:
             await self.collection.update_one(
                 {"tag_key": tag_key, "status": "available"},
                 {
@@ -105,6 +129,7 @@ class TagRepository:
                         "invalid_reason": None,
                     }
                 },
+                upsert=False,
             )
             doc = await self.find_by_key(tag_key)
             if doc:
@@ -113,7 +138,31 @@ class TagRepository:
         return updated
 
     async def mark_used(self, tag_key: str) -> dict | None:
+        tag = await self.find_by_key(tag_key)
+        if not tag:
+            return None
+
         now = datetime.now(timezone.utc)
+
+        if tag.get("status") != "valid":
+            return tag
+
+        if tag.get("delivery_mode") == "physical":
+            await self.collection.update_one(
+                {"tag_key": tag_key, "status": "valid"},
+                {
+                    "$set": {
+                        "status": "available",
+                        "session_id": None,
+                        "used_at": now,
+                        "last_updated_at": now,
+                        "invalid_reason": None,
+                    }
+                },
+                upsert=False,
+            )
+            return await self.find_by_key(tag_key)
+
         await self.collection.update_one(
             {"tag_key": tag_key, "status": "valid"},
             {
@@ -123,10 +172,11 @@ class TagRepository:
                     "last_updated_at": now,
                 }
             },
+            upsert=False,
         )
         return await self.find_by_key(tag_key)
 
-    async def invalidate(self, tag_key: str, reason: str = "timeout") -> dict | None:
+    async def deactivate(self, tag_key: str, reason: str = "manual") -> dict | None:
         now = datetime.now(timezone.utc)
         await self.collection.update_one(
             {"tag_key": tag_key},
@@ -137,5 +187,6 @@ class TagRepository:
                     "last_updated_at": now,
                 }
             },
+            upsert=False,
         )
         return await self.find_by_key(tag_key)

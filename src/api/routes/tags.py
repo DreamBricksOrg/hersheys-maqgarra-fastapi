@@ -86,6 +86,7 @@ async def create_tag(
 ) -> TagResponse:
     return await service.create(
         tag_key=payload.tag_key,
+        delivery_mode=payload.delivery_mode,
         status=payload.status,
         session_id=payload.session_id,
     )
@@ -93,16 +94,18 @@ async def create_tag(
 
 @router.get("", response_model=TagListResponse)
 async def list_tags(
-    status: str | None = Query(default=None),
+    status_value: str | None = Query(default=None, alias="status"),
     session_id: str | None = Query(default=None),
     tag_key: str | None = Query(default=None),
+    delivery_mode: str | None = Query(default=None),
     auth: AuthContext = Depends(require_auth),
     service: TagCrudService = Depends(get_tag_crud_service),
 ) -> TagListResponse:
     return await service.list(
-        status=status,
+        status=status_value,
         session_id=session_id,
         tag_key=tag_key,
+        delivery_mode=delivery_mode,
     )
 
 
@@ -127,6 +130,7 @@ async def update_tag(
         status=payload.status,
         session_id=payload.session_id,
         invalid_reason=payload.invalid_reason,
+        delivery_mode=payload.delivery_mode,
     )
 
 

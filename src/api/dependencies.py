@@ -107,7 +107,6 @@ def get_queue_intake_service(db: AsyncIOMotorDatabase = Depends(get_database)) -
 
 def get_tag_association_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> TagAssociationService:
     return TagAssociationService(
-        receipt_repository=ReceiptRepository(db),
         session_repository=SessionRepository(db),
         tag_repository=TagRepository(db),
         observability_service=ObservabilityService(AuditRepository(db)),

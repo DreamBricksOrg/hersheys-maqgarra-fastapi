@@ -8,12 +8,17 @@ class SessionRepository:
     def __init__(self, db: AsyncIOMotorDatabase):
         self.collection = db.sessions
 
-    async def create(self, receipt_ids: list[str], tag_ids: list[str] | None = None) -> dict:
+    async def create(
+        self,
+        receipt_ids: list[str],
+        tag_ids: list[str] | None = None,
+        phone: str | None = None,
+    ) -> dict:
         payload = {
             "receipt_ids": [ObjectId(item) for item in receipt_ids],
             "tag_ids": [ObjectId(item) for item in (tag_ids or [])],
             "player_ids": [],
-            "phone": None,
+            "phone": phone,
             "created_at": datetime.now(timezone.utc),
             "finished_at": None,
             "last_updated_at": None,

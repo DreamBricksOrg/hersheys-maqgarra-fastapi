@@ -12,28 +12,14 @@ def parse_object_id_to_str(value: Any) -> str:
 
 
 ObjectIdStr = Annotated[str, BeforeValidator(parse_object_id_to_str)]
+
 TagStatus = Literal["invalid", "available", "valid", "used"]
+TagDeliveryMode = Literal["digital", "physical"]
 
 
 class TagAssociateRequest(BaseModel):
     session_id: ObjectIdStr
     tags: list[str]
-
-
-class TagUseRequest(BaseModel):
-    tag_key: str
-
-
-class TagCreateRequest(BaseModel):
-    tag_key: str
-    status: TagStatus = "available"
-    session_id: ObjectIdStr | None = None
-
-
-class TagUpdateRequest(BaseModel):
-    status: TagStatus | None = None
-    session_id: ObjectIdStr | None = None
-    invalid_reason: str | None = None
 
 
 class TagActivateRequest(BaseModel):
@@ -42,6 +28,24 @@ class TagActivateRequest(BaseModel):
 
 class TagDeactivateRequest(BaseModel):
     reason: str | None = None
+
+
+class TagUseRequest(BaseModel):
+    tag_key: str
+
+
+class TagCreateRequest(BaseModel):
+    tag_key: str | None = None
+    delivery_mode: TagDeliveryMode = "digital"
+    status: TagStatus = "available"
+    session_id: ObjectIdStr | None = None
+
+
+class TagUpdateRequest(BaseModel):
+    status: TagStatus | None = None
+    session_id: ObjectIdStr | None = None
+    invalid_reason: str | None = None
+    delivery_mode: TagDeliveryMode | None = None
 
 
 class TagStatusResponse(BaseModel):
@@ -60,6 +64,7 @@ class TagResponse(BaseModel):
 
     tag_id: ObjectIdStr
     tag_key: str
+    delivery_mode: TagDeliveryMode
     status: TagStatus
     session_id: ObjectIdStr | None = None
     last_updated_at: datetime | None = None

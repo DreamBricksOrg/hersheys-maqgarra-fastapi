@@ -27,8 +27,6 @@ class TagAssociationService:
         if len(tags) != len(set(tags)):
             raise AppError("duplicate_tags", "Existem tags duplicadas na requisição", 422, {"tags": tags})
 
-        validated_tags: list[dict] = []
-
         for tag_key in tags:
             tag = await self.tag_repository.find_by_key(tag_key)
 
@@ -44,11 +42,11 @@ class TagAssociationService:
             if status == "invalid":
                 await self.observability_service.emit(
                     "tag-association-failed",
-                    {"tag_key": tag_key, "reason": "timeout"},
+                    {"tag_key": tag_key, "reason": "invalid"},
                 )
                 raise AppError(
                     "tag_invalid",
-                    "Uma ou mais tags expiraram ou ficaram inválidas",
+                    "Uma ou mais tags estão inválidas",
                     409,
                     {"tags": [tag_key]},
                 )
@@ -105,8 +103,6 @@ class TagAssociationService:
                     409,
                     {"tags": [tag_key]},
                 )
-
-            validated_tags.append(tag)
 
         associated = await self.tag_repository.associate_many(session_id, tags)
 
