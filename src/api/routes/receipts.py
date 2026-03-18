@@ -27,7 +27,12 @@ async def validate_receipt_by_qr(
     auth: AuthContext = Depends(require_auth),
     service: ReceiptQRService = Depends(get_receipt_qr_service),
 ) -> ReceiptResponse:
-    return await service.execute(payload.qr_value)
+    return await service.execute(
+        qr_value=payload.qr_value or "",
+        scraped_payload=payload.scraped_payload,
+        matched_items=payload.matched_items,
+        qr_url=payload.qr_url,
+    )
 
 
 @router.post("/image", response_model=ReceiptResponse)

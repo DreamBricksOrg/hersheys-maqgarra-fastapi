@@ -15,7 +15,10 @@ ObjectIdStr = Annotated[str, BeforeValidator(parse_object_id_to_str)]
 
 
 class ReceiptQRRequest(BaseModel):
-    qr_value: str
+    qr_value: str | None = None
+    scraped_payload: dict | None = None
+    matched_items: list[dict] | None = None
+    qr_url: str | None = None
 
 
 class ReceiptOverrideRequest(BaseModel):
