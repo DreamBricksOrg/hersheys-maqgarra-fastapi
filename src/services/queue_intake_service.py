@@ -32,13 +32,13 @@ class QueueIntakeService:
     ) -> QueueIntakeResponse:
         receipt = await self.receipt_repository.find_by_id(receipt_id)
         if not receipt:
-            raise AppError("receipt_not_found", "Receipt não encontrado", 404, {"receipt_id": receipt_id})
+            raise AppError("Receipt não encontrado", "receipt_not_found", 404, {"receipt_id": receipt_id})
 
         receipt_status = receipt.get("status")
         if receipt_status not in {"valid", "approved"}:
             raise AppError(
-                "receipt_not_eligible",
                 "Receipt ainda não está elegível para entrar na fila",
+                "receipt_not_eligible",
                 409,
                 {"receipt_id": receipt_id, "status": receipt_status},
             )
@@ -46,16 +46,16 @@ class QueueIntakeService:
         session = await self.session_repository.find_by_receipt_id(receipt_id)
         if not session:
             raise AppError(
-                "session_required",
                 "A sessão precisa ser criada antes do intake da fila",
+                "session_required",
                 409,
                 {"receipt_id": receipt_id},
             )
 
         if not session.get("player_id"):
             raise AppError(
-                "session_missing_player",
                 "A sessão precisa ter player_id antes de entrar na fila",
+                "session_missing_player",
                 409,
                 {"session_id": str(session["_id"])},
             )

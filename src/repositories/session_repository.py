@@ -12,6 +12,7 @@ class SessionRepository:
         self,
         receipt_ids: list[str],
         player_id: str,
+        total_plays: int = 1,
         tag_ids: list[str] | None = None,
         phone: str | None = None,
     ) -> dict:
@@ -22,6 +23,7 @@ class SessionRepository:
             "tag_ids": [ObjectId(item) for item in (tag_ids or [])],
             "player_id": ObjectId(player_id),
             "queue_entry_id": None,
+            "total_plays": total_plays,
             "phone": phone,
             "status": "created",
             "created_at": now,

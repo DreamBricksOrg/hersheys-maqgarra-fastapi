@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     DEVICE_ID_HEADER: str = Field(..., env="DEVICE_ID_HEADER") 
     API_KEY_HEADER: str = Field(..., env="API_KEY_HEADER")
     
+    #SMS
+    SMS_API_URL: Optional[str] = Field(default=None, env='SMS_API_URL')
+    SMS_API_KEY: Optional[str] = Field(default=None, env='SMS_API_KEY')
+    SMS_TIMEOUT_SECONDS: int = Field(default=10, env="SMS_TIMEOUT_SECONDS")
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
