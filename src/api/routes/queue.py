@@ -69,7 +69,7 @@ async def get_mobile_view(
     auth: AuthContext = Depends(require_auth),
     service: QueueService = Depends(get_queue_service),
 ) -> dict:
-    return await service.get_mobile_view(player_id=player_id, mobile_base_url="")
+    return await service.get_mobile_view(player_id=player_id)
 
 
 @router.get("/{player_id}", response_model=QueueStateResponse)

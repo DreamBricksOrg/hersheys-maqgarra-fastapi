@@ -18,20 +18,37 @@ class SessionService:
 
     async def create(self, payload: SessionCreateRequest) -> SessionResponse:
         if not payload.receipt_ids:
-            raise AppError("invalid_request", "É necessário informar ao menos um receipt_id", 422)
+            raise AppError(
+                "É necessário informar ao menos um receipt_id",
+                "invalid_request",
+                422,
+            )
 
+        if not payload.player_id or not str(payload.player_id).strip():
+            raise AppError(
+                "É necessário informar um player_id",
+                "invalid_player_id",
+                422,
+            )
+
+        unique_receipt_ids = list(dict.fromkeys(payload.receipt_ids))
         validated_receipt_ids: list[str] = []
 
-        for receipt_id in payload.receipt_ids:
+        for receipt_id in unique_receipt_ids:
             receipt = await self.receipt_repository.find_by_id(receipt_id)
             if not receipt:
-                raise AppError("receipt_not_found", "Receipt não encontrado", 404, {"receipt_id": receipt_id})
+                raise AppError(
+                    "Receipt não encontrado",
+                    "receipt_not_found",
+                    404,
+                    {"receipt_id": receipt_id},
+                )
 
             receipt_status = receipt.get("status")
             if receipt_status not in {"valid", "approved"}:
                 raise AppError(
-                    "receipt_not_eligible",
                     "Receipt ainda não está elegível para criar sessão",
+                    "receipt_not_eligible",
                     409,
                     {"receipt_id": receipt_id, "status": receipt_status},
                 )
@@ -39,10 +56,13 @@ class SessionService:
             existing_session_id = receipt.get("session_id")
             if existing_session_id:
                 raise AppError(
-                    "receipt_already_attached",
                     "Receipt já está vinculado a uma sessão",
+                    "receipt_already_attached",
                     409,
-                    {"receipt_id": receipt_id, "session_id": str(existing_session_id)},
+                    {
+                        "receipt_id": receipt_id,
+                        "session_id": str(existing_session_id),
+                    },
                 )
 
             validated_receipt_ids.append(receipt_id)
@@ -55,8 +75,28 @@ class SessionService:
 
         session_id = str(created["_id"])
 
-        for receipt_id in validated_receipt_ids:
-            await self.receipt_repository.attach_session_id(receipt_id, session_id)
+        try:
+            for receipt_id in validated_receipt_ids:
+                await self.receipt_repository.attach_session_id(receipt_id, session_id)
+        except Exception as exc:
+            await self.observability_service.emit(
+                "session-create-partial-failure",
+                {
+                    "session_id": session_id,
+                    "player_id": payload.player_id,
+                    "receipt_ids": validated_receipt_ids,
+                    "error": str(exc),
+                },
+            )
+            raise AppError(
+                "Falha ao vincular os receipts à sessão criada",
+                "session_receipt_attach_failed",
+                500,
+                {
+                    "session_id": session_id,
+                    "receipt_ids": validated_receipt_ids,
+                },
+            )
 
         await self.observability_service.emit(
             "session-created",
@@ -73,6 +113,11 @@ class SessionService:
     async def get_by_id(self, session_id: str) -> SessionResponse:
         session = await self.session_repository.find_by_id(session_id)
         if not session:
-            raise AppError("session_not_found", "Sessão não encontrada", 404, {"session_id": session_id})
+            raise AppError(
+                "Sessão não encontrada",
+                "session_not_found",
+                404,
+                {"session_id": session_id},
+            )
 
         return SessionResponse.model_validate(session)

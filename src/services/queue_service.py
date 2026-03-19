@@ -1,12 +1,14 @@
 from core.exceptions import AppError
 from repositories.queue_repository import QueueRepository
 from repositories.session_repository import SessionRepository
+from repositories.tag_repository import TagRepository
 from schemas.queue import (
     QueueCompleteResponse,
     QueueCurrentResponse,
     QueueEntryResponse,
     QueueJoinResponse,
     QueueListResponse,
+    QueueMobileViewResponse,
     QueueNextResponse,
     QueueSkipResponse,
     QueueStateResponse,
@@ -22,21 +24,25 @@ class QueueService:
         self,
         queue_repository: QueueRepository,
         session_repository: SessionRepository,
+        tag_repository: TagRepository,
         observability_service: ObservabilityService,
+        mobile_base_url: str,
     ):
         self.queue_repository = queue_repository
         self.session_repository = session_repository
+        self.tag_repository = tag_repository
         self.observability_service = observability_service
+        self.mobile_base_url = mobile_base_url.rstrip("/")
 
     async def join(self, session_id: str, total_plays: int = 1) -> QueueJoinResponse:
         session = await self.session_repository.find_by_id(session_id)
         if not session:
-            raise AppError("session_not_found", "Sessão não encontrada", 404, {"session_id": session_id})
+            raise AppError("Sessão não encontrada", "session_not_found", 404, {"session_id": session_id})
 
         if not session.get("player_id"):
             raise AppError(
-                "session_missing_player",
                 "A sessão precisa ter player_id antes de entrar na fila",
+                "session_missing_player",
                 409,
                 {"session_id": session_id},
             )
@@ -91,7 +97,12 @@ class QueueService:
     async def get_state(self, player_id: str) -> QueueStateResponse:
         entry = await self.queue_repository.find_by_id(player_id)
         if not entry:
-            raise AppError("queue_entry_not_found", "Entrada da fila não encontrada", 404, {"player_id": player_id})
+            raise AppError(
+                "Entrada da fila não encontrada",
+                "queue_entry_not_found",
+                404,
+                {"player_id": player_id},
+            )
 
         current_queue_number = await self.queue_repository.get_current_queue_number()
         people_ahead = await self.queue_repository.count_people_ahead(entry["queue_number"])
@@ -132,7 +143,7 @@ class QueueService:
         next_entry = await self.queue_repository.get_next_waiting_entry()
         if not next_entry:
             await self.queue_repository.clear_current_queue_number()
-            raise AppError("queue_empty", "Não há mais pessoas aguardando na fila", 404)
+            raise AppError("Não há mais pessoas aguardando na fila", "queue_empty", 404)
 
         called = await self.queue_repository.mark_called(str(next_entry["_id"]))
         await self.queue_repository.set_current_queue_number(
@@ -161,14 +172,24 @@ class QueueService:
     async def validate_for_play(self, player_id: str) -> QueueValidateResponse:
         entry = await self.queue_repository.find_by_id(player_id)
         if not entry:
-            raise AppError("queue_entry_not_found", "Entrada da fila não encontrada", 404, {"player_id": player_id})
+            raise AppError(
+                "Entrada da fila não encontrada",
+                "queue_entry_not_found",
+                404,
+                {"player_id": player_id},
+            )
 
         if entry["status"] == "done":
-            raise AppError("queue_entry_finished", "Esta entrada da fila já foi concluída", 409, {"player_id": player_id})
+            raise AppError(
+                "Esta entrada da fila já foi concluída",
+                "queue_entry_finished",
+                409,
+                {"player_id": player_id},
+            )
 
         current_queue_number = await self.queue_repository.get_current_queue_number()
         if current_queue_number is None:
-            raise AppError("queue_not_started", "A fila ainda não foi iniciada no tablet", 409)
+            raise AppError("A fila ainda não foi iniciada no tablet", "queue_not_started", 409)
 
         player_queue_number = entry["queue_number"]
 
@@ -254,12 +275,17 @@ class QueueService:
     async def complete(self, player_id: str) -> QueueCompleteResponse:
         entry = await self.queue_repository.find_by_id(player_id)
         if not entry:
-            raise AppError("queue_entry_not_found", "Entrada da fila não encontrada", 404, {"player_id": player_id})
+            raise AppError(
+                "Entrada da fila não encontrada",
+                "queue_entry_not_found",
+                404,
+                {"player_id": player_id},
+            )
 
         if entry["status"] not in {"playing", "called"}:
             raise AppError(
-                "queue_invalid_transition",
                 "A entrada da fila não está em estado válido para conclusão",
+                "queue_invalid_transition",
                 409,
                 {"player_id": player_id, "status": entry["status"]},
             )
@@ -295,12 +321,17 @@ class QueueService:
     async def skip_current(self, reason: str | None = None) -> QueueSkipResponse:
         state = await self.queue_repository.get_current_state()
         if not state or not state.get("player_id"):
-            raise AppError("queue_no_current_player", "Nenhum jogador atual foi chamado", 404)
+            raise AppError("Nenhum jogador atual foi chamado", "queue_no_current_player", 404)
 
         current_player_id = str(state["player_id"])
         current_entry = await self.queue_repository.find_by_id(current_player_id)
         if not current_entry:
-            raise AppError("queue_entry_not_found", "Entrada da fila não encontrada", 404, {"player_id": current_player_id})
+            raise AppError(
+                "Entrada da fila não encontrada",
+                "queue_entry_not_found",
+                404,
+                {"player_id": current_player_id},
+            )
 
         skipped = await self.queue_repository.mark_skipped(current_player_id)
         await self.session_repository.update_status(str(skipped["session_id"]), "queued")
@@ -348,10 +379,15 @@ class QueueService:
             total_waiting=len(waiting),
         )
 
-    async def get_mobile_view(self, player_id: str, mobile_base_url: str) -> dict:
+    async def get_mobile_view(self, player_id: str) -> QueueMobileViewResponse:
         entry = await self.queue_repository.find_by_id(player_id)
         if not entry:
-            raise AppError("queue_entry_not_found", "Entrada da fila não encontrada", 404, {"player_id": player_id})
+            raise AppError(
+                "Entrada da fila não encontrada",
+                "queue_entry_not_found",
+                404,
+                {"player_id": player_id},
+            )
 
         current_queue_number = await self.queue_repository.get_current_queue_number()
         people_ahead = await self.queue_repository.count_people_ahead(entry["queue_number"])
@@ -363,16 +399,16 @@ class QueueService:
             elif entry["queue_number"] <= current_queue_number + self.LATE_TOLERANCE:
                 can_play = True
 
-        return {
-            "player_id": str(entry["_id"]),
-            "session_id": str(entry["session_id"]),
-            "queue_number": entry["queue_number"],
-            "current_queue_number": current_queue_number,
-            "people_ahead": people_ahead,
-            "can_play": can_play,
-            "status": entry["status"],
-            "total_plays": entry["total_plays"],
-            "remaining_plays": entry["remaining_plays"],
-            "qr_value": str(entry["_id"]),
-            "qr_url": f"{mobile_base_url.rstrip('/')}/{str(entry['_id'])}",
-        }
+        return QueueMobileViewResponse(
+            player_id=str(entry["_id"]),
+            session_id=str(entry["session_id"]),
+            queue_number=entry["queue_number"],
+            current_queue_number=current_queue_number,
+            people_ahead=people_ahead,
+            can_play=can_play,
+            status=entry["status"],
+            total_plays=entry["total_plays"],
+            remaining_plays=entry["remaining_plays"],
+            qr_value=str(entry["_id"]),
+            qr_url=f"{self.mobile_base_url}/{str(entry['_id'])}",
+        )

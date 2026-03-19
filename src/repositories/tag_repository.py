@@ -18,6 +18,15 @@ class TagRepository:
         cursor = self.collection.find({"session_id": ObjectId(session_id)}).sort("tag_key", 1)
         return await cursor.to_list(length=None)
 
+    async def find_valid_by_session_id(self, session_id: str) -> list[dict]:
+        cursor = self.collection.find(
+            {
+                "session_id": ObjectId(session_id),
+                "status": "valid",
+            }
+        ).sort("tag_key", 1)
+        return await cursor.to_list(length=None)
+
     async def find_available_physical(self) -> dict | None:
         return await self.collection.find_one(
             {

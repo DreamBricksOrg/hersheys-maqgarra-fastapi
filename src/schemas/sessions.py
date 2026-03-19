@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Annotated
+from typing import Any, Annotated, Literal
 
 from bson import ObjectId
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
@@ -13,7 +13,7 @@ def parse_object_id_to_str(value: Any) -> str:
 
 ObjectIdStr = Annotated[str, BeforeValidator(parse_object_id_to_str)]
 
-SessionStatus = str
+SessionStatus = Literal["created", "queued", "called", "playing", "finished", "cancelled"]
 
 
 class SessionCreateRequest(BaseModel):
@@ -32,8 +32,7 @@ class SessionResponse(BaseModel):
     session_id: ObjectIdStr
     receipt_ids: list[ObjectIdStr] = Field(default_factory=list)
     tag_ids: list[ObjectIdStr] = Field(default_factory=list)
-    player_id: ObjectIdStr | None = None
-    player_ids: list[ObjectIdStr] = Field(default_factory=list)
+    player_id: ObjectIdStr
     queue_entry_id: ObjectIdStr | None = None
     phone: str | None = None
     status: SessionStatus = "created"
@@ -55,9 +54,6 @@ class SessionResponse(BaseModel):
 
             if "tag_ids" in data:
                 data["tag_ids"] = [str(item) for item in data.get("tag_ids", [])]
-
-            if "player_ids" in data:
-                data["player_ids"] = [str(item) for item in data.get("player_ids", [])]
 
             if "player_id" in data and isinstance(data["player_id"], ObjectId):
                 data["player_id"] = str(data["player_id"])

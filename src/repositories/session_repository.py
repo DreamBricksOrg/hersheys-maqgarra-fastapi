@@ -17,13 +17,10 @@ class SessionRepository:
     ) -> dict:
         now = datetime.now(timezone.utc)
 
-        player_object_id = ObjectId(player_id)
-
         payload = {
             "receipt_ids": [ObjectId(item) for item in receipt_ids],
             "tag_ids": [ObjectId(item) for item in (tag_ids or [])],
-            "player_id": player_object_id,
-            "player_ids": [player_object_id],
+            "player_id": ObjectId(player_id),
             "queue_entry_id": None,
             "phone": phone,
             "status": "created",
@@ -49,9 +46,7 @@ class SessionRepository:
             {"_id": ObjectId(session_id)},
             {
                 "$addToSet": {
-                    "tag_ids": {
-                        "$each": [ObjectId(item) for item in tag_ids]
-                    }
+                    "tag_ids": {"$each": [ObjectId(item) for item in tag_ids]}
                 },
                 "$set": {
                     "last_updated_at": datetime.now(timezone.utc),
@@ -61,17 +56,12 @@ class SessionRepository:
         return await self.find_by_id(session_id)
 
     async def set_player_id(self, session_id: str, player_id: str) -> dict | None:
-        player_object_id = ObjectId(player_id)
-
         await self.collection.update_one(
             {"_id": ObjectId(session_id)},
             {
                 "$set": {
-                    "player_id": player_object_id,
+                    "player_id": ObjectId(player_id),
                     "last_updated_at": datetime.now(timezone.utc),
-                },
-                "$addToSet": {
-                    "player_ids": player_object_id,
                 },
             },
         )
@@ -97,7 +87,7 @@ class SessionRepository:
                 "$set": {
                     "queue_entry_id": ObjectId(queue_entry_id),
                     "last_updated_at": datetime.now(timezone.utc),
-                }
+                },
             },
         )
         return await self.find_by_id(session_id)
