@@ -15,14 +15,18 @@ class TagCrudService:
         self.tag_repository = tag_repository
         self.observability_service = observability_service
 
-    async def _generate_unique_tag_key(self) -> str:
+    async def _generate_unique_digital_tag_key(self) -> str:
         for _ in range(100):
-            tag_key = f"T{secrets.randbelow(10000):04d}"
+            tag_key = f"{secrets.randbelow(100000000):08d}"
             existing = await self.tag_repository.find_by_key(tag_key)
             if not existing:
                 return tag_key
 
-        raise AppError("tag_generation_failed", "Não foi possível gerar uma tag única", 500)
+        raise AppError(
+            "tag_generation_failed",
+            "Não foi possível gerar uma tag digital única",
+            500,
+        )
 
     async def create(
         self,
@@ -51,7 +55,28 @@ class TagCrudService:
             )
 
         final_tag_key = (tag_key or "").strip().upper()
-        if final_tag_key:
+
+        if normalized_delivery_mode == "digital":
+            if final_tag_key:
+                existing = await self.tag_repository.find_by_key(final_tag_key)
+                if existing:
+                    raise AppError(
+                        "tag_already_exists",
+                        "Já existe uma tag com esta chave",
+                        409,
+                        {"tag_key": final_tag_key},
+                    )
+            else:
+                final_tag_key = await self._generate_unique_digital_tag_key()
+
+        elif normalized_delivery_mode == "physical":
+            if not final_tag_key:
+                raise AppError(
+                    "physical_tag_key_required",
+                    "Tag física precisa ser criada com tag_key explícita",
+                    422,
+                )
+
             existing = await self.tag_repository.find_by_key(final_tag_key)
             if existing:
                 raise AppError(
@@ -60,8 +85,6 @@ class TagCrudService:
                     409,
                     {"tag_key": final_tag_key},
                 )
-        else:
-            final_tag_key = await self._generate_unique_tag_key()
 
         created = await self.tag_repository.create(
             tag_key=final_tag_key,

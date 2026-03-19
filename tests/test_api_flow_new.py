@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from typing import Any
@@ -64,6 +65,16 @@ def assert_status(response: requests.Response, expected: int) -> dict[str, Any]:
 def assert_true(condition: bool, message: str) -> None:
     if not condition:
         raise TestFailure(message)
+
+
+def assert_digital_tag_format(tag_key: str) -> None:
+    if not re.fullmatch(r"\d{8}", tag_key):
+        raise TestFailure(f"Tag digital fora do padrão esperado: {tag_key}")
+
+
+def assert_physical_tag_format(tag_key: str) -> None:
+    if not re.fullmatch(r"T\d{4}", tag_key):
+        raise TestFailure(f"Tag física fora do padrão esperado: {tag_key}")
 
 
 def api_post(
@@ -187,6 +198,8 @@ def run_multi_tag_digital_flow() -> dict[str, Any]:
     assert_true(tag2["status"] == "valid", "Segunda tag deveria estar valid")
     assert_true(tag1["tag_key"] != tag2["tag_key"], "As tags geradas devem ser diferentes")
     assert_true(mobile_before["remaining_plays"] == 2, "Antes de jogar, remaining_plays deve ser 2")
+    assert_digital_tag_format(tag1["tag_key"])
+    assert_digital_tag_format(tag2["tag_key"])
 
     current = call_next_until_player(queue_player_id)
     validate = api_post("/api/queue/validate", params={"player_id": queue_player_id})
@@ -259,6 +272,8 @@ def run_multi_tag_physical_flow() -> dict[str, Any]:
     assert_true(assoc2["tag"]["status"] == "valid", "Segunda tag física deveria estar valid")
     assert_true(assoc1["tag"]["tag_key"] != assoc2["tag"]["tag_key"], "As tags físicas associadas devem ser diferentes")
     assert_true(mobile_before["remaining_plays"] == 2, "Antes de jogar, remaining_plays deve ser 2")
+    assert_physical_tag_format(assoc1["tag"]["tag_key"])
+    assert_physical_tag_format(assoc2["tag"]["tag_key"])
 
     current = call_next_until_player(queue_player_id)
     validate = api_post("/api/queue/validate", params={"player_id": queue_player_id})
@@ -320,6 +335,9 @@ def run_negative_checks() -> list[dict[str, Any]]:
     tag1 = api_post("/api/tags/generate", {"session_id": session_id, "delivery_mode": "digital"})
     tag2 = api_post("/api/tags/associate", {"session_id": session_id, "delivery_mode": "physical", "tag_key": "T5555"})
 
+    assert_digital_tag_format(tag1["tag_key"])
+    assert_physical_tag_format(tag2["tag"]["tag_key"])
+
     third_attempt = requests.post(
         f"{BASE_URL}/api/tags/generate",
         headers=headers(),
@@ -357,6 +375,8 @@ def run_negative_checks() -> list[dict[str, Any]]:
     queue_a = api_post("/api/queue/join", {"session_id": session_a["session_id"], "total_plays": 1})
     api_post("/api/tags/generate", {"session_id": session_b["session_id"], "delivery_mode": "digital"})
     wrong_tag = api_get(f"/api/sessions/{session_b['session_id']}/tags")["tags"][0]["tag_key"]
+
+    assert_digital_tag_format(wrong_tag)
 
     call_next_until_player(queue_a["player_id"])
     api_post("/api/queue/validate", params={"player_id": queue_a["player_id"]})
@@ -405,21 +425,21 @@ def main() -> int:
             "negative_checks": [item["name"] for item in negative],
         }
         log("Resumo final", summary)
-        print("\nTeste concluído com sucesso.")
+        print("\\nTeste concluído com sucesso.")
         return 0
 
     except TestFailure as exc:
-        print("\nFALHA NO TESTE:")
+        print("\\nFALHA NO TESTE:")
         print(str(exc))
         return 1
 
     except requests.RequestException as exc:
-        print("\nERRO HTTP:")
+        print("\\nERRO HTTP:")
         print(str(exc))
         return 1
 
     except Exception as exc:
-        print("\nERRO INESPERADO:")
+        print("\\nERRO INESPERADO:")
         print(repr(exc))
         return 1
 
