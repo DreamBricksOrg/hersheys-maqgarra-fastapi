@@ -17,8 +17,8 @@ class TagUsageService:
         tag = await self.tag_repository.find_by_key(tag_key)
         if not tag:
             raise AppError(
-                "tag_not_found",
                 "Tag não encontrada",
+                "tag_not_found",
                 404,
                 {"tag_key": tag_key},
             )
@@ -30,32 +30,32 @@ class TagUsageService:
 
         if status == "invalid":
             raise AppError(
-                "tag_invalid",
                 "Tag inválida",
+                "tag_invalid",
                 409,
                 {"tag_key": tag_key},
             )
 
         if status == "available":
             raise AppError(
-                "tag_not_associated",
                 "Tag ainda não foi associada a uma sessão",
+                "tag_not_associated",
                 409,
                 {"tag_key": tag_key},
             )
 
         if status == "used":
             raise AppError(
-                "tag_already_used",
                 "Tag já foi usada",
+                "tag_already_used",
                 409,
                 {"tag_key": tag_key},
             )
 
         if status != "valid":
             raise AppError(
-                "tag_invalid_state",
                 "Estado inválido para uso",
+                "tag_invalid_state",
                 409,
                 {"tag_key": tag_key, "status": status},
             )
@@ -67,8 +67,8 @@ class TagUsageService:
         updated = await self.tag_repository.mark_used(tag_key)
         if not updated:
             raise AppError(
-                "tag_use_failed",
                 "Não foi possível atualizar a tag",
+                "tag_use_failed",
                 500,
                 {"tag_key": tag_key},
             )
@@ -92,8 +92,8 @@ class TagUsageService:
         tag_session_id = tag.get("session_id")
         if not tag_session_id or str(tag_session_id) != str(session_id):
             raise AppError(
-                "tag_not_belongs_to_session",
                 "A tag não pertence à sessão informada",
+                "tag_not_belongs_to_session",
                 409,
                 {
                     "tag_key": tag_key,
@@ -105,8 +105,8 @@ class TagUsageService:
         updated = await self.tag_repository.mark_used(tag_key)
         if not updated:
             raise AppError(
-                "tag_use_failed",
                 "Não foi possível atualizar a tag",
+                "tag_use_failed",
                 500,
                 {"tag_key": tag_key, "session_id": session_id},
             )

@@ -10,7 +10,7 @@ class TagStateService:
     async def get_state(self, tag_key: str) -> TagStatusResponse:
         tag = await self.tag_repository.find_by_key(tag_key)
         if not tag:
-            raise AppError("tag_not_found", "Tag não encontrada", 404, {"tag_key": tag_key})
+            raise AppError("Tag não encontrada", "tag_not_found", 404, {"tag_key": tag_key})
 
         return TagStatusResponse(
             tag_key=tag["tag_key"],
@@ -22,13 +22,13 @@ class TagStateService:
     async def activate(self, tag_key: str, reason: str | None = None) -> TagStatusResponse:
         tag = await self.tag_repository.find_by_key(tag_key)
         if not tag:
-            raise AppError("tag_not_found", "Tag não encontrada", 404, {"tag_key": tag_key})
+            raise AppError("Tag não encontrada", "tag_not_found", 404, {"tag_key": tag_key})
 
         if tag.get("status") == "available":
-            raise AppError("tag_already_available", "A tag já está disponível", 409, {"tag_key": tag_key})
+            raise AppError("A tag já está disponível", "tag_already_available", 409, {"tag_key": tag_key})
 
         if tag.get("status") == "valid":
-            raise AppError("tag_already_associated", "A tag já está associada", 409, {"tag_key": tag_key})
+            raise AppError("A tag já está associada", "tag_already_associated", 409, {"tag_key": tag_key})
 
         updated = await self.tag_repository.activate(tag_key, reason)
 
@@ -42,10 +42,10 @@ class TagStateService:
     async def deactivate(self, tag_key: str, reason: str | None = None) -> TagStatusResponse:
         tag = await self.tag_repository.find_by_key(tag_key)
         if not tag:
-            raise AppError("tag_not_found", "Tag não encontrada", 404, {"tag_key": tag_key})
+            raise AppError("Tag não encontrada", "tag_not_found", 404, {"tag_key": tag_key})
 
         if tag.get("status") == "invalid":
-            raise AppError("tag_already_inactive", "A tag já está inativa", 409, {"tag_key": tag_key})
+            raise AppError("A tag já está inativa", "tag_already_inactive", 409, {"tag_key": tag_key})
 
         updated = await self.tag_repository.deactivate(tag_key, reason or "manual")
 
