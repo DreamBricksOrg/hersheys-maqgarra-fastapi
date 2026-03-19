@@ -123,6 +123,21 @@ confirmBtn.addEventListener('click', async () => {
         webmaniaData = await webmaniaResp.json();
         console.log("[DEBUG] Webmania:", webmaniaData);
 
+        const chave = webmaniaData.chave;
+        if (chave) {
+            const checkResp = await fetch('/api/receipts/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...AUTH_HEADERS },
+                body: JSON.stringify({ receipt_key: chave })
+            });
+            if (checkResp.ok) {
+                const { is_duplicate } = await checkResp.json();
+                if (is_duplicate) {
+                    throw { title: 'Nota duplicada', subtitle: 'Esta nota já foi lida anteriormente.', isDuplicate: true };
+                }
+            }
+        }
+
         // 2b. Verifica quais produtos são Hersheys via backend
         const matchResp = await fetch("/api/products/match", {
             method: "POST",
@@ -146,7 +161,7 @@ confirmBtn.addEventListener('click', async () => {
     } catch (err) {
         console.error(err);
         loadingModal.style.display = 'none';
-        showError('Erro ao validar nota', err.message);
+        showError(err.title || 'Erro ao validar nota', err.subtitle || err.message, !!err.isDuplicate);
     }
 });
 

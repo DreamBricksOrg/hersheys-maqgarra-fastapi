@@ -79,6 +79,21 @@ qrInput.addEventListener('keydown', async (e) => {
         scrapedData = await scrapeResp.json();
         console.log('[DEBUG] Scrape:', scrapedData);
 
+        const chave = scrapedData.chave;
+        if (chave) {
+            const checkResp = await fetch('/api/receipts/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...AUTH_HEADERS },
+                body: JSON.stringify({ receipt_key: chave })
+            });
+            if (checkResp.ok) {
+                const { is_duplicate } = await checkResp.json();
+                if (is_duplicate) {
+                    throw { title: 'Nota duplicada', subtitle: 'Esta nota já foi lida anteriormente.', isDuplicate: true };
+                }
+            }
+        }
+
         // Passo 2: Classificar produtos via backend
         const matchResp = await fetch('/api/products/match', {
             method: 'POST',
@@ -100,7 +115,7 @@ qrInput.addEventListener('keydown', async (e) => {
 
     } catch (err) {
         console.error(err);
-        showError('Erro ao processar nota', err.message);
+        showError(err.title || 'Erro ao processar nota', err.subtitle || err.message, !!err.isDuplicate);
     } finally {
         inputSpinner.style.display = 'none';
         qrInput.style.display = 'block';

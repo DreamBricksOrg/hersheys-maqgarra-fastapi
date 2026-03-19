@@ -11,7 +11,7 @@ from api.dependencies import (
 )
 from repositories.receipt_repository import ReceiptRepository
 from schemas.auth import AuthContext
-from schemas.receipts import ReceiptOverrideRequest, ReceiptQRRequest, ReceiptResponse
+from schemas.receipts import ReceiptCheckRequest, ReceiptCheckResponse, ReceiptOverrideRequest, ReceiptQRRequest, ReceiptResponse
 from core.exceptions import AppError
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from services.receipt_image_service import ReceiptImageService
@@ -83,6 +83,17 @@ async def get_receipt(
         raw_payload=receipt.get("raw_payload"),
         session_id=receipt.get("session_id"),
     )
+
+
+@router.post("/check", response_model=ReceiptCheckResponse)
+async def check_duplicate_receipt(
+    payload: ReceiptCheckRequest,
+    auth: AuthContext = Depends(require_auth),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> ReceiptCheckResponse:
+    repo = ReceiptRepository(db)
+    existing = await repo.find_by_key(payload.receipt_key)
+    return ReceiptCheckResponse(is_duplicate=bool(existing))
 
 
 @router.post("/override", response_model=ReceiptResponse)

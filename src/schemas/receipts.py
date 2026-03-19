@@ -72,5 +72,13 @@ class ReceiptListTagAssociateRequest(BaseModel):
     tags: list[str]
 
 
+class ReceiptCheckRequest(BaseModel):
+    receipt_key: str
+
+
+class ReceiptCheckResponse(BaseModel):
+    is_duplicate: bool
+
+
 class ReceiptLookupQueryResponse(ReceiptResponse):
     pass
