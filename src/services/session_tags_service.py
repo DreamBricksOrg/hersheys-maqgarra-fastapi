@@ -16,7 +16,12 @@ class SessionTagsService:
     async def get_tags(self, session_id: str) -> SessionTagsResponse:
         session = await self.session_repository.find_by_id(session_id)
         if not session:
-            raise AppError("session_not_found", "Sessão não encontrada", 404, {"session_id": session_id})
+            raise AppError(
+                "Sessão não encontrada",
+                "session_not_found",
+                404,
+                {"session_id": session_id},
+            )
 
         tags = await self.tag_repository.find_by_session_id(session_id)
 

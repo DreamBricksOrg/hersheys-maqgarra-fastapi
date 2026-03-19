@@ -18,6 +18,24 @@ class TagRepository:
         cursor = self.collection.find({"session_id": ObjectId(session_id)}).sort("tag_key", 1)
         return await cursor.to_list(length=None)
 
+    async def find_valid_by_session_id(self, session_id: str) -> list[dict]:
+        cursor = self.collection.find(
+            {
+                "session_id": ObjectId(session_id),
+                "status": "valid",
+            }
+        ).sort("tag_key", 1)
+        return await cursor.to_list(length=None)
+
+    async def find_available_physical(self) -> dict | None:
+        return await self.collection.find_one(
+            {
+                "delivery_mode": "physical",
+                "status": "available",
+            },
+            sort=[("tag_key", 1)],
+        )
+
     async def list_tags(
         self,
         status: str | None = None,
@@ -136,6 +154,23 @@ class TagRepository:
                 updated.append(doc)
 
         return updated
+
+    async def associate_one(self, session_id: str, tag_key: str) -> dict | None:
+        now = datetime.now(timezone.utc)
+
+        await self.collection.update_one(
+            {"tag_key": tag_key, "status": "available"},
+            {
+                "$set": {
+                    "status": "valid",
+                    "session_id": ObjectId(session_id),
+                    "last_updated_at": now,
+                    "invalid_reason": None,
+                }
+            },
+            upsert=False,
+        )
+        return await self.find_by_key(tag_key)
 
     async def mark_used(self, tag_key: str) -> dict | None:
         tag = await self.find_by_key(tag_key)

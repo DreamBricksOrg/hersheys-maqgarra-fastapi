@@ -44,26 +44,25 @@ class QueueIntakeService:
             )
 
         session = await self.session_repository.find_by_receipt_id(receipt_id)
-
         if not session:
-            session = await self.session_repository.create(
-                receipt_ids=[receipt_id],
-                phone=phone,
+            raise AppError(
+                "session_required",
+                "A sessão precisa ser criada antes do intake da fila",
+                409,
+                {"receipt_id": receipt_id},
             )
-            await self.receipt_repository.attach_session_id(receipt_id, str(session["_id"]))
-        else:
-            await self.session_repository.attach_receipt_id(str(session["_id"]), receipt_id)
-            if not receipt.get("session_id"):
-                await self.receipt_repository.attach_session_id(receipt_id, str(session["_id"]))
+
+        if not session.get("player_id"):
+            raise AppError(
+                "session_missing_player",
+                "A sessão precisa ter player_id antes de entrar na fila",
+                409,
+                {"session_id": str(session["_id"])},
+            )
 
         joined = await self.queue_service.join(
             session_id=str(session["_id"]),
             total_plays=total_plays,
-        )
-
-        await self.session_repository.attach_player_id(
-            session_id=str(session["_id"]),
-            player_id=joined.player_id,
         )
 
         qr_value = joined.player_id
