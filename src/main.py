@@ -14,9 +14,6 @@ from logcenter_sdk.middleware import LogCenterAuditMiddleware
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from api.uploads import router as router_uploads
-from api.webmanianfe import router as router_webmanianfe
-from api.nfce import router as router_nfce
 from fastapi.responses import JSONResponse
 
 from core.exceptions import AppError
@@ -24,7 +21,12 @@ from core.config import settings
 from api.routes.health import router as health_router
 from api.routes.receipts import router as receipts_router
 from api.routes.tags import router as tags_router
+from api.routes.queue import router as queue_router
+from api.routes.sessions import router as sessions_router
 from api.routes.products import router as products_router
+from api.uploads import router as uploads_router
+from api.webmanianfe import router as webmanianfe_router
+from api.nfce import router as nfce_router
 from api.pages import router as pages_router
 
 
@@ -122,9 +124,11 @@ def create_app() -> FastAPI:
     app.include_router(tags_router)
     app.include_router(products_router)
     app.include_router(pages_router)
-    app.include_router(router_uploads)
-    app.include_router(router_webmanianfe)
-    app.include_router(router_nfce)
+    app.include_router(queue_router)
+    app.include_router(sessions_router)
+    app.include_router(uploads_router)
+    app.include_router(webmanianfe_router)
+    app.include_router(nfce_router)
 
     @app.exception_handler(AppError)
     async def app_error_handler(request: Request, exc: AppError):
