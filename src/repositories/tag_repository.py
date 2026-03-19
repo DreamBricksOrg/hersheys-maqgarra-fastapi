@@ -190,3 +190,7 @@ class TagRepository:
             upsert=False,
         )
         return await self.find_by_key(tag_key)
+
+    async def find_by_status(self, limit: int) -> list[dict]:
+        cursor = self.collection.find({"status": {"$in": ["invalid", "available"]}}).limit(limit)
+        return await cursor.to_list(length=limit)

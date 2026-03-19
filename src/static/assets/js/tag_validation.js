@@ -7,15 +7,17 @@ function onScanSuccess(decodedText, decodedResult) {
     // handle the scanned code as you like, for example:
     console.log("Code matched = ${decodedText}", decodedResult);
     fetch(`/api/tags/${decodedText}`, {
-        method: 'POST',
+        method: 'GET',
         headers: {
+            'x-api-key': 'capibarra-tablet-03',
+            'x-device-id': 'tablet-03',
             'Content-Type': 'application/json'
         }
     }).then(resp => {
         if (!resp.ok) {
             throw new Error(`HTTP error: ${resp.status}`)
         }
-        resp.json()
+        return resp.json()
     }).then(response => {
         console.log(response);
         if (response.available_for_play) {
@@ -39,14 +41,15 @@ async function deactivateTag(tag_key) {
     fetch(`/api/tags/${tag_key}/deactivate`, {
         method: 'POST',
         headers: {
+            'x-api-key': 'capibarra-tablet-03',
+            'x-device-id': 'tablet-03',
             'Content-Type': 'application/json'
         },
-        body: { "reason": "used_for_play" }
+        body: JSON.stringify({ "reason": "used_for_play" })
     }).then(response => {
-        if(!response.ok)
-        {
+        if (!response.ok) {
             throw new Error(`HTTP error: ${response.status}`)
-        }        
+        }
     });
 }
 
@@ -63,7 +66,7 @@ async function startScan() {
     html5QrCode.start({ facingMode: "user" }, config, onScanSuccess);
 }
 document.addEventListener('DOMContentLoaded', function () {
-    setTimeout(startScan(), 3000);
+    setTimeout(startScan, 3000);
 }, false);
 
 function hideElement(element) {

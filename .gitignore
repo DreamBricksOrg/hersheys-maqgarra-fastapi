@@ -208,3 +208,6 @@ __marimo__/
 
 # Hersheys Maquina de Garra
 src/util/nfce_scrapper/output
+
+docs/
+.agent/
