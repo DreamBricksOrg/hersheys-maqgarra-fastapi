@@ -59,6 +59,10 @@ class ReceiptImageService:
         else:
             raw_payload = self.parser_service.parse_image(image_path_str)
 
+        receipt_key = raw_payload.get("chave")
+        if receipt_key:
+            await self.receipt_validation_service.ensure_not_duplicate(receipt_key)
+
         # matched_items: usa o que o frontend já processou via /api/products/match,
         # caso contrário faz o match internamente (fallback para fluxo QR/legacy)
         if matched_items is not None:
