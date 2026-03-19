@@ -9,7 +9,7 @@
     body {
         margin: 0;
         min-height: 100svh;
-        background-image: url('/src/static/images/background.png');
+        background-image: url('../images/background.png');
         background-repeat: no-repeat;
         background-position: center;
         background-size: 100% 100%;
@@ -101,7 +101,7 @@
     }
 
     #reader-border {
-        background-image: url(/src/static/images/fundo_qr_code_chocolate.png);
+        background-image: url('../images/fundo_qr_code_chocolate.png');
         background-repeat: no-repeat;
         background-position: center;
         background-size: 100% 100%;

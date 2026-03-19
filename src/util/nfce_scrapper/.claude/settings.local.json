@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.nfce.fazenda.sp.gov.br)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:gist.github.com)",
+      "Bash(c:\\\\Python311\\\\python.exe -m pip install -q pytest pytest-mock responses)",
+      "Bash(cd \"C:\\\\Users\\\\Win 11\\\\Documents\\\\github\\\\hersheys-maqgarra-fastapi\" && PYTHONPATH=src \"C:\\\\Python311\\\\python.exe\" -m pytest tests/ -v)",
+      "Bash(cd \"C:\\\\Users\\\\Win 11\\\\Documents\\\\github\\\\hersheys-maqgarra-fastapi\" && PYTHONPATH=src \"C:\\\\Python311\\\\python.exe\" -m pytest tests/test_scrapper.py::TestNfceScrapperSuccessfulScrape::test_scrape_valid_html_returns_ok -xvs 2>&1 | head -80)",
+      "Bash(cd \"C:\\\\Users\\\\Win 11\\\\Documents\\\\github\\\\hersheys-maqgarra-fastapi\" && PYTHONPATH=src \"C:\\\\Python311\\\\python.exe\" -m pytest tests/ -v --tb=short 2>&1 | tail -100)",
+      "Bash(cd \"C:\\\\Users\\\\Win 11\\\\Documents\\\\github\\\\hersheys-maqgarra-fastapi\" && PYTHONPATH=src \"C:\\\\Python311\\\\python.exe\" -c \"\nfrom util.translators.nfce_to_webmania import NfceToWebmaniaTranslator\ntranslator = NfceToWebmaniaTranslator\\(\\)\nraw = 'Av Imperatriz Leopoldina , 1170 , , Vila Leopoldina , Sao Paulo , SP'\nparts = raw.split\\(' , '\\)\nprint\\('Parts:', parts\\)\nprint\\('Length:', len\\(parts\\)\\)\nfor i, p in enumerate\\(parts\\):\n    print\\(f'[{i}] = {repr\\(p\\)}'\\)\nresult = translator._parse_address\\(raw\\)\nprint\\('Result:', result\\)\n\")",
+      "Bash(cd \"C:\\\\Users\\\\Win 11\\\\Documents\\\\github\\\\hersheys-maqgarra-fastapi\" && PYTHONPATH=src \"C:\\\\Python311\\\\python.exe\" -m pytest tests/ -v --tb=line 2>&1 | tail -60)",
+      "Bash(cd \"C:\\\\Users\\\\Win 11\\\\Documents\\\\github\\\\hersheys-maqgarra-fastapi\" && PYTHONPATH=src \"C:\\\\Python311\\\\python.exe\" -m pytest tests/ -v --co 2>&1 | head -80)",
+      "Bash(cd \"C:\\\\Users\\\\Win 11\\\\Documents\\\\github\\\\hersheys-maqgarra-fastapi\" && PYTHONPATH=src \"C:\\\\Python311\\\\python.exe\" -m pytest tests/ -v --tb=no 2>&1 | grep -E \"\\(PASSED|FAILED|passed|failed|ERROR\\)\" | tail -20)",
+      "Bash(cd \"C:\\\\Users\\\\Win 11\\\\Documents\\\\github\\\\hersheys-maqgarra-fastapi\" && PYTHONPATH=src \"C:\\\\Python311\\\\python.exe\" -m pytest tests/ --collect-only -q | wc -l)",
+      "Bash(cd \"C:\\\\Users\\\\Win 11\\\\Documents\\\\github\\\\hersheys-maqgarra-fastapi\" && PYTHONPATH=src \"C:\\\\Python311\\\\python.exe\" -m pytest tests/ -v --tb=short 2>&1 | grep -E \"^tests/\" | wc -l)"
+    ]
+  }
+}

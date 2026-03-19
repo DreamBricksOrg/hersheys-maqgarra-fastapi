@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner de QR Code</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='assets/css/root.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='assets/css/add-manually.css') }}">
+</head>
+<body>
+    
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="{{ url_for('static', path='assets/images/titulo.png') }}" width="100%" alt="Logo">
+                </div>
+                <div class="counter-container">
+                    <div class="bars-counter">
+                        <h1>BARRAS</h1>
+                        <h1 id="barrasCount">0</h1>
+                    </div>
+                    <div class="separator"></div>
+                    <div class="tags-counter">
+                        <h1>TAGS</h1>
+                        <h1 id="tagsCount">0</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="content">
+            <h1>Adicionar <span>Manualmente</span></h1> 
+            
+            <div class="number-control">
+                <button id="btn-minus" class="control-btn">-</button>
+                <div id="qtd-display" class="qtd-value">0</div>
+                <button id="btn-plus" class="control-btn">+</button>
+            </div>
+
+            <button id="openCameraBtn" class="btn">Abrir câmera</button>
+            <button id="btn-voltar">VOLTAR</button>
+            <input type="file" accept="image/*" capture="environment" id="cameraInput" style="display: none;">
+        </div>
+        <div class="footer">
+            <img src="{{ url_for('static', path='assets/images/capivara.png') }}" class="footer-capivara" alt="Img 2">
+            <img src="{{ url_for('static', path='assets/images/coracao.png') }}" class="footer-coracao" alt="Img 1">
+        </div>
+    </div>
+
+    <!-- Modal de Loading -->
+    <div id="loadingModal" class="modal-overlay" style="display: none;">
+        <div class="modal-confirm-content" style="text-align: center; min-width: 300px; padding: 40px;">
+            <div class="spinner"></div>
+            <h2>Enviando...</h2>
+        </div>
+    </div>
+
+    <!-- Modal de Aviso -->
+    <div id="warningModal" class="modal-overlay" style="display: none;">
+        <div class="modal-confirm-content" style="text-align: center;">
+            <svg viewBox="0 0 24 24" style="width: 70px; height: 70px; fill: #ffc107; margin-bottom: 15px;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+            <h2>É necessário adicionar a quantidade de Barras.</h2>
+            <div class="modal-actions">
+                <button id="closeWarningBtn" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Sucesso -->
+    <div id="successModal" class="modal-overlay" style="display: none;">
+        <div class="modal-confirm-content" style="text-align: center;">
+            <svg viewBox="0 0 24 24" style="width: 80px; height: 80px; fill: #28a745; margin-bottom: 20px;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            <h2>Nota enviada com sucesso!</h2>
+            <p>Foram adicionadas <span id="added-qtd">0</span> barras.</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', path='assets/js/counter.js') }}"></script>
+    <script src="{{ url_for('static', path='assets/js/add-manually.js') }}"></script>
+</body>
+</html>

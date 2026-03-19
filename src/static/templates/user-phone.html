@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Termos</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='assets/css/root.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='assets/css/user-phone.css') }}">
+</head>
+
+<body>
+
+    <div class="page-wrapper" id="pageWrapper">
+        <img src="{{ url_for('static', path='assets/images/titulo.png') }}" class="page-logo" alt="Logo">
+        <div id="container">
+            <span class="phone-title">INSIRA O SEU NÚMERO DE TELEFONE</span>
+
+            <input type="text" inputmode="numeric" pattern="[0-9]*" id="phone-input" maxlength="15"  placeholder="Digite seu telefone" autofocus oninput="mascaraTelefone(this)">
+            <div class="buttons">
+                <button class="button">Processar</button>
+            </div>
+            <span class="info_text">Enviaremos uma mensagem de SMS quando for a sua vez.</span>
+        </div>
+    </div>
+
+    <div class="page-footer">
+        <img src="{{ url_for('static', path='assets/images/coracao.png') }}" class="footer-coracao" alt="Coração">
+    </div>
+
+
+    <script src="{{ url_for('static', path='assets/js/user-phone.js') }}"></script>
+</body>
+
+</html>

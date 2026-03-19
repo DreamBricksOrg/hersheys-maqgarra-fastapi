@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner de QR Code</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='assets/css/root.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='assets/css/found-bars.css') }}">
+</head>
+<body>
+    
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="{{ url_for('static', path='assets/images/titulo.png') }}" width="100%" alt="Logo">
+                </div>
+                <div class="counter-container">
+                    <div class="bars-counter">
+                        <h1>BARRAS</h1>
+                        <h1 id="barrasCount">0</h1>
+                    </div>
+                    <div class="separator"></div>
+                    <div class="tags-counter">
+                        <h1>TAGS</h1>
+                        <h1 id="tagsCount">0</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="content">
+            <h1>Foram encontradas <span>X</span> barras!</h1> 
+            <div class="buttons">
+                <button>CERTO</button>
+                <button>ERRADO</button>
+            </div>
+        </div>
+        <div class="footer">
+            <img src="{{ url_for('static', path='assets/images/capivara.png') }}" class="footer-capivara" alt="Img 2">
+            <img src="{{ url_for('static', path='assets/images/coracao.png') }}" class="footer-coracao" alt="Img 1">
+        </div>
+    </div>
+    <script src="{{ url_for('static', path='assets/js/counter.js') }}"></script>
+    <script src="{{ url_for('static', path='assets/js/index.js') }}"></script>
+</body>
+</html>

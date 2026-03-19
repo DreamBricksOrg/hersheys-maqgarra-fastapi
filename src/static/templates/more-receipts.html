@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner de QR Code</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='assets/css/root.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='assets/css/more-receipts.css') }}">
+</head>
+<body>
+    
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="{{ url_for('static', path='assets/images/titulo.png') }}" width="100%" alt="Logo">
+                </div>
+                <div class="counter-container">
+                    <div class="bars-counter">
+                        <h1>BARRAS</h1>
+                        <h1 id="barrasCount">0</h1>
+                    </div>
+                    <div class="separator"></div>
+                    <div class="tags-counter">
+                        <h1>TAGS</h1>
+                        <h1 id="tagsCount">0</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="content">
+            <h1>Possui mais notas?</h1> 
+            <div class="buttons">
+                <button id="btn-sim">SIM</button>
+                <button id="btn-nao">NÃO</button>
+            </div>
+        </div>
+        <div class="footer">
+            <img src="{{ url_for('static', path='assets/images/capivara.png') }}" class="footer-capivara" alt="Img 2">
+            <img src="{{ url_for('static', path='assets/images/coracao.png') }}" class="footer-coracao" alt="Img 1">
+        </div>
+    </div>
+
+    <!-- Modal Poxa -->
+    <div id="sorryModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="text-align: center;">
+            <svg viewBox="0 0 24 24" style="width: 70px; height: 70px; fill: #dc3545; margin-bottom: 15px;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+            <h2>Poxa, infelizmente você não alcançou a quantidade necessária para conseguir participar</h2>
+        </div>
+    </div>
+    <script src="{{ url_for('static', path='assets/js/counter.js') }}"></script>
+    <script src="{{ url_for('static', path='assets/js/more-receipts.js') }}"></script>
+</body>
+</html>

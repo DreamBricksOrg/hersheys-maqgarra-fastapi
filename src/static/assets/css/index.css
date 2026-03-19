@@ -1,0 +1,38 @@
+.content{
+    display: flex;
+    flex:1;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    z-index: 1;
+    gap: 2rem;
+}
+
+.content h1{
+    font-size: 2rem;
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    color: var(--light-color);
+}
+
+.content span{
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+}
+
+.buttons{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    gap: 2rem;
+}
+
+button{
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    border-radius: 2rem;
+    cursor: pointer;
+    padding: 10px 20px;
+    border: none;
+    background-color: var(--chocolate-color);
+    color: var(--light-color);
+    font-size: 2rem;
+}

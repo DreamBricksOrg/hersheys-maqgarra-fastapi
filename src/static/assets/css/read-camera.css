@@ -1,0 +1,272 @@
+.content{
+    display: flex;
+    flex:1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    z-index: 1;
+    gap: 2rem;
+}
+
+.content h1{
+    font-size: 2rem;
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    color: var(--light-color);
+}
+
+.content span{
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+}
+
+.buttons{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    gap: 2rem;
+}
+
+@media (orientation: portrait) {
+    .buttons {
+        width: 90vw;
+    }
+}
+
+button{
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    border-radius: 2rem;
+    cursor: pointer;
+    padding: 10px 20px;
+    border: none;
+    background-color: var(--chocolate-color);
+    color: var(--light-color);
+    font-size: 2rem;
+}
+
+/* Camera and Modal removed, replaced by native input */
+
+.spinner {
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid var(--chocolate-color);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loader {
+    width: 60px;
+    aspect-ratio: 1;
+    --_g: no-repeat radial-gradient(farthest-side, var(--chocolate-color) 90%, #0000);
+    background: var(--_g), var(--_g), var(--_g);
+    background-size: 25% 25%;
+    animation: l17 1s infinite;
+}
+
+@keyframes l17 {
+    0%      { background-position: 0% -100%, 50% -100%, 100% -100% }
+    16.67%  { background-position: 0%   50%, 50% -100%, 100% -100% }
+    33.33%  { background-position: 0%   50%, 50%   50%, 100% -100% }
+    45%,55% { background-position: 0%   50%, 50%   50%, 100%   50% }
+    66.67%  { background-position: 0%  200%, 50%   50%, 100%   50% }
+    83.33%  { background-position: 0%  200%, 50%  200%, 100%   50% }
+    100%    { background-position: 0%  200%, 50%  200%, 100%  200% }
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    background-color: var(--light-color);
+    padding: 30px 40px;
+    border-radius: 2rem;
+    text-align: center;
+    max-width: 90%;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    min-width: 500px;
+}
+
+.modal-content h2 {
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+    color: var(--chocolate-color);
+    margin: 0;
+    font-size: 2.5rem;
+    flex-shrink: 0;
+}
+
+#previewImage {
+    max-width: 100%;
+    max-height: 50vh;
+    border: 2px solid #ccc;
+    border-radius: 1rem;
+    object-fit: contain;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    justify-content: center;
+}
+
+.modal-actions .btn {
+    font-size: 2rem;
+    padding: 15px 30px;
+    flex: 1;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+}
+
+.btn-primary {
+    background-color: #28a745;
+}
+
+/* NFC-e Result */
+.nfce-result {
+    width: 100%;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex: 1;
+}
+
+.nfce-emitente {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+    margin-bottom: 10px;
+}
+
+.nfce-emitente strong {
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+    font-size: 1.6rem;
+    color: var(--chocolate-color);
+}
+
+.nfce-emitente span {
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    font-size: 1.2rem;
+    color: #666;
+}
+
+.nfce-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-bottom: 10px;
+    margin-bottom: 0px;
+    flex-shrink: 0;
+}
+
+.nfce-info span {
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    font-size: 1.2rem;
+    color: #444;
+    word-break: break-all;
+}
+
+.table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    border-top: 2px solid #eee;
+    border-bottom: 2px solid #eee;
+    margin-bottom: 10px;
+}
+
+.nfce-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0px;
+}
+
+.nfce-table thead th {
+    position: sticky;
+    top: 0;
+    background-color: var(--light-color);
+    z-index: 10;
+}
+
+.nfce-table th {
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+    font-size: 1.2rem;
+    color: var(--chocolate-color);
+    text-align: left;
+    padding: 8px;
+    border-bottom: 2px solid var(--chocolate-color);
+}
+
+.nfce-table td {
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    font-size: 1.1rem;
+    padding: 6px 8px;
+    border-bottom: 1px solid #eee;
+    color: #333;
+}
+
+.nfce-total {
+    text-align: right;
+    padding-top: 10px;
+    border-top: 2px solid var(--chocolate-color);
+}
+
+.nfce-total strong {
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+    font-size: 2rem;
+    color: var(--chocolate-color);
+}
+
+.item-row {
+    transition: background-color 0.2s;
+}
+
+.item-row:hover {
+    opacity: 0.8;
+}
+
+.item-row.item-selected {
+    background-color: #d4edda;
+}
+
+.item-row.item-selected td {
+    color: #155724;
+    font-weight: bold;
+}
+
+.error-msg {
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    font-size: 1.5rem;
+    color: #dc3545;
+    text-align: center;
+    padding: 20px;
+}
+
+.footer{
+   height: 50px !important;
+}

@@ -15,9 +15,9 @@ function onScanSuccess(decodedText, decodedResult) {
     fetch(`/api/tags/${decodedText}`, {
         method: 'GET',
         headers: {
-            'x-api-key': 'capibarra-tablet-03',
-            'x-device-id': 'tablet-03',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'x-api-key': 'capibarra-tablet-01',
+            'x-device-id': 'tablet-01'
         }
     }).then(resp => {
         if (!resp.ok) {
@@ -47,9 +47,9 @@ async function deactivateTag(tag_key) {
     fetch(`/api/tags/${tag_key}/deactivate`, {
         method: 'POST',
         headers: {
-            'x-api-key': 'capibarra-tablet-03',
-            'x-device-id': 'tablet-03',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'x-api-key': 'capibarra-tablet-01',
+            'x-device-id': 'tablet-01'
         },
         body: JSON.stringify({ "reason": "used_for_play" })
     }).then(response => {
