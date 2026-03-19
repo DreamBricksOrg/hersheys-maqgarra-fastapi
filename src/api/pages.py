@@ -12,7 +12,7 @@ TEMPLATES_DIR = os.path.normpath(os.path.join(BASE_DIR, "..", "static", "templat
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
-@router.get("/", response_class=HTMLResponse, include_in_schema=False)
+@router.get("/tag_validation", response_class=HTMLResponse, include_in_schema=False)
 async def page_home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
@@ -32,9 +32,17 @@ async def page_more_receipts(request: Request):
 async def page_read_camera(request: Request):
     return templates.TemplateResponse("read-camera.html", {"request": request})
 
+@router.get("/tag-type", response_class=HTMLResponse, include_in_schema=False)
+async def page_tag_type(request: Request):
+    return templates.TemplateResponse("tag-type.html", {"request": request})
+
 @router.get("/associate-tag", response_class=HTMLResponse, include_in_schema=False)
 async def page_associate_tag(request: Request):
     return templates.TemplateResponse("associate-tag.html", {"request": request})
+
+@router.get("/associate-tag-physical", response_class=HTMLResponse, include_in_schema=False)
+async def page_associate_tag_physical(request: Request):
+    return templates.TemplateResponse("associate-tag-physical.html", {"request": request})
 
 @router.get("/add-manually", response_class=HTMLResponse, include_in_schema=False)
 async def page_add_manually(request: Request):
@@ -43,7 +51,15 @@ async def page_add_manually(request: Request):
 @router.get("/user-qrcode", response_class=HTMLResponse, include_in_schema=False)
 async def page_user_qrcode(request: Request):
     return templates.TemplateResponse("user-qrcode.html", {"request": request})
-    
+
+@router.get("/user-terms", response_class=HTMLResponse, include_in_schema=False)
+async def page_user_terms(request: Request):
+    return templates.TemplateResponse("user-terms.html", {"request": request})
+
+@router.get("/user-phone", response_class=HTMLResponse, include_in_schema=False)
+async def page_user_phone(request: Request):
+    return templates.TemplateResponse("user-phone.html", {"request": request})
+        
 @router.get("/tag-validation", response_class=HTMLResponse, include_in_schema=False)
 async def page_tag_validation(request: Request):
     return templates.TemplateResponse("tag_validation.html", {"request": request})

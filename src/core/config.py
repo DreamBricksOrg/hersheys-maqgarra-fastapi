@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     NF_API_KEY: str = Field("", env="NF_API_KEY")
     NF_BASE_API: str = Field("https://api.webmania.com.br/2", env="NF_BASE_API")
     
+    DEVICE_ID_HEADER: str = Field(..., env="DEVICE_ID_HEADER") 
+    API_KEY_HEADER: str = Field(..., env="API_KEY_HEADER")
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

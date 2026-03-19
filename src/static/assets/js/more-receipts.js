@@ -15,6 +15,6 @@ btnNao.addEventListener('click', () => {
             window.location.href = '/pages/';
         }, 3000);
     } else {
-        window.location.href = '/pages/associate-tag';
+        window.location.href = '/pages/tag-type';
     }
-});
+});

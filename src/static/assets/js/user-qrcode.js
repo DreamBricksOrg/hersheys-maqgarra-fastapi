@@ -5,7 +5,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const dotsContainer = document.getElementById('carouselDots');
     const numeroEl = document.getElementById('numeroValue');
     const posicaoEl = document.getElementById('posicaoValue');
+    const btnWarnMe = document.getElementById('btn_warn_me')
 
+    btnWarnMe.addEventListener('click', () => {
+        window.location.href = '/pages/user-terms';
+    });
     // Expected tags format: ?tags=KEY1,KEY2,KEY3
     const tagsParam = params.get('tags');
     const tagsArray = tagsParam ? tagsParam.split(',') : ['QRCODE-1'];

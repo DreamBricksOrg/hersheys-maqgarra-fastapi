@@ -47,10 +47,9 @@ async function deactivateTag(tag_key) {
         },
         body: JSON.stringify({ "reason": "used_for_play" })
     }).then(response => {
-        if(!response.ok)
-        {
+        if (!response.ok) {
             throw new Error(`HTTP error: ${response.status}`)
-        }        
+        }
     });
 }
 

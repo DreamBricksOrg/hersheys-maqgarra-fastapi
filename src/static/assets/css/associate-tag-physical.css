@@ -1,0 +1,132 @@
+.content{
+    display: flex;
+    flex:1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    z-index: 1;
+    gap: 1rem;
+}
+
+.content h1{
+    font-size: 2rem;
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    color: var(--light-color);
+}
+
+.content span{
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+}
+
+.buttons{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    gap: 2rem;
+}
+
+@media (orientation: portrait) {
+    .buttons {
+        width: 90vw;
+    }
+}
+
+button{
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    border-radius: 2rem;
+    cursor: pointer;
+    padding: 10px 20px;
+    border: none;
+    background-color: var(--chocolate-color);
+    color: var(--light-color);
+    font-size: 2rem;
+}
+
+input{
+    width: 100%;
+    height: 3rem;
+    border-radius: 2rem;
+    border: none;
+    padding: 10px 20px;
+    font-size: 2rem;
+    text-align: center;
+}
+
+/* Input Wrapper */
+.input-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 3rem;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    background-color: var(--light-color);
+    padding: 40px;
+    border-radius: 2rem;
+    text-align: center;
+    max-width: 90%;
+    max-height: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.modal-content h2 {
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+    color: var(--chocolate-color);
+    margin: 0;
+}
+
+.tag-value {
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    font-size: 2rem;
+    color: #333;
+    word-break: break-all;
+    padding: 15px 25px;
+    background-color: #f5f5f5;
+    border-radius: 1rem;
+    border: 2px solid #ccc;
+    min-width: 300px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    justify-content: center;
+}
+
+.modal-actions .btn {
+    font-size: 2rem;
+    padding: 15px 30px;
+    flex: 1;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+}
+
+.btn-primary {
+    background-color: #28a745;
+}
+
+.footer{
+   height: 50px !important;
+}
