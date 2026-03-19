@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 
 from api.dependencies import get_queue_intake_service, get_queue_service, require_auth
 from schemas.auth import AuthContext
@@ -97,6 +97,19 @@ async def validate_queue_player(
     service: QueueService = Depends(get_queue_service),
 ) -> QueueValidateResponse:
     return await service.validate_for_play(player_id)
+
+
+@router.post("/play")
+async def play_queue_turn(
+    player_id: str = Body(..., embed=True),
+    tag_key: str = Body(..., embed=True),
+    auth: AuthContext = Depends(require_auth),
+    service: QueueService = Depends(get_queue_service),
+) -> dict:
+    return await service.play(
+        player_id=player_id,
+        tag_key=tag_key,
+    )
 
 
 @router.post("/complete", response_model=QueueCompleteResponse)

@@ -27,8 +27,8 @@ class TagAssociationService:
         session = await self.session_repository.find_by_id(session_id)
         if not session:
             raise AppError(
-                "Sessão não encontrada",
                 "session_not_found",
+                "Sessão não encontrada",
                 404,
                 {"session_id": session_id},
             )
@@ -41,8 +41,8 @@ class TagAssociationService:
 
         if len(valid_tags) >= max_tags:
             raise AppError(
-                "Limite de tags válidas da sessão já foi atingido",
                 "session_tag_limit_reached",
+                "Limite de tags válidas da sessão já foi atingido",
                 409,
                 {
                     "session_id": session_id,
@@ -53,16 +53,16 @@ class TagAssociationService:
 
         return session
 
-    async def _generate_unique_tag_key(self) -> str:
+    async def _generate_unique_digital_tag_key(self) -> str:
         for _ in range(100):
-            tag_key = f"T{secrets.randbelow(10000):04d}"
+            tag_key = f"{secrets.randbelow(100000000):08d}"
             existing = await self.tag_repository.find_by_key(tag_key)
             if not existing:
                 return tag_key
 
         raise AppError(
-            "Não foi possível gerar uma tag única",
             "tag_generation_failed",
+            "Não foi possível gerar uma tag digital única",
             500,
         )
 
@@ -71,13 +71,13 @@ class TagAssociationService:
 
         if payload.delivery_mode != "digital":
             raise AppError(
-                "A rota de geração automática é destinada a tags digitais",
                 "invalid_delivery_mode",
+                "A rota de geração automática é destinada a tags digitais",
                 422,
                 {"delivery_mode": payload.delivery_mode},
             )
 
-        tag_key = await self._generate_unique_tag_key()
+        tag_key = await self._generate_unique_digital_tag_key()
         created = await self.tag_repository.create(
             tag_key=tag_key,
             delivery_mode="digital",
@@ -103,8 +103,8 @@ class TagAssociationService:
 
         if payload.delivery_mode != "physical":
             raise AppError(
-                "A rota de associação é destinada a tags físicas",
                 "invalid_delivery_mode",
+                "A rota de associação é destinada a tags físicas",
                 422,
                 {"delivery_mode": payload.delivery_mode},
             )
@@ -113,8 +113,8 @@ class TagAssociationService:
             tag = await self.tag_repository.find_by_key(payload.tag_key)
             if not tag:
                 raise AppError(
-                    "Tag não encontrada",
                     "tag_not_found",
+                    "Tag não encontrada",
                     404,
                     {"tag_key": payload.tag_key},
                 )
@@ -122,39 +122,50 @@ class TagAssociationService:
             tag = await self.tag_repository.find_available_physical()
             if not tag:
                 raise AppError(
-                    "Não há tags físicas disponíveis",
                     "tag_not_available",
+                    "Não há tags físicas disponíveis",
                     409,
                 )
 
         status = tag.get("status")
         if status == "invalid":
-            raise AppError("Tag inválida", "tag_invalid", 409, {"tag_key": tag["tag_key"]})
+            raise AppError("tag_invalid", "Tag inválida", 409, {"tag_key": tag["tag_key"]})
 
         if status == "used":
-            raise AppError("Tag já foi usada", "tag_already_used", 409, {"tag_key": tag["tag_key"]})
+            raise AppError("tag_already_used", "Tag já foi usada", 409, {"tag_key": tag["tag_key"]})
 
         if status == "valid":
             raise AppError(
-                "Tag já está associada",
                 "tag_already_associated",
+                "Tag já está associada",
                 409,
                 {"tag_key": tag["tag_key"]},
             )
 
         if status != "available":
             raise AppError(
-                "Tag em estado inválido para associação",
                 "tag_invalid_state",
+                "Tag em estado inválido para associação",
                 409,
                 {"tag_key": tag["tag_key"], "status": status},
+            )
+
+        if tag.get("delivery_mode") != "physical":
+            raise AppError(
+                "invalid_tag_delivery_mode",
+                "A tag informada não é física",
+                409,
+                {
+                    "tag_key": tag["tag_key"],
+                    "delivery_mode": tag.get("delivery_mode"),
+                },
             )
 
         associated = await self.tag_repository.associate_one(payload.session_id, tag["tag_key"])
         if not associated:
             raise AppError(
-                "Não foi possível associar a tag à sessão",
                 "tag_association_failed",
+                "Não foi possível associar a tag à sessão",
                 409,
                 {"tag_key": tag["tag_key"], "session_id": payload.session_id},
             )
