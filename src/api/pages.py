@@ -12,7 +12,7 @@ TEMPLATES_DIR = os.path.normpath(os.path.join(BASE_DIR, "..", "static", "templat
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
-@router.get("/tag_validation", response_class=HTMLResponse, include_in_schema=False)
+@router.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def page_home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 

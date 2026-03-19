@@ -6,6 +6,7 @@ from db.utils import get_db
 from repositories.api_key_repository import ApiKeyRepository
 from repositories.audit_repository import AuditRepository
 from repositories.queue_repository import QueueRepository
+from repositories.bars_name_repository import BarsNameRepository
 from repositories.raw_payload_repository import RawPayloadRepository
 from repositories.receipt_repository import ReceiptRepository
 from repositories.session_repository import SessionRepository
@@ -18,6 +19,7 @@ from services.product_matching_service import ProductMatchingService
 from services.queue_intake_service import QueueIntakeService
 from services.queue_service import QueueService
 from services.receipt_image_service import ReceiptImageService
+from services.receipt_manual_service import ReceiptManualService
 from services.receipt_override_service import ReceiptOverrideService
 from services.receipt_qr_service import ReceiptQRService
 from services.receipt_validation_service import ReceiptValidationService
@@ -36,6 +38,16 @@ def get_observability_service(db: AsyncIOMotorDatabase = Depends(get_database)) 
     return ObservabilityService(AuditRepository(db))
 
 
+def get_bars_name_repository(db: AsyncIOMotorDatabase = Depends(get_database)) -> BarsNameRepository:
+    return BarsNameRepository(db)
+
+
+def get_product_matching_service(
+    repo: BarsNameRepository = Depends(get_bars_name_repository),
+) -> ProductMatchingService:
+    return ProductMatchingService(repo)
+
+
 async def require_auth(
     db: AsyncIOMotorDatabase = Depends(get_database),
     api_key: str | None = Header(default=None, alias=settings.API_KEY_HEADER),
@@ -51,7 +63,7 @@ def get_receipt_qr_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> 
     observability = ObservabilityService(AuditRepository(db))
     return ReceiptQRService(
         parser_service=ParserService(),
-        product_matching_service=ProductMatchingService(db),
+        product_matching_service=ProductMatchingService(BarsNameRepository(db)),
         receipt_validation_service=ReceiptValidationService(ReceiptRepository(db)),
         receipt_repository=ReceiptRepository(db),
         raw_payload_repository=RawPayloadRepository(db),
@@ -63,7 +75,7 @@ def get_receipt_image_service(db: AsyncIOMotorDatabase = Depends(get_database)) 
     observability = ObservabilityService(AuditRepository(db))
     return ReceiptImageService(
         parser_service=ParserService(),
-        product_matching_service=ProductMatchingService(db),
+        product_matching_service=ProductMatchingService(BarsNameRepository(db)),
         receipt_validation_service=ReceiptValidationService(ReceiptRepository(db)),
         receipt_repository=ReceiptRepository(db),
         raw_payload_repository=RawPayloadRepository(db),
@@ -102,6 +114,13 @@ def get_queue_intake_service(db: AsyncIOMotorDatabase = Depends(get_database)) -
         ),
         observability_service=ObservabilityService(AuditRepository(db)),
         mobile_base_url=settings.BASE_URL,
+    )
+
+
+def get_receipt_manual_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> ReceiptManualService:
+    return ReceiptManualService(
+        receipt_repository=ReceiptRepository(db),
+        observability_service=ObservabilityService(AuditRepository(db)),
     )
 
 

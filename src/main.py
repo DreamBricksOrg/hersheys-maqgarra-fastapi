@@ -23,6 +23,7 @@ from api.routes.receipts import router as receipts_router
 from api.routes.tags import router as tags_router
 from api.routes.queue import router as queue_router
 from api.routes.sessions import router as sessions_router
+from api.routes.products import router as products_router
 from api.uploads import router as router_uploads
 from api.webmanianfe import router as router_webmanianfe
 from api.nfce import router as router_nfce
@@ -122,6 +123,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(receipts_router)
     app.include_router(tags_router)
+    app.include_router(products_router)
     app.include_router(pages_router)
     app.include_router(queue_router)
     app.include_router(sessions_router)

@@ -15,8 +15,8 @@ async function updateRemaining() {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                    'capibarra-tablet-01': 'capibarra-tablet-01',
-                    'tablet-01': 'tablet-01'
+                    'x-api-key': 'capibarra-tablet-01',
+                    'x-device-id': 'tablet-01'
                 }
             });
 
@@ -33,14 +33,36 @@ async function updateRemaining() {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'capibarra-tablet-01': 'capibarra-tablet-01',
-                            'tablet-01': 'tablet-01'
+                            'x-api-key': 'capibarra-tablet-01',
+                            'x-device-id': 'tablet-01'
                         },
                         body: JSON.stringify({ reason: "associated_for_play" })
                     });
                 } catch (activationError) {
                     console.error(`Failed to activate tag ${tagKey}:`, activationError);
                 }
+            }
+
+            // Atrela as tags aos receipts atuais
+            try {
+                const receiptIds = getReceiptIds();
+                if (receiptIds.length > 0) {
+                    await fetch('/api/tags/associate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-api-key': 'capibarra-tablet-01',
+                            'x-device-id': 'tablet-01'
+                        },
+                        body: JSON.stringify({
+                            receipt_ids: receiptIds,
+                            tags: data.tags
+                        })
+                    });
+                    console.log('[DEBUG] Tags associadas aos receipts:', receiptIds);
+                }
+            } catch (assocError) {
+                console.error('Erro ao associar tags aos receipts:', assocError);
             }
 
             const tagKeys = data.tags.join(','); // Create comma-separated string
@@ -58,5 +80,6 @@ updateRemaining();
 
 btnVoltar.addEventListener('click', () => {
     resetCounters();
+    clearReceiptIds();
     window.location.href = '/pages/';
 });

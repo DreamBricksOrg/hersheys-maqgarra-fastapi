@@ -61,10 +61,14 @@
                 <svg viewBox="0 0 24 24" style="width: 70px; height: 70px; fill: #dc3545; margin-bottom: 15px;">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
-                <h2>Erro ao ler nota</h2>
-                <div class="modal-actions">
+                <h2 id="errorTitle">Erro ao ler nota</h2>
+                <p id="errorSubtitle" style="color: #666; margin: 8px 0 16px; font-size: 14px; display: none;"></p>
+                <div class="modal-actions" id="errorDefaultActions">
                     <button id="retryBtn" class="btn btn-secondary">Tentar Novamente</button>
                     <button id="addManualBtn" class="btn btn-primary">Adicionar Manual</button>
+                </div>
+                <div class="modal-actions" id="errorDuplicateActions" style="display: none;">
+                    <button id="dismissBtn" class="btn btn-primary">Entendido</button>
                 </div>
             </div>
         </div>

@@ -28,28 +28,46 @@ class ReceiptQRService:
         self.raw_payload_repository = raw_payload_repository
         self.observability_service = observability_service
 
-    async def execute(self, qr_value: str) -> ReceiptResponse:
-        try:
-            raw_payload = self.parser_service.parse_qr(qr_value)
-        except RuntimeError as exc:
-            raise HTTPException(status_code=502, detail=str(exc))
-        except ValueError as exc:
-            raise HTTPException(status_code=422, detail=str(exc))
+    async def execute(
+        self,
+        qr_value: str = "",
+        scraped_payload: dict | None = None,
+        matched_items: list[dict] | None = None,
+        qr_url: str | None = None,
+    ) -> ReceiptResponse:
+        if scraped_payload is not None:
+            raw_payload = scraped_payload
+            await self.observability_service.emit("receipt-qr-received", {"qr_url": qr_url or ""})
+        else:
+            try:
+                raw_payload = self.parser_service.parse_qr(qr_value)
+            except RuntimeError as exc:
+                raise HTTPException(status_code=502, detail=str(exc))
+            except ValueError as exc:
+                raise HTTPException(status_code=422, detail=str(exc))
+            await self.observability_service.emit("receipt-qr-received", {"qr_length": len(qr_value)})
 
         response_raw_payload = deepcopy(raw_payload)
-
-        await self.observability_service.emit("receipt-qr-received", {"qr_length": len(qr_value)})
-        await self.observability_service.emit("receipt-qr-parsed", {"receipt_key": raw_payload.get("chave")})
-
         receipt_key = raw_payload.get("chave")
+        await self.observability_service.emit("receipt-qr-parsed", {"receipt_key": receipt_key})
         await self.receipt_validation_service.ensure_not_duplicate(receipt_key)
 
-        await self.observability_service.emit("product_matching-started", {"receipt_key": receipt_key})
-        items, found_bars = await self.product_matching_service.match_products(raw_payload.get("produtos", []))
-        await self.observability_service.emit(
-            "product_matching-finished",
-            {"receipt_key": receipt_key, "found_bars": found_bars},
-        )
+        if matched_items is not None:
+            items = matched_items
+            found_bars = sum(
+                i.get("quantity", 0) for i in items if i.get("matched", False)
+            )
+        else:
+            await self.observability_service.emit("product_matching-started", {"receipt_key": receipt_key})
+            items, found_bars = await self.product_matching_service.match_products(
+                raw_payload.get("produtos", [])
+            )
+            await self.observability_service.emit(
+                "product_matching-finished",
+                {"receipt_key": receipt_key, "found_bars": found_bars},
+            )
+
+        matched_only = [i for i in items if i.get("matched", False)]
 
         review = False
         status = self.receipt_validation_service.build_status(found_bars, review)
@@ -65,12 +83,12 @@ class ReceiptQRService:
             "status": status,
             "raw_payload_id": raw_payload_id,
             "raw_payload": response_raw_payload,
-            "items": items,
+            "items": matched_only,
             "session_id": None,
+            "qr_url": qr_url,
         }
 
         created = await self.receipt_repository.create(payload)
-
         await self.observability_service.emit(
             "receipt-validation-finished",
             {"receipt_id": str(created["_id"]), "status": status},
@@ -85,7 +103,7 @@ class ReceiptQRService:
             final_bars=created["final_bars"],
             review=created["review"],
             status=created["status"],
-            items=[ReceiptItemResponse(**item) for item in created.get("items", [])],
+            items=[ReceiptItemResponse(**item) for item in matched_only],
             raw_payload=created.get("raw_payload"),
             session_id=str(created["session_id"]) if created.get("session_id") else None,
         )
