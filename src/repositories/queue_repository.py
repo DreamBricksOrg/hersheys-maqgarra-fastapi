@@ -1,10 +1,12 @@
 from datetime import datetime, timezone
 
 from bson import ObjectId
-from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection
+from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorDatabase
 
 
 class QueueRepository:
+    ACTIVE_STATUSES = ["waiting", "requeued", "called", "playing"]
+
     def __init__(self, db: AsyncIOMotorDatabase):
         self.collection: AsyncIOMotorCollection = db.queue
         self.state_collection: AsyncIOMotorCollection = db.queue_state
@@ -22,6 +24,15 @@ class QueueRepository:
     async def get_next_queue_number(self) -> int:
         last = await self.find_last_queue_entry()
         return (last["queue_number"] + 1) if last else 1
+
+    async def find_active_by_session_id(self, session_id: str) -> dict | None:
+        return await self.collection.find_one(
+            {
+                "session_id": ObjectId(session_id),
+                "status": {"$in": self.ACTIVE_STATUSES},
+            },
+            sort=[("queue_number", 1)],
+        )
 
     async def create_entry(
         self,
@@ -118,7 +129,7 @@ class QueueRepository:
 
     async def list_active_queue(self) -> list[dict]:
         cursor = self.collection.find(
-            {"status": {"$in": ["waiting", "requeued", "called", "playing"]}}
+            {"status": {"$in": self.ACTIVE_STATUSES}}
         ).sort("queue_number", 1)
         return await cursor.to_list(length=None)
 

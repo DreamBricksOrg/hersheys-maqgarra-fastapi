@@ -17,9 +17,15 @@ TagStatus = Literal["invalid", "available", "valid", "used"]
 TagDeliveryMode = Literal["digital", "physical"]
 
 
+class TagGenerateRequest(BaseModel):
+    session_id: ObjectIdStr
+    delivery_mode: TagDeliveryMode = "digital"
+
+
 class TagAssociateRequest(BaseModel):
     session_id: ObjectIdStr
-    tags: list[str]
+    delivery_mode: TagDeliveryMode = "physical"
+    tag_key: str | None = None
 
 
 class TagActivateRequest(BaseModel):
@@ -88,7 +94,7 @@ class TagResponse(BaseModel):
 
 class TagAssociateResponse(BaseModel):
     session_id: ObjectIdStr
-    tags: list[TagResponse]
+    tag: TagResponse
     associated: bool
 
 

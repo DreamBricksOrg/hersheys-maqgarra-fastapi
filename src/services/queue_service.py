@@ -33,6 +33,29 @@ class QueueService:
         if not session:
             raise AppError("session_not_found", "Sessão não encontrada", 404, {"session_id": session_id})
 
+        if not session.get("player_id"):
+            raise AppError(
+                "session_missing_player",
+                "A sessão precisa ter player_id antes de entrar na fila",
+                409,
+                {"session_id": session_id},
+            )
+
+        existing_entry = await self.queue_repository.find_active_by_session_id(session_id)
+        if existing_entry:
+            people_ahead = await self.queue_repository.count_people_ahead(existing_entry["queue_number"])
+
+            return QueueJoinResponse(
+                player_id=str(existing_entry["_id"]),
+                session_id=str(existing_entry["session_id"]),
+                queue_number=existing_entry["queue_number"],
+                status=existing_entry["status"],
+                total_plays=existing_entry["total_plays"],
+                remaining_plays=existing_entry["remaining_plays"],
+                people_ahead=people_ahead,
+                created_at=existing_entry["created_at"],
+            )
+
         next_number = await self.queue_repository.get_next_queue_number()
         created = await self.queue_repository.create_entry(
             session_id=session_id,
@@ -40,6 +63,9 @@ class QueueService:
             total_plays=total_plays,
         )
         people_ahead = await self.queue_repository.count_people_ahead(next_number)
+
+        await self.session_repository.set_queue_entry_id(session_id, str(created["_id"]))
+        await self.session_repository.update_status(session_id, "queued")
 
         await self.observability_service.emit(
             "queue-joined",
@@ -114,6 +140,7 @@ class QueueService:
             player_id=str(called["_id"]),
             status=called["status"],
         )
+        await self.session_repository.update_status(str(called["session_id"]), "called")
 
         waiting = await self.queue_repository.list_waiting_queue()
 
@@ -152,6 +179,8 @@ class QueueService:
                 player_id=str(playing["_id"]),
                 status=playing["status"],
             )
+            await self.session_repository.update_status(str(playing["session_id"]), "playing")
+
             await self.observability_service.emit(
                 "queue-play-allowed",
                 {
@@ -173,6 +202,8 @@ class QueueService:
 
         if player_queue_number <= current_queue_number + self.LATE_TOLERANCE:
             playing = await self.queue_repository.mark_playing(player_id)
+            await self.session_repository.update_status(str(playing["session_id"]), "playing")
+
             await self.observability_service.emit(
                 "queue-play-allowed",
                 {
@@ -198,6 +229,7 @@ class QueueService:
             new_queue_number=new_queue_number,
             old_queue_number=player_queue_number,
         )
+        await self.session_repository.update_status(str(requeued["session_id"]), "queued")
 
         await self.observability_service.emit(
             "queue-requeued",
@@ -237,8 +269,10 @@ class QueueService:
 
         if finished:
             updated = await self.queue_repository.mark_done(player_id, remaining_plays=remaining)
+            await self.session_repository.update_status(str(updated["session_id"]), "finished")
         else:
             updated = await self.queue_repository.touch_status(player_id, "done")
+            await self.session_repository.update_status(str(updated["session_id"]), "queued")
 
         await self.observability_service.emit(
             "queue-completed",
@@ -269,6 +303,7 @@ class QueueService:
             raise AppError("queue_entry_not_found", "Entrada da fila não encontrada", 404, {"player_id": current_player_id})
 
         skipped = await self.queue_repository.mark_skipped(current_player_id)
+        await self.session_repository.update_status(str(skipped["session_id"]), "queued")
 
         await self.observability_service.emit(
             "queue-skipped",
@@ -294,6 +329,7 @@ class QueueService:
             player_id=str(called["_id"]),
             status=called["status"],
         )
+        await self.session_repository.update_status(str(called["session_id"]), "called")
 
         return QueueSkipResponse(
             skipped_player_id=str(skipped["_id"]),
@@ -315,7 +351,7 @@ class QueueService:
     async def get_mobile_view(self, player_id: str, mobile_base_url: str) -> dict:
         entry = await self.queue_repository.find_by_id(player_id)
         if not entry:
-            raise AppError("Entrada da fila não encontrada", "queue_entry_not_found", 404, {"player_id": player_id})
+            raise AppError("queue_entry_not_found", "Entrada da fila não encontrada", 404, {"player_id": player_id})
 
         current_queue_number = await self.queue_repository.get_current_queue_number()
         people_ahead = await self.queue_repository.count_people_ahead(entry["queue_number"])

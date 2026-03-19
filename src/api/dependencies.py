@@ -23,6 +23,7 @@ from services.receipt_manual_service import ReceiptManualService
 from services.receipt_override_service import ReceiptOverrideService
 from services.receipt_qr_service import ReceiptQRService
 from services.receipt_validation_service import ReceiptValidationService
+from services.session_service import SessionService
 from services.session_tags_service import SessionTagsService
 from services.tag_association_service import TagAssociationService
 from services.tag_crud_service import TagCrudService
@@ -119,6 +120,14 @@ def get_queue_intake_service(db: AsyncIOMotorDatabase = Depends(get_database)) -
 
 def get_receipt_manual_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> ReceiptManualService:
     return ReceiptManualService(
+        receipt_repository=ReceiptRepository(db),
+        observability_service=ObservabilityService(AuditRepository(db)),
+    )
+
+
+def get_session_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> SessionService:
+    return SessionService(
+        session_repository=SessionRepository(db),
         receipt_repository=ReceiptRepository(db),
         observability_service=ObservabilityService(AuditRepository(db)),
     )

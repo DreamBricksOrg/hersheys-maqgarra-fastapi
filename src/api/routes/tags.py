@@ -21,7 +21,7 @@ from schemas.tags import (
     TagStatusResponse,
     TagUpdateRequest,
     TagUseRequest,
-    TagListResponse,
+    TagGenerateRequest,
 )
 from services.session_tags_service import SessionTagsService
 from services.tag_association_service import TagAssociationService
@@ -32,13 +32,22 @@ from services.tag_usage_service import TagUsageService
 router = APIRouter(prefix="/api/tags", tags=["tags"])
 
 
+@router.post("/generate", response_model=TagResponse)
+async def generate_tag(
+    payload: TagGenerateRequest,
+    auth: AuthContext = Depends(require_auth),
+    service: TagAssociationService = Depends(get_tag_association_service),
+) -> TagResponse:
+    return await service.generate(payload)
+
+
 @router.post("/associate", response_model=TagAssociateResponse)
-async def associate_tags(
+async def associate_tag(
     payload: TagAssociateRequest,
     auth: AuthContext = Depends(require_auth),
     service: TagAssociationService = Depends(get_tag_association_service),
 ) -> TagAssociateResponse:
-    return await service.execute(payload.session_id, payload.tags)
+    return await service.associate(payload)
 
 
 @router.post("/use", response_model=TagResponse)
@@ -59,14 +68,13 @@ async def get_tag_state(
     return await service.get_state(tag_key)
 
 
-@router.get("", response_model=TagListResponse)
-async def list_tags(
-    amount: int,
+@router.get("/available-keys", response_model=list[str])
+async def list_available_tag_keys(
+    amount: int = Query(10, ge=1, le=500),
     auth: AuthContext = Depends(require_auth),
     service: TagStateService = Depends(get_tag_state_service),
-) -> TagListResponse:
-    tags = await service.list_tags(amount)
-    return TagListResponse(tags=tags)
+) -> list[str]:
+    return await service.list_tags(amount)
 
 
 @router.post("/{tag_key}/activate", response_model=TagStatusResponse)
