@@ -1,12 +1,16 @@
 from repositories.bars_name_repository import BarsNameRepository
-
+from services.redis_service import RedisService
 
 class ProductMatchingService:
-    def __init__(self, bars_name_repository: BarsNameRepository):
+    def __init__(self, bars_name_repository: BarsNameRepository, redisService: RedisService):
         self.bars_name_repository = bars_name_repository
+        self.redisService = redisService 
 
     async def match_products(self, produtos: list[dict]) -> tuple[list[dict], int]:
-        known_names = await self.bars_name_repository.find_all_names()
+        known_names = self.redisService.get_list("bars_names")
+        if known_names is None:
+            known_names = await self.bars_name_repository.find_all_names()
+            self.redisService.add_to_redis_set("bars_names", known_names)
         matched_items: list[dict] = []
         total_bars = 0
 

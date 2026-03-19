@@ -28,6 +28,7 @@ from services.tag_association_service import TagAssociationService
 from services.tag_crud_service import TagCrudService
 from services.tag_state_service import TagStateService
 from services.tag_usage_service import TagUsageService
+from services.redis_service import RedisService
 
 
 async def get_database() -> AsyncIOMotorDatabase:
@@ -63,7 +64,7 @@ def get_receipt_qr_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> 
     observability = ObservabilityService(AuditRepository(db))
     return ReceiptQRService(
         parser_service=ParserService(),
-        product_matching_service=ProductMatchingService(BarsNameRepository(db)),
+        product_matching_service=ProductMatchingService(BarsNameRepository(db), RedisService()),
         receipt_validation_service=ReceiptValidationService(ReceiptRepository(db)),
         receipt_repository=ReceiptRepository(db),
         raw_payload_repository=RawPayloadRepository(db),
@@ -76,8 +77,8 @@ def get_receipt_image_service(db: AsyncIOMotorDatabase = Depends(get_database)) 
     observability = ObservabilityService(AuditRepository(db))
     return ReceiptImageService(
         parser_service=ParserService(),
-        product_matching_service=ProductMatchingService(BarsNameRepository(db)),
-        receipt_validation_service=ReceiptValidationService(ReceiptRepository(db)),
+        product_matching_service=ProductMatchingService(BarsNameRepository(db), RedisService()),
+        receipt_validation_service=ReceiptValidationService(ReceiptRepository(db), RedisService()),
         receipt_repository=ReceiptRepository(db),
         raw_payload_repository=RawPayloadRepository(db),
         redisService = RedisService(),

@@ -99,6 +99,7 @@ class ReceiptImageService:
             "image_path": image_path_str,
         }
         created = await self.receipt_repository.create(payload)
+        self.redisService.add_to_redis_set("receipt_key", raw_payload.get("chave"))
         await self.observability_service.emit("receipt-image-audited", {"receipt_id": str(created["_id"]), "image_path": str(output_path)})
 
         return ReceiptResponse(
