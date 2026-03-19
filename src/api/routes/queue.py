@@ -9,6 +9,7 @@ from schemas.queue import (
     QueueJoinRequest,
     QueueJoinResponse,
     QueueListResponse,
+    QueueMobileViewResponse,
     QueueNextResponse,
     QueueSkipResponse,
     QueueStateResponse,
@@ -63,12 +64,12 @@ async def list_active_queue(
     return await service.list_active()
 
 
-@router.get("/mobile/{player_id}")
+@router.get("/mobile/{player_id}", response_model=QueueMobileViewResponse)
 async def get_mobile_view(
     player_id: str,
     auth: AuthContext = Depends(require_auth),
     service: QueueService = Depends(get_queue_service),
-) -> dict:
+) -> QueueMobileViewResponse:
     return await service.get_mobile_view(player_id=player_id)
 
 

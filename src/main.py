@@ -24,11 +24,10 @@ from api.routes.tags import router as tags_router
 from api.routes.queue import router as queue_router
 from api.routes.sessions import router as sessions_router
 from api.routes.products import router as products_router
-from api.uploads import router as router_uploads
-from api.webmanianfe import router as router_webmanianfe
-from api.nfce import router as router_nfce
+from api.uploads import router as uploads_router
+from api.webmanianfe import router as webmanianfe_router
+from api.nfce import router as nfce_router
 from api.pages import router as pages_router
-
 
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -127,9 +126,9 @@ def create_app() -> FastAPI:
     app.include_router(pages_router)
     app.include_router(queue_router)
     app.include_router(sessions_router)
-    app.include_router(router_uploads)
-    app.include_router(router_webmanianfe)
-    app.include_router(router_nfce)
+    app.include_router(uploads_router)
+    app.include_router(webmanianfe_router)
+    app.include_router(nfce_router)
 
     @app.exception_handler(AppError)
     async def app_error_handler(request: Request, exc: AppError):

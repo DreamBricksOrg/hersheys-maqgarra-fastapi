@@ -98,6 +98,20 @@ class QueueStateResponse(BaseModel):
     requeued_from: int | None = None
 
 
+class QueueMobileViewResponse(BaseModel):
+    player_id: str
+    session_id: str
+    queue_number: int
+    current_queue_number: int | None = None
+    people_ahead: int
+    can_play: bool
+    status: str
+    total_plays: int
+    remaining_plays: int
+    qr_value: str
+    qr_url: str
+
+
 class QueueCurrentResponse(BaseModel):
     current_queue_number: int | None = None
     current_player_id: str | None = None
