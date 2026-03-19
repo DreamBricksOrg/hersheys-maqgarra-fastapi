@@ -53,6 +53,9 @@ class QueueRepository:
             "completed_at": None,
             "requeued_from": None,
             "last_updated_at": now,
+            "registration_sms_sent_at": None,
+            "fifth_position_sms_sent_at": None,
+            "next_up_sms_sent_at": None,
         }
         result = await self.collection.insert_one(payload)
         return await self.collection.find_one({"_id": result.inserted_id})
@@ -118,6 +121,20 @@ class QueueRepository:
             },
         )
         return await self.find_by_id(player_id)
+
+    async def update_one_force_finish(self, player_id: str) -> None:
+        now = datetime.now(timezone.utc)
+        await self.collection.update_one(
+            {"_id": ObjectId(player_id)},
+            {
+                "$set": {
+                    "status": "done",
+                    "remaining_plays": 0,
+                    "completed_at": now,
+                    "last_updated_at": now,
+                }
+            },
+        )
 
     async def mark_skipped(self, player_id: str) -> dict | None:
         now = datetime.now(timezone.utc)
@@ -230,3 +247,36 @@ class QueueRepository:
             },
         )
         return await self.find_by_id(player_id)
+
+    async def mark_registration_sms_sent(self, player_id: str) -> None:
+        await self.collection.update_one(
+            {"_id": ObjectId(player_id)},
+            {
+                "$set": {
+                    "registration_sms_sent_at": datetime.now(timezone.utc),
+                    "last_updated_at": datetime.now(timezone.utc),
+                }
+            },
+        )
+
+    async def mark_fifth_position_sms_sent(self, player_id: str) -> None:
+        await self.collection.update_one(
+            {"_id": ObjectId(player_id)},
+            {
+                "$set": {
+                    "fifth_position_sms_sent_at": datetime.now(timezone.utc),
+                    "last_updated_at": datetime.now(timezone.utc),
+                }
+            },
+        )
+
+    async def mark_next_up_sms_sent(self, player_id: str) -> None:
+        await self.collection.update_one(
+            {"_id": ObjectId(player_id)},
+            {
+                "$set": {
+                    "next_up_sms_sent_at": datetime.now(timezone.utc),
+                    "last_updated_at": datetime.now(timezone.utc),
+                }
+            },
+        )

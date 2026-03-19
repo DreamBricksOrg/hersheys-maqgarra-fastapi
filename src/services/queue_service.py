@@ -1,3 +1,5 @@
+import logging
+
 from core.exceptions import AppError
 from repositories.queue_repository import QueueRepository
 from repositories.session_repository import SessionRepository
@@ -15,6 +17,14 @@ from schemas.queue import (
     QueueValidateResponse,
 )
 from services.observability_service import ObservabilityService
+from util.sms import (
+    send_queue_fifth_position_sms,
+    send_queue_next_up_sms,
+    send_queue_registration_sms,
+)
+
+
+logger = logging.getLogger(__name__)
 
 
 class QueueService:
@@ -34,20 +44,103 @@ class QueueService:
         self.observability_service = observability_service
         self.mobile_base_url = mobile_base_url.rstrip("/")
 
+    async def _send_registration_sms_if_possible(self, session: dict, queue_entry: dict) -> None:
+        phone = session.get("phone")
+        if not phone:
+            return
+
+        if queue_entry.get("registration_sms_sent_at"):
+            return
+
+        sent = send_queue_registration_sms(
+            destination_number=phone,
+            queue_number=queue_entry["queue_number"],
+        )
+        if sent:
+            await self.queue_repository.mark_registration_sms_sent(str(queue_entry["_id"]))
+        else:
+            logger.warning(
+                "queue.sms_registration_failed",
+                extra={
+                    "session_id": str(session["_id"]),
+                    "player_id": str(queue_entry["_id"]),
+                    "queue_number": queue_entry["queue_number"],
+                },
+            )
+
+    async def _send_fifth_position_sms_if_needed(self) -> None:
+        waiting_entries = await self.queue_repository.list_waiting_queue()
+
+        for item in waiting_entries:
+            if item.get("fifth_position_sms_sent_at"):
+                continue
+
+            people_ahead = await self.queue_repository.count_people_ahead(item["queue_number"])
+            if people_ahead != 4:
+                continue
+
+            session = await self.session_repository.find_by_id(str(item["session_id"]))
+            if not session or not session.get("phone"):
+                continue
+
+            sent = send_queue_fifth_position_sms(
+                destination_number=session["phone"],
+                queue_number=item["queue_number"],
+            )
+            if sent:
+                await self.queue_repository.mark_fifth_position_sms_sent(str(item["_id"]))
+            else:
+                logger.warning(
+                    "queue.sms_fifth_position_failed",
+                    extra={
+                        "session_id": str(item["session_id"]),
+                        "player_id": str(item["_id"]),
+                        "queue_number": item["queue_number"],
+                    },
+                )
+
+    async def _send_next_up_sms_if_needed(self) -> None:
+        next_after_called = await self.queue_repository.get_next_waiting_entry()
+        if not next_after_called:
+            return
+
+        if next_after_called.get("next_up_sms_sent_at"):
+            return
+
+        session = await self.session_repository.find_by_id(str(next_after_called["session_id"]))
+        if not session or not session.get("phone"):
+            return
+
+        sent = send_queue_next_up_sms(
+            destination_number=session["phone"],
+            queue_number=next_after_called["queue_number"],
+        )
+        if sent:
+            await self.queue_repository.mark_next_up_sms_sent(str(next_after_called["_id"]))
+        else:
+            logger.warning(
+                "queue.sms_next_up_failed",
+                extra={
+                    "session_id": str(next_after_called["session_id"]),
+                    "player_id": str(next_after_called["_id"]),
+                    "queue_number": next_after_called["queue_number"],
+                },
+            )
+
     async def join(self, session_id: str, total_plays: int = 1) -> QueueJoinResponse:
         session = await self.session_repository.find_by_id(session_id)
         if not session:
             raise AppError(
-                "session_not_found",
                 "Sessão não encontrada",
+                "session_not_found",
                 404,
                 {"session_id": session_id},
             )
 
         if not session.get("player_id"):
             raise AppError(
-                "session_missing_player",
                 "A sessão precisa ter player_id antes de entrar na fila",
+                "session_missing_player",
                 409,
                 {"session_id": session_id},
             )
@@ -57,8 +150,8 @@ class QueueService:
 
         if total_plays and total_plays != session_total_plays:
             raise AppError(
-                "queue_total_plays_mismatch",
                 "total_plays da fila difere do total_plays da sessão",
+                "queue_total_plays_mismatch",
                 409,
                 {
                     "session_id": session_id,
@@ -103,6 +196,8 @@ class QueueService:
             },
         )
 
+        await self._send_registration_sms_if_possible(session, created)
+
         return QueueJoinResponse(
             player_id=str(created["_id"]),
             session_id=str(created["session_id"]),
@@ -118,8 +213,8 @@ class QueueService:
         entry = await self.queue_repository.find_by_id(player_id)
         if not entry:
             raise AppError(
-                "queue_entry_not_found",
                 "Entrada da fila não encontrada",
+                "queue_entry_not_found",
                 404,
                 {"player_id": player_id},
             )
@@ -164,8 +259,8 @@ class QueueService:
         if not next_entry:
             await self.queue_repository.clear_current_queue_number()
             raise AppError(
-                "queue_empty",
                 "Não há mais pessoas aguardando na fila",
+                "queue_empty",
                 404,
             )
 
@@ -187,6 +282,9 @@ class QueueService:
             },
         )
 
+        await self._send_fifth_position_sms_if_needed()
+        await self._send_next_up_sms_if_needed()
+
         return QueueNextResponse(
             current_queue_number=called["queue_number"],
             player=QueueEntryResponse.model_validate(called),
@@ -197,16 +295,16 @@ class QueueService:
         entry = await self.queue_repository.find_by_id(player_id)
         if not entry:
             raise AppError(
-                "queue_entry_not_found",
                 "Entrada da fila não encontrada",
+                "queue_entry_not_found",
                 404,
                 {"player_id": player_id},
             )
 
         if entry["status"] == "done":
             raise AppError(
-                "queue_entry_finished",
                 "Esta entrada da fila já foi concluída",
+                "queue_entry_finished",
                 409,
                 {"player_id": player_id},
             )
@@ -214,8 +312,8 @@ class QueueService:
         current_queue_number = await self.queue_repository.get_current_queue_number()
         if current_queue_number is None:
             raise AppError(
-                "queue_not_started",
                 "A fila ainda não foi iniciada no tablet",
+                "queue_not_started",
                 409,
             )
 
@@ -304,24 +402,24 @@ class QueueService:
         entry = await self.queue_repository.find_by_id(player_id)
         if not entry:
             raise AppError(
-                "queue_entry_not_found",
                 "Entrada da fila não encontrada",
+                "queue_entry_not_found",
                 404,
                 {"player_id": player_id},
             )
 
         if entry["status"] in {"done", "skipped"}:
             raise AppError(
-                "queue_entry_not_playable",
                 "A entrada da fila não está em estado jogável",
+                "queue_entry_not_playable",
                 409,
                 {"player_id": player_id, "status": entry["status"]},
             )
 
         if int(entry.get("remaining_plays", 0)) <= 0:
             raise AppError(
-                "queue_no_remaining_plays",
                 "Não há mais jogadas restantes para esta entrada da fila",
+                "queue_no_remaining_plays",
                 409,
                 {"player_id": player_id},
             )
@@ -329,8 +427,8 @@ class QueueService:
         current_queue_number = await self.queue_repository.get_current_queue_number()
         if current_queue_number is None:
             raise AppError(
-                "queue_not_started",
                 "A fila ainda não foi iniciada no tablet",
+                "queue_not_started",
                 409,
             )
 
@@ -382,8 +480,8 @@ class QueueService:
         tag = await self.tag_repository.find_by_key(tag_key)
         if not tag:
             raise AppError(
-                "tag_not_found",
                 "Tag não encontrada",
+                "tag_not_found",
                 404,
                 {"tag_key": tag_key},
             )
@@ -391,8 +489,8 @@ class QueueService:
         tag_session_id = tag.get("session_id")
         if not tag_session_id or str(tag_session_id) != str(entry["session_id"]):
             raise AppError(
-                "tag_not_belongs_to_session",
                 "A tag não pertence à sessão da fila",
+                "tag_not_belongs_to_session",
                 409,
                 {
                     "tag_key": tag_key,
@@ -404,8 +502,8 @@ class QueueService:
         tag_status = tag.get("status")
         if tag_status != "valid":
             raise AppError(
-                "tag_invalid_state",
                 "A tag não está válida para jogar",
+                "tag_invalid_state",
                 409,
                 {"tag_key": tag_key, "status": tag_status},
             )
@@ -413,8 +511,8 @@ class QueueService:
         updated_tag = await self.tag_repository.mark_used(tag_key)
         if not updated_tag:
             raise AppError(
-                "tag_use_failed",
                 "Não foi possível consumir a tag",
+                "tag_use_failed",
                 500,
                 {"tag_key": tag_key},
             )
@@ -463,8 +561,8 @@ class QueueService:
         entry = await self.queue_repository.find_by_id(player_id)
         if not entry:
             raise AppError(
-                "queue_entry_not_found",
                 "Entrada da fila não encontrada",
+                "queue_entry_not_found",
                 404,
                 {"player_id": player_id},
             )
@@ -493,8 +591,8 @@ class QueueService:
         state = await self.queue_repository.get_current_state()
         if not state or not state.get("player_id"):
             raise AppError(
-                "queue_no_current_player",
                 "Nenhum jogador atual foi chamado",
+                "queue_no_current_player",
                 404,
             )
 
@@ -502,8 +600,8 @@ class QueueService:
         current_entry = await self.queue_repository.find_by_id(current_player_id)
         if not current_entry:
             raise AppError(
-                "queue_entry_not_found",
                 "Entrada da fila não encontrada",
+                "queue_entry_not_found",
                 404,
                 {"player_id": current_player_id},
             )
@@ -537,6 +635,9 @@ class QueueService:
         )
         await self.session_repository.update_status(str(called["session_id"]), "called")
 
+        await self._send_fifth_position_sms_if_needed()
+        await self._send_next_up_sms_if_needed()
+
         return QueueSkipResponse(
             skipped_player_id=str(skipped["_id"]),
             skipped_queue_number=skipped["queue_number"],
@@ -558,8 +659,8 @@ class QueueService:
         entry = await self.queue_repository.find_by_id(player_id)
         if not entry:
             raise AppError(
-                "queue_entry_not_found",
                 "Entrada da fila não encontrada",
+                "queue_entry_not_found",
                 404,
                 {"player_id": player_id},
             )
