@@ -4,6 +4,8 @@ const STORAGE_KEYS = {
     BARRAS: 'counter_barras',
     TAGS: 'counter_tags',
     RECEIPT_IDS: 'receipt_ids',
+    PLAYER_ID: 'player_id',
+    SESSION_ID: 'session_id',
 };
 
 // ── Receipt IDs ──────────────────────────────────────────────────────────────
@@ -23,6 +25,45 @@ function addReceiptId(receiptId) {
 
 function clearReceiptIds() {
     localStorage.removeItem(STORAGE_KEYS.RECEIPT_IDS);
+}
+
+// ── Player ID ────────────────────────────────────────────────────────────────
+
+function generateObjectId() {
+    const timestamp = Math.floor(new Date().getTime() / 1000).toString(16);
+    return timestamp + 'xxxxxxxxxxxxxxxx'.replace(/[x]/g, () => {
+        return Math.floor(Math.random() * 16).toString(16);
+    }).toLowerCase();
+}
+
+function getPlayerId() {
+    return localStorage.getItem(STORAGE_KEYS.PLAYER_ID);
+}
+
+function setPlayerId(id) {
+    if (id) {
+        localStorage.setItem(STORAGE_KEYS.PLAYER_ID, id);
+    } else {
+        localStorage.removeItem(STORAGE_KEYS.PLAYER_ID);
+    }
+}
+
+// ── Session ID ───────────────────────────────────────────────────────────────
+
+function getSessionId() {
+    return localStorage.getItem(STORAGE_KEYS.SESSION_ID);
+}
+
+function setSessionId(id) {
+    if (id) {
+        localStorage.setItem(STORAGE_KEYS.SESSION_ID, id);
+    } else {
+        localStorage.removeItem(STORAGE_KEYS.SESSION_ID);
+    }
+}
+
+function clearSessionId() {
+    localStorage.removeItem(STORAGE_KEYS.SESSION_ID);
 }
 
 // ── Barras / Tags ─────────────────────────────────────────────────────────────

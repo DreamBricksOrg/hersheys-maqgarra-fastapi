@@ -410,5 +410,5 @@ class QueueService:
             total_plays=entry["total_plays"],
             remaining_plays=entry["remaining_plays"],
             qr_value=str(entry["_id"]),
-            qr_url=f"{self.mobile_base_url}/{str(entry['_id'])}",
+            qr_url=f"{self.mobile_base_url}/user-qrcode?pid={str(entry['_id'])}",
         )

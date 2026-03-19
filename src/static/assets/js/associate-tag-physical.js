@@ -160,7 +160,9 @@ associateBtn.addEventListener('click', async () => {
     }
 });
 
-// Botão voltar
 btnVoltar.addEventListener('click', () => {
+    resetCounters();
+    clearReceiptIds();
+    clearSessionId();
     window.location.href = '/pages/';
 });

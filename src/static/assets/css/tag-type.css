@@ -33,3 +33,16 @@ button{
     font-size: 2rem;
     font-family: 'SharpGroteskPETrialBook', sans-serif;
 }
+
+.loader {
+    width: 60px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 8px solid rgba(255, 255, 255, 0.3);
+    border-right-color: #ffffff;
+    animation: l2 1s infinite linear;
+}
+
+@keyframes l2 {
+    to { transform: rotate(1turn); }
+}
