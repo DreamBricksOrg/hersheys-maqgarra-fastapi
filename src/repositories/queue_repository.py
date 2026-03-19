@@ -52,6 +52,7 @@ class QueueRepository:
             "played_at": None,
             "completed_at": None,
             "requeued_from": None,
+            "last_updated_at": now,
         }
         result = await self.collection.insert_one(payload)
         return await self.collection.find_one({"_id": result.inserted_id})
@@ -79,7 +80,13 @@ class QueueRepository:
         now = datetime.now(timezone.utc)
         await self.collection.update_one(
             {"_id": ObjectId(player_id)},
-            {"$set": {"status": "called", "called_at": now}},
+            {
+                "$set": {
+                    "status": "called",
+                    "called_at": now,
+                    "last_updated_at": now,
+                }
+            },
         )
         return await self.find_by_id(player_id)
 
@@ -87,7 +94,13 @@ class QueueRepository:
         now = datetime.now(timezone.utc)
         await self.collection.update_one(
             {"_id": ObjectId(player_id)},
-            {"$set": {"status": "playing", "played_at": now}},
+            {
+                "$set": {
+                    "status": "playing",
+                    "played_at": now,
+                    "last_updated_at": now,
+                }
+            },
         )
         return await self.find_by_id(player_id)
 
@@ -100,19 +113,27 @@ class QueueRepository:
                     "status": "done",
                     "completed_at": now,
                     "remaining_plays": remaining_plays,
+                    "last_updated_at": now,
                 }
             },
         )
         return await self.find_by_id(player_id)
 
     async def mark_skipped(self, player_id: str) -> dict | None:
+        now = datetime.now(timezone.utc)
         await self.collection.update_one(
             {"_id": ObjectId(player_id)},
-            {"$set": {"status": "skipped"}},
+            {
+                "$set": {
+                    "status": "skipped",
+                    "last_updated_at": now,
+                }
+            },
         )
         return await self.find_by_id(player_id)
 
     async def requeue(self, player_id: str, new_queue_number: int, old_queue_number: int) -> dict | None:
+        now = datetime.now(timezone.utc)
         await self.collection.update_one(
             {"_id": ObjectId(player_id)},
             {
@@ -122,6 +143,7 @@ class QueueRepository:
                     "requeued_from": old_queue_number,
                     "called_at": None,
                     "played_at": None,
+                    "last_updated_at": now,
                 }
             },
         )
@@ -180,16 +202,31 @@ class QueueRepository:
 
     async def decrement_remaining_play(self, player_id: str) -> int:
         doc = await self.find_by_id(player_id)
-        remaining = max((doc or {}).get("remaining_plays", 1) - 1, 0)
+        if not doc:
+            return 0
+
+        current_remaining = int(doc.get("remaining_plays", 1))
+        remaining = max(current_remaining - 1, 0)
+
         await self.collection.update_one(
             {"_id": ObjectId(player_id)},
-            {"$set": {"remaining_plays": remaining}},
+            {
+                "$set": {
+                    "remaining_plays": remaining,
+                    "last_updated_at": datetime.now(timezone.utc),
+                }
+            },
         )
         return remaining
 
     async def touch_status(self, player_id: str, status: str) -> dict | None:
         await self.collection.update_one(
             {"_id": ObjectId(player_id)},
-            {"$set": {"status": status}},
+            {
+                "$set": {
+                    "status": status,
+                    "last_updated_at": datetime.now(timezone.utc),
+                }
+            },
         )
         return await self.find_by_id(player_id)

@@ -19,6 +19,7 @@ SessionStatus = Literal["created", "queued", "called", "playing", "finished", "c
 class SessionCreateRequest(BaseModel):
     receipt_ids: list[ObjectIdStr] = Field(min_length=1)
     player_id: ObjectIdStr
+    total_plays: int = Field(default=1, ge=1, le=20)
     phone: str | None = None
 
 
@@ -34,6 +35,7 @@ class SessionResponse(BaseModel):
     tag_ids: list[ObjectIdStr] = Field(default_factory=list)
     player_id: ObjectIdStr
     queue_entry_id: ObjectIdStr | None = None
+    total_plays: int = 1
     phone: str | None = None
     status: SessionStatus = "created"
     created_at: datetime

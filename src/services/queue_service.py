@@ -47,6 +47,21 @@ class QueueService:
                 {"session_id": session_id},
             )
 
+        session_total_plays = int(session.get("total_plays", 1))
+        effective_total_plays = session_total_plays
+
+        if total_plays and total_plays != session_total_plays:
+            raise AppError(
+                "total_plays da fila difere do total_plays da sessão",
+                "queue_total_plays_mismatch",
+                409,
+                {
+                    "session_id": session_id,
+                    "session_total_plays": session_total_plays,
+                    "requested_total_plays": total_plays,
+                },
+            )
+
         existing_entry = await self.queue_repository.find_active_by_session_id(session_id)
         if existing_entry:
             people_ahead = await self.queue_repository.count_people_ahead(existing_entry["queue_number"])
@@ -66,7 +81,7 @@ class QueueService:
         created = await self.queue_repository.create_entry(
             session_id=session_id,
             queue_number=next_number,
-            total_plays=total_plays,
+            total_plays=effective_total_plays,
         )
         people_ahead = await self.queue_repository.count_people_ahead(next_number)
 
@@ -79,7 +94,7 @@ class QueueService:
                 "session_id": session_id,
                 "player_id": str(created["_id"]),
                 "queue_number": next_number,
-                "total_plays": total_plays,
+                "total_plays": effective_total_plays,
             },
         )
 
@@ -291,13 +306,12 @@ class QueueService:
             )
 
         remaining = await self.queue_repository.decrement_remaining_play(player_id)
-        finished = remaining <= 0
+        updated = await self.queue_repository.mark_done(player_id, remaining_plays=remaining)
 
+        finished = remaining <= 0
         if finished:
-            updated = await self.queue_repository.mark_done(player_id, remaining_plays=remaining)
             await self.session_repository.update_status(str(updated["session_id"]), "finished")
         else:
-            updated = await self.queue_repository.touch_status(player_id, "done")
             await self.session_repository.update_status(str(updated["session_id"]), "queued")
 
         await self.observability_service.emit(

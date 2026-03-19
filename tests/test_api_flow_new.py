@@ -1,6 +1,6 @@
+#!/usr/bin/env python3
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import sys
@@ -9,15 +9,16 @@ from typing import Any
 
 import requests
 from bson import ObjectId
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from pymongo import MongoClient
 
 
 BASE_URL = os.getenv("CAPIGARRA_BASE_URL", "http://localhost:8000").rstrip("/")
-MONGO_URI = os.getenv("CAPIGARRA_MONGO_URI", "mongodb://localhost:27017")
+MONGO_URI = os.getenv("CAPIGARRA_MONGO_DIRECT_URI") or os.getenv(
+    "CAPIGARRA_MONGO_URI", "mongodb://localhost:27017"
+)
 DB_NAME = os.getenv("CAPIGARRA_DB_NAME", "hersheys_capigarra")
 API_KEY = os.getenv("CAPIGARRA_API_KEY", "dev-api-key")
 DEVICE_ID = os.getenv("CAPIGARRA_DEVICE_ID", "capigarra-test-runner")
-
 TIMEOUT = int(os.getenv("CAPIGARRA_HTTP_TIMEOUT", "20"))
 
 
@@ -63,71 +64,25 @@ def assert_true(condition: bool, message: str) -> None:
         raise TestFailure(message)
 
 
-def api_post(
-    path: str,
-    payload: dict[str, Any] | None = None,
-    params: dict[str, Any] | None = None,
-) -> dict[str, Any]:
+def api_post(path: str, payload: dict[str, Any] | None = None, params: dict[str, Any] | None = None) -> dict[str, Any]:
     url = f"{BASE_URL}{path}"
-    response = requests.post(
-        url,
-        headers=headers(),
-        json=payload,
-        params=params,
-        timeout=TIMEOUT,
-    )
-    return assert_status(response, 200 if path not in {"/api/sessions", "/api/tags"} else 201)
+    response = requests.post(url, headers=headers(), json=payload, params=params, timeout=TIMEOUT)
+    expected = 201 if path == "/api/sessions" else 200
+    return assert_status(response, expected)
 
 
 def api_get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
     url = f"{BASE_URL}{path}"
-    response = requests.get(
-        url,
-        headers=headers(),
-        params=params,
-        timeout=TIMEOUT,
-    )
+    response = requests.get(url, headers=headers(), params=params, timeout=TIMEOUT)
     return assert_status(response, 200)
 
 
-def api_post_expect(
-    path: str,
-    expected_status: int,
-    payload: dict[str, Any] | None = None,
-    params: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    url = f"{BASE_URL}{path}"
-    response = requests.post(
-        url,
-        headers=headers(),
-        json=payload,
-        params=params,
-        timeout=TIMEOUT,
-    )
-    return assert_status(response, expected_status)
+def get_db():
+    client = MongoClient(MONGO_URI)
+    return client[DB_NAME]
 
 
-def api_get_expect(
-    path: str,
-    expected_status: int,
-    params: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    url = f"{BASE_URL}{path}"
-    response = requests.get(
-        url,
-        headers=headers(),
-        params=params,
-        timeout=TIMEOUT,
-    )
-    return assert_status(response, expected_status)
-
-
-def get_db() -> tuple[AsyncIOMotorClient, AsyncIOMotorDatabase]:
-    client = AsyncIOMotorClient(MONGO_URI)
-    return client, client[DB_NAME]
-
-
-async def seed_receipt(db: AsyncIOMotorDatabase, status: str = "valid") -> str:
+def seed_receipt(db, status: str = "valid") -> str:
     doc = {
         "_id": ObjectId(),
         "receipt_key": f"FAKE-{ObjectId()}",
@@ -142,19 +97,14 @@ async def seed_receipt(db: AsyncIOMotorDatabase, status: str = "valid") -> str:
         "created_at": utc_now(),
         "last_updated_at": utc_now(),
     }
-    await db.receipts.insert_one(doc)
+    db.receipts.insert_one(doc)
     return str(doc["_id"])
 
 
-async def seed_physical_tag(
-    db: AsyncIOMotorDatabase,
-    tag_key: str,
-    status: str = "available",
-) -> str:
-    existing = await db.tags.find_one({"tag_key": tag_key})
-
+def seed_physical_tag(db, tag_key: str, status: str = "available") -> str:
+    existing = db.tags.find_one({"tag_key": tag_key})
     if existing:
-        await db.tags.update_one(
+        db.tags.update_one(
             {"_id": existing["_id"]},
             {
                 "$set": {
@@ -179,7 +129,7 @@ async def seed_physical_tag(
         "used_at": None,
         "invalid_reason": None,
     }
-    await db.tags.insert_one(doc)
+    db.tags.insert_one(doc)
     return str(doc["_id"])
 
 
@@ -187,140 +137,175 @@ def create_fake_player_id() -> str:
     return str(ObjectId())
 
 
-async def run_digital_flow(db: AsyncIOMotorDatabase) -> dict[str, Any]:
-    receipt_id = await seed_receipt(db, "valid")
+def run_multi_tag_digital_flow() -> dict[str, Any]:
+    db = get_db()
+
+    receipt_id = seed_receipt(db, "valid")
     player_id = create_fake_player_id()
-
-    create_session_payload = {
-        "receipt_ids": [receipt_id],
-        "player_id": player_id,
-        "phone": "5511999999999",
-    }
-    session = api_post("/api/sessions", create_session_payload)
-    session_id = session["session_id"]
-
-    joined = api_post("/api/queue/join", {"session_id": session_id, "total_plays": 1})
-    queue_player_id = joined["player_id"]
-
-    generated_tag = api_post("/api/tags/generate", {"session_id": session_id, "delivery_mode": "digital"})
-    mobile_before = api_get(f"/api/queue/mobile/{queue_player_id}")
-    current_before = api_get("/api/queue/current")
-
-    next_called = api_post("/api/queue/next", {})
-    validate = api_post("/api/queue/validate", params={"player_id": queue_player_id})
-    complete = api_post("/api/queue/complete", params={"player_id": queue_player_id})
-    used_tag = api_post("/api/tags/use", {"tag_key": generated_tag["tag_key"]})
-    mobile_after = api_get(f"/api/queue/mobile/{queue_player_id}")
-    session_after = api_get(f"/api/sessions/{session_id}")
-
-    assert_true(session["status"] == "created", "Session deveria iniciar como created")
-    assert_true(joined["status"] in {"waiting", "requeued", "called", "playing"}, "Join retornou status inesperado")
-    assert_true(generated_tag["delivery_mode"] == "digital", "Tag digital deveria ter delivery_mode=digital")
-    assert_true(generated_tag["status"] == "valid", "Tag digital recém-criada deveria estar valid")
-    assert_true(mobile_before["player_id"] == queue_player_id, "Mobile view deveria retornar a queue entry")
-    assert_true(validate["allowed"] is True, "Jogador digital deveria estar liberado para jogar após next")
-    assert_true(used_tag["status"] == "used", "Tag digital usada deveria virar used")
-    assert_true(session_after["status"] == "finished", "Sessão digital deveria terminar como finished")
-    assert_true(session_after["queue_entry_id"] == queue_player_id, "queue_entry_id deveria estar salvo na session")
-
-    return {
-        "receipt_id": receipt_id,
-        "player_id": player_id,
-        "session": session,
-        "join_queue": joined,
-        "generated_tag": generated_tag,
-        "mobile_before": mobile_before,
-        "current_before": current_before,
-        "next_called": next_called,
-        "validate": validate,
-        "complete": complete,
-        "used_tag": used_tag,
-        "mobile_after": mobile_after,
-        "session_after": session_after,
-    }
-
-
-async def run_physical_flow(db: AsyncIOMotorDatabase) -> dict[str, Any]:
-    receipt_id = await seed_receipt(db, "valid")
-    player_id = create_fake_player_id()
-
-    await seed_physical_tag(db, "T1284", "available")
-    await seed_physical_tag(db, "T2309", "available")
 
     session = api_post(
         "/api/sessions",
         {
             "receipt_ids": [receipt_id],
             "player_id": player_id,
-            "phone": None,
+            "total_plays": 2,
+            "phone": "5511999999999",
         },
     )
     session_id = session["session_id"]
 
-    joined = api_post("/api/queue/join", {"session_id": session_id, "total_plays": 1})
+    joined = api_post("/api/queue/join", {"session_id": session_id, "total_plays": 2})
     queue_player_id = joined["player_id"]
 
-    associated_tag = api_post("/api/tags/associate", {"session_id": session_id, "delivery_mode": "physical"})
+    tag1 = api_post("/api/tags/generate", {"session_id": session_id, "delivery_mode": "digital"})
+    tag2 = api_post("/api/tags/generate", {"session_id": session_id, "delivery_mode": "digital"})
     mobile_before = api_get(f"/api/queue/mobile/{queue_player_id}")
+
+    assert_true(tag1["status"] == "valid", "Primeira tag deveria estar valid")
+    assert_true(tag2["status"] == "valid", "Segunda tag deveria estar valid")
+    assert_true(tag1["tag_key"] != tag2["tag_key"], "As tags geradas devem ser diferentes")
+
     next_called = api_post("/api/queue/next", {})
     validate = api_post("/api/queue/validate", params={"player_id": queue_player_id})
-    complete = api_post("/api/queue/complete", params={"player_id": queue_player_id})
-    used_tag = api_post("/api/tags/use", {"tag_key": associated_tag["tag"]["tag_key"]})
+
+    complete1 = api_post("/api/queue/complete", params={"player_id": queue_player_id})
+    used1 = api_post("/api/tags/use", {"tag_key": tag1["tag_key"]})
+
+    complete2 = api_post("/api/queue/complete", params={"player_id": queue_player_id})
+    used2 = api_post("/api/tags/use", {"tag_key": tag2["tag_key"]})
+
     session_after = api_get(f"/api/sessions/{session_id}")
 
-    assert_true(associated_tag["tag"]["delivery_mode"] == "physical", "Tag física deveria ter delivery_mode=physical")
-    assert_true(associated_tag["tag"]["status"] == "valid", "Tag física associada deveria estar valid")
-    assert_true(validate["allowed"] is True, "Jogador físico deveria estar liberado para jogar após next")
-    assert_true(used_tag["status"] == "available", "Tag física usada deveria voltar para available")
-    assert_true(used_tag["session_id"] is None, "Tag física usada deveria limpar session_id")
-    assert_true(session_after["status"] == "finished", "Sessão física deveria terminar como finished")
+    assert_true(validate["allowed"] is True, "Jogador deveria estar liberado após next")
+    assert_true(used1["status"] == "used", "Primeira tag digital deveria virar used")
+    assert_true(used2["status"] == "used", "Segunda tag digital deveria virar used")
+    assert_true(session_after["total_plays"] == 2, "Session deveria manter total_plays=2")
+    assert_true(session_after["status"] == "finished", "Session deveria terminar como finished")
 
     return {
         "receipt_id": receipt_id,
         "player_id": player_id,
         "session": session,
         "join_queue": joined,
-        "associated_tag": associated_tag,
+        "tag1": tag1,
+        "tag2": tag2,
         "mobile_before": mobile_before,
         "next_called": next_called,
         "validate": validate,
-        "complete": complete,
-        "used_tag": used_tag,
+        "complete1": complete1,
+        "used1": used1,
+        "complete2": complete2,
+        "used2": used2,
         "session_after": session_after,
     }
 
 
-async def run_negative_checks(db: AsyncIOMotorDatabase) -> list[dict[str, Any]]:
-    results: list[dict[str, Any]] = []
+def run_multi_tag_physical_flow() -> dict[str, Any]:
+    db = get_db()
 
-    receipt_id = await seed_receipt(db, "valid")
+    receipt_id = seed_receipt(db, "valid")
     player_id = create_fake_player_id()
-    await seed_physical_tag(db, "T9998", "available")
+    seed_physical_tag(db, "T1284", "available")
+    seed_physical_tag(db, "T2309", "available")
+    seed_physical_tag(db, "T9998", "available")
 
-    session = api_post("/api/sessions", {"receipt_ids": [receipt_id], "player_id": player_id})
+    session = api_post(
+        "/api/sessions",
+        {
+            "receipt_ids": [receipt_id],
+            "player_id": player_id,
+            "total_plays": 2,
+        },
+    )
     session_id = session["session_id"]
 
-    first_tag = api_post("/api/tags/generate", {"session_id": session_id, "delivery_mode": "digital"})
+    joined = api_post("/api/queue/join", {"session_id": session_id, "total_plays": 2})
+    queue_player_id = joined["player_id"]
 
-    second_attempt = requests.post(
-        f"{BASE_URL}/api/tags/associate",
+    assoc1 = api_post("/api/tags/associate", {"session_id": session_id, "delivery_mode": "physical"})
+    assoc2 = api_post("/api/tags/associate", {"session_id": session_id, "delivery_mode": "physical"})
+    mobile_before = api_get(f"/api/queue/mobile/{queue_player_id}")
+
+    assert_true(assoc1["tag"]["status"] == "valid", "Primeira tag física deveria estar valid")
+    assert_true(assoc2["tag"]["status"] == "valid", "Segunda tag física deveria estar valid")
+    assert_true(assoc1["tag"]["tag_key"] != assoc2["tag"]["tag_key"], "As tags físicas associadas devem ser diferentes")
+
+    api_post("/api/queue/next", {})
+    validate = api_post("/api/queue/validate", params={"player_id": queue_player_id})
+
+    complete1 = api_post("/api/queue/complete", params={"player_id": queue_player_id})
+    used1 = api_post("/api/tags/use", {"tag_key": assoc1["tag"]["tag_key"]})
+
+    complete2 = api_post("/api/queue/complete", params={"player_id": queue_player_id})
+    used2 = api_post("/api/tags/use", {"tag_key": assoc2["tag"]["tag_key"]})
+
+    session_after = api_get(f"/api/sessions/{session_id}")
+
+    assert_true(validate["allowed"] is True, "Jogador físico deveria estar liberado")
+    assert_true(used1["status"] == "available", "Tag física usada deve voltar para available")
+    assert_true(used2["status"] == "available", "Segunda tag física usada deve voltar para available")
+    assert_true(used1["session_id"] is None, "Tag física usada deve limpar session_id")
+    assert_true(used2["session_id"] is None, "Tag física usada deve limpar session_id")
+    assert_true(session_after["status"] == "finished", "Session física deveria terminar como finished")
+
+    return {
+        "receipt_id": receipt_id,
+        "player_id": player_id,
+        "session": session,
+        "join_queue": joined,
+        "assoc1": assoc1,
+        "assoc2": assoc2,
+        "mobile_before": mobile_before,
+        "validate": validate,
+        "complete1": complete1,
+        "used1": used1,
+        "complete2": complete2,
+        "used2": used2,
+        "session_after": session_after,
+    }
+
+
+def run_negative_checks() -> list[dict[str, Any]]:
+    db = get_db()
+    results: list[dict[str, Any]] = []
+
+    receipt_id = seed_receipt(db, "valid")
+    player_id = create_fake_player_id()
+    seed_physical_tag(db, "T5555", "available")
+
+    session = api_post(
+        "/api/sessions",
+        {
+            "receipt_ids": [receipt_id],
+            "player_id": player_id,
+            "total_plays": 2,
+        },
+    )
+    session_id = session["session_id"]
+
+    tag1 = api_post("/api/tags/generate", {"session_id": session_id, "delivery_mode": "digital"})
+    tag2 = api_post("/api/tags/associate", {"session_id": session_id, "delivery_mode": "physical", "tag_key": "T5555"})
+
+    third_attempt = requests.post(
+        f"{BASE_URL}/api/tags/generate",
         headers=headers(),
-        json={"session_id": session_id, "delivery_mode": "physical", "tag_key": "T9998"},
+        json={"session_id": session_id, "delivery_mode": "digital"},
         timeout=TIMEOUT,
     )
-    second_data = assert_status(second_attempt, 409)
+    third_data = assert_status(third_attempt, 409)
     results.append(
         {
-            "name": "block_multiple_valid_tags_per_session",
-            "first_tag_key": first_tag["tag_key"],
-            "response": second_data,
+            "name": "block_tag_generation_above_total_plays",
+            "tag1": tag1["tag_key"],
+            "tag2": tag2["tag"]["tag_key"],
+            "response": third_data,
         }
     )
 
     reuse_attempt = requests.post(
         f"{BASE_URL}/api/sessions",
         headers=headers(),
-        json={"receipt_ids": [receipt_id], "player_id": create_fake_player_id()},
+        json={"receipt_ids": [receipt_id], "player_id": create_fake_player_id(), "total_plays": 1},
         timeout=TIMEOUT,
     )
     reuse_data = assert_status(reuse_attempt, 409)
@@ -334,35 +319,30 @@ async def run_negative_checks(db: AsyncIOMotorDatabase) -> list[dict[str, Any]]:
     return results
 
 
-async def async_main() -> int:
-    log(
-        "Configuração",
-        {
-            "base_url": BASE_URL,
-            "mongo_uri": MONGO_URI,
-            "db_name": DB_NAME,
-            "device_id": DEVICE_ID,
-        },
-    )
-
-    client, db = get_db()
+def main() -> int:
+    log("Configuração", {
+        "base_url": BASE_URL,
+        "mongo_uri": MONGO_URI,
+        "db_name": DB_NAME,
+        "device_id": DEVICE_ID,
+    })
 
     try:
-        digital = await run_digital_flow(db)
-        log("Fluxo digital OK", digital)
+        digital = run_multi_tag_digital_flow()
+        log("Fluxo digital multi-tag OK", digital)
 
-        physical = await run_physical_flow(db)
-        log("Fluxo físico OK", physical)
+        physical = run_multi_tag_physical_flow()
+        log("Fluxo físico multi-tag OK", physical)
 
-        negative = await run_negative_checks(db)
+        negative = run_negative_checks()
         log("Validações negativas OK", negative)
 
         summary = {
             "result": "success",
             "digital_session_id": digital["session"]["session_id"],
             "physical_session_id": physical["session"]["session_id"],
-            "digital_tag_key": digital["generated_tag"]["tag_key"],
-            "physical_tag_key": physical["associated_tag"]["tag"]["tag_key"],
+            "digital_tag_keys": [digital["tag1"]["tag_key"], digital["tag2"]["tag_key"]],
+            "physical_tag_keys": [physical["assoc1"]["tag"]["tag_key"], physical["assoc2"]["tag"]["tag_key"]],
             "negative_checks": [item["name"] for item in negative],
         }
         log("Resumo final", summary)
@@ -383,13 +363,6 @@ async def async_main() -> int:
         print("\nERRO INESPERADO:")
         print(repr(exc))
         return 1
-
-    finally:
-        client.close()
-
-
-def main() -> int:
-    return asyncio.run(async_main())
 
 
 if __name__ == "__main__":

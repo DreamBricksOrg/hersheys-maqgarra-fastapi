@@ -31,6 +31,13 @@ class SessionService:
                 422,
             )
 
+        if payload.total_plays < 1:
+            raise AppError(
+                "É necessário informar ao menos uma jogada",
+                "invalid_total_plays",
+                422,
+            )
+
         unique_receipt_ids = list(dict.fromkeys(payload.receipt_ids))
         validated_receipt_ids: list[str] = []
 
@@ -70,6 +77,7 @@ class SessionService:
         created = await self.session_repository.create(
             receipt_ids=validated_receipt_ids,
             player_id=payload.player_id,
+            total_plays=payload.total_plays,
             phone=payload.phone,
         )
 
@@ -104,6 +112,7 @@ class SessionService:
                 "session_id": session_id,
                 "player_id": payload.player_id,
                 "receipt_ids": validated_receipt_ids,
+                "total_plays": payload.total_plays,
                 "phone": payload.phone,
             },
         )

@@ -34,18 +34,24 @@ class TagAssociationService:
             )
         return session
 
-    async def _ensure_no_valid_tag_for_session(self, session_id: str) -> None:
+    async def _ensure_tag_capacity_for_session(self, session_id: str) -> dict:
+        session = await self._get_session_or_raise(session_id)
+        max_tags = int(session.get("total_plays", 1))
         valid_tags = await self.tag_repository.find_valid_by_session_id(session_id)
-        if valid_tags:
+
+        if len(valid_tags) >= max_tags:
             raise AppError(
-                "A sessão já possui uma tag válida associada",
-                "session_already_has_valid_tag",
+                "Limite de tags válidas da sessão já foi atingido",
+                "session_tag_limit_reached",
                 409,
                 {
                     "session_id": session_id,
-                    "tag_keys": [item["tag_key"] for item in valid_tags],
+                    "max_tags": max_tags,
+                    "current_valid_tags": len(valid_tags),
                 },
             )
+
+        return session
 
     async def _generate_unique_tag_key(self) -> str:
         for _ in range(100):
@@ -61,8 +67,7 @@ class TagAssociationService:
         )
 
     async def generate(self, payload: TagGenerateRequest) -> TagResponse:
-        await self._get_session_or_raise(payload.session_id)
-        await self._ensure_no_valid_tag_for_session(payload.session_id)
+        await self._ensure_tag_capacity_for_session(payload.session_id)
 
         if payload.delivery_mode != "digital":
             raise AppError(
@@ -94,8 +99,7 @@ class TagAssociationService:
         return TagResponse.model_validate(created)
 
     async def associate(self, payload: TagAssociateRequest) -> TagAssociateResponse:
-        await self._get_session_or_raise(payload.session_id)
-        await self._ensure_no_valid_tag_for_session(payload.session_id)
+        await self._ensure_tag_capacity_for_session(payload.session_id)
 
         if payload.delivery_mode != "physical":
             raise AppError(
@@ -104,8 +108,6 @@ class TagAssociationService:
                 422,
                 {"delivery_mode": payload.delivery_mode},
             )
-
-        tag: dict | None = None
 
         if payload.tag_key:
             tag = await self.tag_repository.find_by_key(payload.tag_key)
