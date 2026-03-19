@@ -1,4 +1,5 @@
 const btnVoltar = document.getElementById('btn-voltar');
+const btnInicio = document.getElementById('btn-inicio');
 const remainingCount = document.getElementById('remainingCount');
 const dynamicQRCode = document.getElementById('dynamicQRCode');
 
@@ -17,10 +18,23 @@ function updateRemaining() {
 
 updateRemaining();
 
-btnVoltar.addEventListener('click', () => {
+btnInicio.addEventListener('click', () => {
+    document.getElementById('confirmResetModal').style.display = 'flex';
+});
+
+document.getElementById('cancelResetBtn').addEventListener('click', () => {
+    document.getElementById('confirmResetModal').style.display = 'none';
+});
+
+document.getElementById('confirmResetBtn').addEventListener('click', () => {
     resetCounters();
     clearReceiptIds();
     clearSessionId();
-    localStorage.removeItem('virtual_qr_url');
+    clearQrUrl();
+    clearPlayerId();
     window.location.href = '/pages/';
+});
+
+btnVoltar.addEventListener('click', () => {
+    window.history.back();
 });

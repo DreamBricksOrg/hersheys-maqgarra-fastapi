@@ -3,6 +3,7 @@ const cancelBtn = document.getElementById('cancelButton');
 const associateBtn = document.getElementById('associateButton');
 const tagInput = document.getElementById('tag-input');
 const btnVoltar = document.getElementById('btn-voltar');
+const btnInicio = document.getElementById('btn-inicio');
 const container = document.getElementById('container');
 
 const progressModal = document.getElementById('progressModal');
@@ -160,9 +161,23 @@ associateBtn.addEventListener('click', async () => {
     }
 });
 
-btnVoltar.addEventListener('click', () => {
+btnInicio.addEventListener('click', () => {
+    document.getElementById('confirmResetModal').style.display = 'flex';
+});
+
+document.getElementById('cancelResetBtn').addEventListener('click', () => {
+    document.getElementById('confirmResetModal').style.display = 'none';
+});
+
+document.getElementById('confirmResetBtn').addEventListener('click', () => {
     resetCounters();
     clearReceiptIds();
     clearSessionId();
+    clearQrUrl();
+    clearPlayerId();
     window.location.href = '/pages/';
+});
+
+btnVoltar.addEventListener('click', () => {
+    window.history.back();
 });

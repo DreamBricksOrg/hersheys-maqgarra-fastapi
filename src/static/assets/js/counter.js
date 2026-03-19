@@ -48,6 +48,10 @@ function setPlayerId(id) {
     }
 }
 
+function clearPlayerId() {
+    localStorage.removeItem(STORAGE_KEYS.PLAYER_ID);
+}
+
 // ── Session ID ───────────────────────────────────────────────────────────────
 
 function getSessionId() {
@@ -110,6 +114,18 @@ function updateCounterDisplay() {
     if (barrasEl) barrasEl.textContent = getBarras();
     if (tagsEl) tagsEl.textContent = getTags();
     localStorage.setItem(STORAGE_KEYS.TAGS, Math.floor(getBarras() / 6).toString());
+}
+
+function getQrUrl() {
+    return localStorage.getItem('virtual_qr_url');
+}
+
+function setQrUrl(url) {
+    localStorage.setItem('virtual_qr_url', url);
+}
+
+function clearQrUrl() {
+    localStorage.removeItem('virtual_qr_url');
 }
 
 // Atualiza o display assim que o DOM carregar
