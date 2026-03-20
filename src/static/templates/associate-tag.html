@@ -32,9 +32,11 @@
             <h1>Associar <span>TAG</span></h1>
             <p id="remainingText" style="font-family: 'SharpGroteskPETrialBook', sans-serif; font-size: 1.5rem; color: var(--light-color);">Você tem direito a <strong id="remainingCount">0</strong> tag(s)</p>
             
-            <!-- QR Code mockado para levar a user-qrcode.html -->
-            <div class="qrcode-wrapper" id="qrcodeWrapper" style="display: flex; justify-content: center; align-items: center; margin: 2rem 0; background: white; padding: 20px; border-radius: 20px;">
-                <img id="dynamicQRCode" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=http://localhost:8000/pages/user-qrcode" alt="QR Code" style="width: 300px; height: 300px;">
+            <!-- QR Code com loading -->
+            <div class="qrcode-wrapper" id="qrcodeWrapper" style="display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 2rem 0; background: white; padding: 20px; border-radius: 20px; min-height: 340px;">
+                <div id="qrLoader" class="loader"></div>
+                <img id="dynamicQRCode" src="" alt="QR Code" style="width: 300px; height: 300px; display: none;">
+                <p id="qrStatusText" style="color: #333; margin-top: 10px; font-weight: bold;">Gerando tags...</p>
             </div>
 
             <!-- Input wrapper hidden to avoid breaking JS -->

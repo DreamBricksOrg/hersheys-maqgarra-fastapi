@@ -10,6 +10,8 @@ const progressModal = document.getElementById('progressModal');
 const progressTitle = document.getElementById('progressTitle');
 const successModal = document.getElementById('successModal');
 const remainingCount = document.getElementById('remainingCount');
+const queueNumberDisplay = document.getElementById('queueNumberDisplay');
+const finalizarBtn = document.getElementById('finalizarBtn');
 
 const errorModal = document.getElementById('errorModal');
 const errorModalMessage = document.getElementById('errorModalMessage');
@@ -95,17 +97,21 @@ associateBtn.addEventListener('click', async () => {
     associateBtn.disabled = true;
 
     try {
-        // Valida/Ativa a tag chamando a API
-        const actResp = await fetch(`/api/tags/${currentTag}/activate`, {
+        // Associa a tag à sessão
+        const sessionId = getSessionId();
+        const assocResp = await fetch(`/api/tags/associate`, {
             method: 'POST',
             headers: AUTH_HEADERS,
-            body: JSON.stringify({ reason: "associated_for_play" })
+            body: JSON.stringify({
+                session_id: sessionId,
+                delivery_mode: "physical",
+                tag_key: currentTag
+            })
         });
 
-        if (!actResp.ok) {
-            const err = await actResp.json().catch(() => ({}));
-            // Como no backend o texto amigável está sendo passado como o 2º parâmetro (que vira 'code' no JSON)
-            throw new Error(err.error?.code || err.error?.message || err.detail || 'Erro ao validar a TAG');
+        if (!assocResp.ok) {
+            const err = await assocResp.json().catch(() => ({}));
+            throw new Error(err.error?.code || err.error?.message || err.detail || 'Erro ao associar a TAG');
         }
 
         // Sucesso: adiciona na lista
@@ -116,30 +122,15 @@ associateBtn.addEventListener('click', async () => {
         updateRemaining();
 
         if (remaining <= 0) {
-            // Associa todas as tags aos receipts no backend antes de finalizar
-            try {
-                const receiptIds = getReceiptIds();
-                await fetch('/api/tags/associate', {
-                    method: 'POST',
-                    headers: AUTH_HEADERS,
-                    body: JSON.stringify({
-                        receipt_ids: receiptIds,
-                        tags: collectedTags
-                    })
-                });
-                console.log('[DEBUG] Tags associadas aos receipts:', receiptIds);
-            } catch (assocError) {
-                console.error('Erro ao associar tags aos receipts:', assocError);
-            }
-
             // Todas as tags associadas!
             tagModal.style.display = 'none';
             successModal.style.display = 'flex';
-            resetCounters();
-            clearReceiptIds();
-            setTimeout(() => {
-                window.location.href = '/pages/';
-            }, 2500);
+
+            // Mostra o número da fila que já temos salvo
+            const queueNumber = getQueueNumber();
+            queueNumberDisplay.textContent = queueNumber || '--';
+
+            // Não fecha mais automaticamente
         } else {
             // Ainda faltam tags
             tagModal.style.display = 'none';
@@ -159,6 +150,17 @@ associateBtn.addEventListener('click', async () => {
         currentTag = '';
         tagModal.style.display = 'none';
     }
+});
+
+finalizarBtn.addEventListener('click', () => {
+    resetCounters();
+    clearReceiptIds();
+    clearSessionId();
+    clearQrUrl();
+    clearPlayerId();
+    clearQueueId();
+    clearQueueNumber();
+    window.location.href = '/pages/';
 });
 
 btnInicio.addEventListener('click', () => {

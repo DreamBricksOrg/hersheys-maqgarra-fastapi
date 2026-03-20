@@ -6,6 +6,8 @@ const STORAGE_KEYS = {
     RECEIPT_IDS: 'receipt_ids',
     PLAYER_ID: 'player_id',
     SESSION_ID: 'session_id',
+    QUEUE_ID: 'queue_id',
+    QUEUE_NUMBER: 'queue_number',
 };
 
 // ── Receipt IDs ──────────────────────────────────────────────────────────────
@@ -68,6 +70,42 @@ function setSessionId(id) {
 
 function clearSessionId() {
     localStorage.removeItem(STORAGE_KEYS.SESSION_ID);
+}
+
+// ── Queue ID ─────────────────────────────────────────────────────────────────
+
+function getQueueId() {
+    return localStorage.getItem(STORAGE_KEYS.QUEUE_ID);
+}
+
+function setQueueId(id) {
+    if (id) {
+        localStorage.setItem(STORAGE_KEYS.QUEUE_ID, id);
+    } else {
+        localStorage.removeItem(STORAGE_KEYS.QUEUE_ID);
+    }
+}
+
+function clearQueueId() {
+    localStorage.removeItem(STORAGE_KEYS.QUEUE_ID);
+}
+
+// ── Queue Number ─────────────────────────────────────────────────────────────
+
+function getQueueNumber() {
+    return localStorage.getItem(STORAGE_KEYS.QUEUE_NUMBER);
+}
+
+function setQueueNumber(num) {
+    if (num !== undefined && num !== null) {
+        localStorage.setItem(STORAGE_KEYS.QUEUE_NUMBER, num.toString());
+    } else {
+        localStorage.removeItem(STORAGE_KEYS.QUEUE_NUMBER);
+    }
+}
+
+function clearQueueNumber() {
+    localStorage.removeItem(STORAGE_KEYS.QUEUE_NUMBER);
 }
 
 // ── Barras / Tags ─────────────────────────────────────────────────────────────

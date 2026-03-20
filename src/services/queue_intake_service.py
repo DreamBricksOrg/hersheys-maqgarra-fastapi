@@ -66,7 +66,7 @@ class QueueIntakeService:
         )
 
         qr_value = joined.player_id
-        qr_url = f"{self.mobile_base_url}/user-qrcode?pid={joined.player_id}"
+        qr_url = f"{self.mobile_base_url}/pages/user-qrcode?pid={joined.player_id}"
 
         await self.observability_service.emit(
             "queue-intake-created",

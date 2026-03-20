@@ -82,7 +82,7 @@ class ReceiptImageService:
         # Apenas itens matched vão para o receipt
         matched_only = [i for i in items if i.get("matched", False)]
 
-        review = True
+        review = False
         status = self.receipt_validation_service.build_status(found_bars, review)
         raw_payload_id = await self.raw_payload_repository.create(raw_payload)
         payload = {

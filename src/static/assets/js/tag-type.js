@@ -66,6 +66,8 @@ confirmTypeBtn.addEventListener('click', async () => {
                     const data = await response.json();
                     console.log('[DEBUG] Intake sucesso:', data);
                     localStorage.setItem('virtual_qr_url', data.mobile_payload.qr_url);
+                    setQueueId(data.player_id);
+                    setQueueNumber(data.queue_number);
                     window.location.href = '/pages/associate-tag';
                 } else {
                     console.error('[ERRO] Falha no intake HTTP:', response.status);
@@ -92,7 +94,10 @@ confirmTypeBtn.addEventListener('click', async () => {
                     })
                 });
                 if (response.ok) {
+                    const data = await response.json();
                     console.log('[DEBUG] Join sucesso');
+                    setQueueId(data.player_id);
+                    setQueueNumber(data.queue_number);
                     window.location.href = '/pages/associate-tag-physical';
                 } else {
                     console.error('[ERRO] Falha no join HTTP:', response.status);

@@ -1,6 +1,18 @@
 const btnSim = document.getElementById('btn-sim');
 const btnNao = document.getElementById('btn-nao');
 const sorryModal = document.getElementById('sorryModal');
+const sessionErrorModal = document.getElementById('sessionErrorModal');
+const sessionErrorMessage = document.getElementById('sessionErrorMessage');
+const sessionErrorOkButton = document.getElementById('sessionErrorOkButton');
+
+function showSessionError(msg) {
+    sessionErrorMessage.textContent = msg;
+    sessionErrorModal.style.display = 'flex';
+}
+
+sessionErrorOkButton.addEventListener('click', () => {
+    sessionErrorModal.style.display = 'none';
+});
 
 btnSim.addEventListener('click', () => {
     window.location.href = '/pages/';
@@ -27,7 +39,8 @@ btnNao.addEventListener('click', async () => {
                 },
                 body: JSON.stringify({
                     player_id: playerId,
-                    receipt_ids: receiptIds
+                    receipt_ids: receiptIds,
+                    total_plays: tags
                 })
             });
 
@@ -36,10 +49,15 @@ btnNao.addEventListener('click', async () => {
                 setSessionId(data.session_id);
                 console.log('[DEBUG] Sessão criada com sucesso:', data.session_id);
             } else {
-                console.error('[ERRO] Falha ao criar sessão HTTP:', response.status);
+                const errData = await response.json().catch(() => ({}));
+                const msg = errData.error?.message || errData.detail || 'Falha ao processar solicitação';
+                showSessionError(msg);
+                return; // Interrompe o fluxo para permitir correção
             }
         } catch (error) {
             console.error('[DEBUG] Falha ao criar sessão:', error);
+            showSessionError('Ocorreu um erro de conexão. Verifique sua rede.');
+            return;
         }
     }
 
