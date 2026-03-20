@@ -6,6 +6,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const numeroEl = document.getElementById('numeroValue');
     const posicaoEl = document.getElementById('posicaoValue');
     const btnWarnMe = document.getElementById('btn_warn_me');
+    const pageWrapper = document.getElementById('pageWrapper');
+    const doneWrapper = document.getElementById('doneWrapper');
+    const posicaoContainer = document.getElementById('posicaoContainer');
+    const calledContainer = document.getElementById('calledContainer');
+    const buttonsContainer = document.getElementById('buttonsContainer');
 
     let qid = params.get('qid');
     let sid = params.get('sid');
@@ -107,6 +112,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (err) {
         console.error('Erro ao inicializar página de QR Codes:', err);
+    }
+
+    // Polling de status a cada 5 segundos
+    setInterval(updateQueueStatus, 5000);
+
+    async function updateQueueStatus() {
+        try {
+            const resp = await fetch(`/api/queue/${qid}`, { headers: AUTH_HEADERS });
+            if (!resp.ok) return;
+            const data = await resp.json();
+            updateUIByStatus(data);
+        } catch (e) {
+            console.warn('[DEBUG] Erro no polling:', e);
+        }
+    }
+
+    function updateUIByStatus(data) {
+        const { status, people_ahead, queue_number } = data;
+        
+        // Atualiza posição/número se ainda estiver na fila
+        if (numeroEl) numeroEl.textContent = queue_number || '--';
+        if (posicaoEl) posicaoEl.textContent = (people_ahead !== undefined) ? (people_ahead + 1) : '--';
+
+        if (status === 'called' || status === 'playing') {
+            if (posicaoContainer) posicaoContainer.style.display = 'none';
+            if (calledContainer) calledContainer.style.display = 'flex';
+            if (buttonsContainer) buttonsContainer.style.display = 'none';
+        } else if (status === 'done') {
+            if (pageWrapper) pageWrapper.style.display = 'none';
+            if (doneWrapper) doneWrapper.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Evita scroll na tela de agradecimento
+        } else {
+            // "waiting" ou outro
+            if (posicaoContainer) posicaoContainer.style.display = 'flex';
+            if (calledContainer) calledContainer.style.display = 'none';
+        }
     }
 
     function setupCarouselObserver() {
