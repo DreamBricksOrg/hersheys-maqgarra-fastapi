@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const disclaimerUnderstoodButton = document.getElementById('disclaimerUnderstoodButton');
 
     let isDataReady = false;
-    let isDisclaimerDismissed = false;
+    let isDisclaimerDismissed = localStorage.getItem('disclaimer_dismissed') === 'true';
 
     function checkAllReady() {
         if (isDataReady && isDisclaimerDismissed) {
@@ -25,9 +25,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Se já foi dispensado anteriormente, esconde o overlay imediatamente
+    if (isDisclaimerDismissed && disclaimerOverlay) {
+        disclaimerOverlay.style.display = 'none';
+    }
+
     if (disclaimerUnderstoodButton) {
         disclaimerUnderstoodButton.addEventListener('click', () => {
             isDisclaimerDismissed = true;
+            localStorage.setItem('disclaimer_dismissed', 'true');
             if (disclaimerOverlay) disclaimerOverlay.style.display = 'none';
             checkAllReady();
         });
