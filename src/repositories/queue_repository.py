@@ -47,6 +47,7 @@ class QueueRepository:
             "status": "waiting",
             "total_plays": total_plays,
             "remaining_plays": total_plays,
+            "late_play_allowed": False,
             "created_at": now,
             "called_at": None,
             "played_at": None,
@@ -143,6 +144,7 @@ class QueueRepository:
             {
                 "$set": {
                     "status": "skipped",
+                    "late_play_allowed": True,
                     "last_updated_at": now,
                 }
             },
@@ -160,6 +162,33 @@ class QueueRepository:
                     "requeued_from": old_queue_number,
                     "called_at": None,
                     "played_at": None,
+                    "late_play_allowed": True,
+                    "last_updated_at": now,
+                }
+            },
+        )
+        return await self.find_by_id(player_id)
+
+    async def allow_late_play(self, player_id: str) -> dict | None:
+        now = datetime.now(timezone.utc)
+        await self.collection.update_one(
+            {"_id": ObjectId(player_id)},
+            {
+                "$set": {
+                    "late_play_allowed": True,
+                    "last_updated_at": now,
+                }
+            },
+        )
+        return await self.find_by_id(player_id)
+
+    async def clear_late_play_allowed(self, player_id: str) -> dict | None:
+        now = datetime.now(timezone.utc)
+        await self.collection.update_one(
+            {"_id": ObjectId(player_id)},
+            {
+                "$set": {
+                    "late_play_allowed": False,
                     "last_updated_at": now,
                 }
             },

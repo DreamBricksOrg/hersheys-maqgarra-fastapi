@@ -134,6 +134,14 @@ class QueueValidateResponse(BaseModel):
     message: str
 
 
+class QueueRequeueResponse(BaseModel):
+    player_id: str
+    old_queue_number: int
+    new_queue_number: int
+    status: str
+    message: str
+
+
 class QueueCompleteResponse(BaseModel):
     player_id: str
     queue_number: int

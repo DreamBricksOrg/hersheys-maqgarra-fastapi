@@ -12,12 +12,13 @@ from schemas.queue import (
     QueueListResponse,
     QueueMobileViewResponse,
     QueueNextResponse,
+    QueueRequeueResponse,
     QueueSkipResponse,
     QueueStateResponse,
     QueueValidateResponse,
 )
 from services.observability_service import ObservabilityService
-from util.sms import (
+from utils.sms import (
     send_queue_fifth_position_sms,
     send_queue_next_up_sms,
     send_queue_registration_sms,
@@ -28,8 +29,6 @@ logger = logging.getLogger(__name__)
 
 
 class QueueService:
-    LATE_TOLERANCE = 10
-
     def __init__(
         self,
         queue_repository: QueueRepository,
@@ -222,12 +221,8 @@ class QueueService:
         current_queue_number = await self.queue_repository.get_current_queue_number()
         people_ahead = await self.queue_repository.count_people_ahead(entry["queue_number"])
 
-        can_play = False
-        if current_queue_number is not None:
-            if entry["queue_number"] <= current_queue_number:
-                can_play = True
-            elif entry["queue_number"] <= current_queue_number + self.LATE_TOLERANCE:
-                can_play = True
+        is_current_player = current_queue_number is not None and entry["queue_number"] == current_queue_number
+        can_play = is_current_player or bool(entry.get("late_play_allowed"))
 
         return QueueStateResponse(
             player_id=str(entry["_id"]),
@@ -265,6 +260,7 @@ class QueueService:
             )
 
         called = await self.queue_repository.mark_called(str(next_entry["_id"]))
+        await self.queue_repository.clear_late_play_allowed(str(called["_id"]))
         await self.queue_repository.set_current_queue_number(
             queue_number=called["queue_number"],
             player_id=str(called["_id"]),
@@ -318,84 +314,47 @@ class QueueService:
             )
 
         player_queue_number = entry["queue_number"]
+        is_current_player = player_queue_number == current_queue_number
+        is_late_allowed = bool(entry.get("late_play_allowed"))
 
-        if player_queue_number <= current_queue_number:
-            playing = await self.queue_repository.mark_playing(player_id)
-            await self.queue_repository.set_current_queue_number(
-                queue_number=playing["queue_number"],
-                player_id=str(playing["_id"]),
-                status=playing["status"],
-            )
-            await self.session_repository.update_status(str(playing["session_id"]), "playing")
-
-            await self.observability_service.emit(
-                "queue-play-allowed",
+        if not is_current_player and not is_late_allowed:
+            raise AppError(
+                "Ainda não é a vez deste jogador",
+                "queue_not_current_player",
+                409,
                 {
                     "player_id": player_id,
                     "queue_number": player_queue_number,
                     "current_queue_number": current_queue_number,
-                    "reason": "current_or_older",
                 },
             )
-            return QueueValidateResponse(
-                allowed=True,
-                action="play",
-                player_id=player_id,
-                queue_number=player_queue_number,
-                current_queue_number=current_queue_number,
-                new_queue_number=None,
-                message="Jogador liberado para jogar.",
-            )
 
-        if player_queue_number <= current_queue_number + self.LATE_TOLERANCE:
-            playing = await self.queue_repository.mark_playing(player_id)
-            await self.session_repository.update_status(str(playing["session_id"]), "playing")
-
-            await self.observability_service.emit(
-                "queue-play-allowed",
-                {
-                    "player_id": player_id,
-                    "queue_number": player_queue_number,
-                    "current_queue_number": current_queue_number,
-                    "reason": "late_within_tolerance",
-                },
-            )
-            return QueueValidateResponse(
-                allowed=True,
-                action="play",
-                player_id=player_id,
-                queue_number=player_queue_number,
-                current_queue_number=current_queue_number,
-                new_queue_number=None,
-                message="Jogador atrasado, mas ainda dentro da tolerância. Pode jogar.",
-            )
-
-        new_queue_number = await self.queue_repository.get_next_queue_number()
-        requeued = await self.queue_repository.requeue(
-            player_id=player_id,
-            new_queue_number=new_queue_number,
-            old_queue_number=player_queue_number,
+        playing = await self.queue_repository.mark_playing(player_id)
+        await self.queue_repository.set_current_queue_number(
+            queue_number=playing["queue_number"],
+            player_id=str(playing["_id"]),
+            status=playing["status"],
         )
-        await self.session_repository.update_status(str(requeued["session_id"]), "queued")
+        await self.session_repository.update_status(str(playing["session_id"]), "playing")
 
         await self.observability_service.emit(
-            "queue-requeued",
+            "queue-play-allowed",
             {
                 "player_id": player_id,
-                "old_queue_number": player_queue_number,
-                "new_queue_number": new_queue_number,
+                "queue_number": player_queue_number,
                 "current_queue_number": current_queue_number,
+                "reason": "current_player" if is_current_player else "late_play_allowed",
             },
         )
 
         return QueueValidateResponse(
-            allowed=False,
-            action="requeued",
+            allowed=True,
+            action="play",
             player_id=player_id,
-            queue_number=requeued["queue_number"],
+            queue_number=player_queue_number,
             current_queue_number=current_queue_number,
-            new_queue_number=new_queue_number,
-            message="Jogador chegou tarde demais e foi movido para o final da fila.",
+            new_queue_number=None,
+            message="Jogador liberado para jogar.",
         )
 
     async def play(self, player_id: str, tag_key: str) -> dict:
@@ -408,7 +367,7 @@ class QueueService:
                 {"player_id": player_id},
             )
 
-        if entry["status"] in {"done", "skipped"}:
+        if entry["status"] in {"done"}:
             raise AppError(
                 "A entrada da fila não está em estado jogável",
                 "queue_entry_not_playable",
@@ -433,40 +392,20 @@ class QueueService:
             )
 
         player_queue_number = entry["queue_number"]
+        is_current_player = player_queue_number == current_queue_number
+        is_late_allowed = bool(entry.get("late_play_allowed"))
 
-        if player_queue_number > current_queue_number + self.LATE_TOLERANCE:
-            new_queue_number = await self.queue_repository.get_next_queue_number()
-            requeued = await self.queue_repository.requeue(
-                player_id=player_id,
-                new_queue_number=new_queue_number,
-                old_queue_number=player_queue_number,
-            )
-            await self.session_repository.update_status(str(requeued["session_id"]), "queued")
-
-            await self.observability_service.emit(
-                "queue-requeued-during-play",
+        if not is_current_player and not is_late_allowed:
+            raise AppError(
+                "Ainda não é a vez deste jogador",
+                "queue_not_current_player",
+                409,
                 {
                     "player_id": player_id,
-                    "old_queue_number": player_queue_number,
-                    "new_queue_number": new_queue_number,
+                    "queue_number": player_queue_number,
                     "current_queue_number": current_queue_number,
-                    "tag_key": tag_key,
                 },
             )
-
-            return {
-                "allowed": False,
-                "action": "requeued",
-                "player_id": player_id,
-                "session_id": str(requeued["session_id"]),
-                "queue_number": requeued["queue_number"],
-                "current_queue_number": current_queue_number,
-                "new_queue_number": new_queue_number,
-                "tag_key": tag_key,
-                "remaining_plays": requeued["remaining_plays"],
-                "finished": False,
-                "message": "Jogador chegou tarde demais e foi movido para o final da fila.",
-            }
 
         if entry["status"] != "playing":
             entry = await self.queue_repository.mark_playing(player_id)
@@ -526,6 +465,7 @@ class QueueService:
                 remaining_plays=remaining,
             )
             await self.session_repository.update_status(str(updated_entry["session_id"]), "finished")
+            await self.queue_repository.clear_late_play_allowed(player_id)
         else:
             updated_entry = await self.queue_repository.touch_status(player_id, "playing")
             await self.session_repository.update_status(str(updated_entry["session_id"]), "playing")
@@ -557,6 +497,68 @@ class QueueService:
             "message": "Jogada consumida com sucesso.",
         }
 
+    async def requeue(self, player_id: str) -> QueueRequeueResponse:
+        entry = await self.queue_repository.find_by_id(player_id)
+        if not entry:
+            raise AppError(
+                "Entrada da fila não encontrada",
+                "queue_entry_not_found",
+                404,
+                {"player_id": player_id},
+            )
+
+        if entry["status"] == "done":
+            raise AppError(
+                "Esta entrada da fila já foi concluída",
+                "queue_entry_finished",
+                409,
+                {"player_id": player_id},
+            )
+
+        old_queue_number = entry["queue_number"]
+        new_queue_number = await self.queue_repository.get_next_queue_number()
+
+        requeued = await self.queue_repository.requeue(
+            player_id=player_id,
+            new_queue_number=new_queue_number,
+            old_queue_number=old_queue_number,
+        )
+        await self.session_repository.update_status(str(requeued["session_id"]), "queued")
+
+        current_state = await self.queue_repository.get_current_state()
+        if current_state and current_state.get("player_id") and str(current_state["player_id"]) == player_id:
+            next_player = await self.queue_repository.get_next_waiting_entry()
+            if next_player:
+                called = await self.queue_repository.mark_called(str(next_player["_id"]))
+                await self.queue_repository.clear_late_play_allowed(str(called["_id"]))
+                await self.queue_repository.set_current_queue_number(
+                    queue_number=called["queue_number"],
+                    player_id=str(called["_id"]),
+                    status=called["status"],
+                )
+                await self.session_repository.update_status(str(called["session_id"]), "called")
+                await self._send_fifth_position_sms_if_needed()
+                await self._send_next_up_sms_if_needed()
+            else:
+                await self.queue_repository.clear_current_queue_number()
+
+        await self.observability_service.emit(
+            "queue-requeued-manually",
+            {
+                "player_id": player_id,
+                "old_queue_number": old_queue_number,
+                "new_queue_number": new_queue_number,
+            },
+        )
+
+        return QueueRequeueResponse(
+            player_id=str(requeued["_id"]),
+            old_queue_number=old_queue_number,
+            new_queue_number=requeued["queue_number"],
+            status=requeued["status"],
+            message="Jogador movido para o fim da fila com sucesso.",
+        )
+
     async def complete(self, player_id: str) -> QueueCompleteResponse:
         entry = await self.queue_repository.find_by_id(player_id)
         if not entry:
@@ -570,6 +572,7 @@ class QueueService:
         await self.queue_repository.update_one_force_finish(player_id)
         updated = await self.queue_repository.find_by_id(player_id)
         await self.session_repository.update_status(str(updated["session_id"]), "finished")
+        await self.queue_repository.clear_late_play_allowed(player_id)
 
         await self.observability_service.emit(
             "queue-force-completed",
@@ -628,6 +631,7 @@ class QueueService:
             )
 
         called = await self.queue_repository.mark_called(str(next_player["_id"]))
+        await self.queue_repository.clear_late_play_allowed(str(called["_id"]))
         await self.queue_repository.set_current_queue_number(
             queue_number=called["queue_number"],
             player_id=str(called["_id"]),
@@ -668,12 +672,8 @@ class QueueService:
         current_queue_number = await self.queue_repository.get_current_queue_number()
         people_ahead = await self.queue_repository.count_people_ahead(entry["queue_number"])
 
-        can_play = False
-        if current_queue_number is not None:
-            if entry["queue_number"] <= current_queue_number:
-                can_play = True
-            elif entry["queue_number"] <= current_queue_number + self.LATE_TOLERANCE:
-                can_play = True
+        is_current_player = current_queue_number is not None and entry["queue_number"] == current_queue_number
+        can_play = is_current_player or bool(entry.get("late_play_allowed"))
 
         return QueueMobileViewResponse(
             player_id=str(entry["_id"]),
@@ -686,5 +686,5 @@ class QueueService:
             total_plays=entry["total_plays"],
             remaining_plays=entry["remaining_plays"],
             qr_value=str(entry["_id"]),
-            qr_url=f"{self.mobile_base_url}/user-qrcode?pid={str(entry['_id'])}",
+            qr_url=f"{self.mobile_base_url}/{str(entry['_id'])}",
         )

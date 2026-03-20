@@ -14,6 +14,7 @@ from schemas.queue import (
     QueueSkipResponse,
     QueueStateResponse,
     QueueValidateResponse,
+    QueueRequeueResponse,
 )
 from services.queue_intake_service import QueueIntakeService
 from services.queue_service import QueueService
@@ -128,3 +129,11 @@ async def skip_current_player(
     service: QueueService = Depends(get_queue_service),
 ) -> QueueSkipResponse:
     return await service.skip_current(reason=reason)
+
+@router.post("/requeue", response_model=QueueRequeueResponse)
+async def requeue_player(
+    player_id: str,
+    auth: AuthContext = Depends(require_auth),
+    service: QueueService = Depends(get_queue_service),
+) -> QueueRequeueResponse:
+    return await service.requeue(player_id)
