@@ -12,6 +12,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const calledContainer = document.getElementById('calledContainer');
     const buttonsContainer = document.getElementById('buttonsContainer');
     const loadingOverlay = document.getElementById('loadingOverlay');
+    const disclaimerOverlay = document.getElementById('disclaimerOverlay');
+    const disclaimerUnderstoodButton = document.getElementById('disclaimerUnderstoodButton');
+
+    let isDataReady = false;
+    let isDisclaimerDismissed = false;
+
+    function checkAllReady() {
+        if (isDataReady && isDisclaimerDismissed) {
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
+            if (disclaimerOverlay) disclaimerOverlay.style.display = 'none';
+        }
+    }
+
+    if (disclaimerUnderstoodButton) {
+        disclaimerUnderstoodButton.addEventListener('click', () => {
+            isDisclaimerDismissed = true;
+            if (disclaimerOverlay) disclaimerOverlay.style.display = 'none';
+            checkAllReady();
+        });
+    }
 
     let qid = params.get('qid');
     let sid = params.get('sid');
@@ -25,6 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!qid || !sid) {
         console.error('Missing qid or sid parameters');
         if (loadingOverlay) loadingOverlay.style.display = 'none';
+        if (disclaimerOverlay) disclaimerOverlay.style.display = 'none';
         return;
     }
 
@@ -109,15 +130,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         setupCarouselObserver();
 
-        // Hide loader and show content
-        if (loadingOverlay) loadingOverlay.style.display = 'none';
+        // Data is ready
+        isDataReady = true;
+        checkAllReady();
 
-        // Polling de status a cada 10 segundos (inicia após o primeiro carregamento)
+        // Polling de status a cada 10 segundos
         setInterval(updateQueueStatus, 10000);
 
     } catch (err) {
         console.error('Erro ao inicializar página de QR Codes:', err);
         if (loadingOverlay) loadingOverlay.style.display = 'none';
+        if (disclaimerOverlay) disclaimerOverlay.style.display = 'none';
         // Opcional: mostrar erro na tela
     }
 
