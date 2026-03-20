@@ -166,5 +166,44 @@ function clearQrUrl() {
     localStorage.removeItem('virtual_qr_url');
 }
 
-// Atualiza o display assim que o DOM carregar
-document.addEventListener('DOMContentLoaded', updateCounterDisplay);
+function setupLogoReset() {
+    const logos = document.querySelectorAll('.logo-container, .logo-container img, img.page-logo');
+    let pressTimer;
+
+    logos.forEach(logo => {
+        // Função para iniciar o contador
+        const startPress = () => {
+            pressTimer = setTimeout(() => {
+                if (confirm('Deseja realmente zerar todos os dados locais?')) {
+                    localStorage.clear();
+                    alert('Todos os dados foram removidos.');
+                    window.location.href = '/pages/';
+                }
+            }, 3000); // 3 segundos
+        };
+
+        // Função para cancelar o contador
+        const cancelPress = () => {
+            clearTimeout(pressTimer);
+        };
+
+        // Eventos para Desktop
+        logo.addEventListener('mousedown', startPress);
+        logo.addEventListener('mouseup', cancelPress);
+        logo.addEventListener('mouseleave', cancelPress);
+
+        // Eventos para Mobile (Touch)
+        logo.addEventListener('touchstart', (e) => {
+            // e.preventDefault(); // Opcional: evita menu de contexto, mas pode travar scroll se não for cuidadoso
+            startPress();
+        }, { passive: true });
+        logo.addEventListener('touchend', cancelPress);
+        logo.addEventListener('touchcancel', cancelPress);
+    });
+}
+
+// Atualiza o display e configura o reset assim que o DOM carregar
+document.addEventListener('DOMContentLoaded', () => {
+    updateCounterDisplay();
+    setupLogoReset();
+});
