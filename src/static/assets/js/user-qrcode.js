@@ -7,8 +7,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const posicaoEl = document.getElementById('posicaoValue');
     const btnWarnMe = document.getElementById('btn_warn_me');
 
-    const qid = params.get('qid'); // Queue Entry ID
-    const sid = params.get('sid'); // Session ID
+    let qid = params.get('qid');
+    let sid = params.get('sid');
+
+    if (qid) setQueueId(qid);
+    if (sid) setSessionId(sid);
+
+    if (!qid) qid = getQueueId();
+    if (!sid) sid = getSessionId();
 
     if (!qid || !sid) {
         console.error('Missing qid or sid parameters');
@@ -22,11 +28,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     btnWarnMe.addEventListener('click', () => {
-        window.location.href = '/pages/user-terms';
+        window.location.href = `/pages/user-terms?sid=${sid}&qid=${qid}`;
     });
 
     try {
-        // Parallel fetch for session tags and queue state
         const [tagsResp, queueResp] = await Promise.all([
             fetch(`/api/sessions/${sid}/tags`, { headers: AUTH_HEADERS }),
             fetch(`/api/queue/${qid}`, { headers: AUTH_HEADERS })
