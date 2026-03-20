@@ -33,11 +33,20 @@ async function onScanSuccess(decodedText, decodedResult) {
             let session_id = await getSessionWithTagKey(decodedText);
             let session = await getSession(session_id);
             let isValid = await Validate_tag(decodedText)
-            if (session.status == "skipped") {
+            if (session.status == "skipped" && isValid) {
                 await Disable_tag(decodedText);
             }
             else if (isValid) {
-                await play(decodedText, session.queue_entry_id)
+                let goNext = await play(decodedText, session.queue_entry_id)
+                if (goNext) {
+                    await getNext();
+                    await getCurrentPlayer()
+                }
+            }
+            else if (isValid == false) {
+                modal_error.style.display = "flex";
+                modal_overlay.style.display = "flex";
+                setTimeout(() => { hideModal(modal_error) }, 2000);
             }
         }
         hideLoading();
@@ -88,20 +97,13 @@ async function Validate_tag(tag_key) {
         error.status = resp.status;
         throw error
     }
-    let response = await resp.json()
-    console.log(response);
+    const response = await resp.json();
+
     if (response.available_for_play) {
-        modal_success.style.display = "flex";
-        modal_overlay.style.display = "flex";
-        setTimeout(() => { hideModal(modal_success) }, 2000);
         return true;
     }
-    else {
-        modal_error.style.display = "flex";
-        modal_overlay.style.display = "flex";
-        setTimeout(() => { hideModal(modal_error) }, 2000);
+    else
         return false;
-    }
 }
 async function Disable_tag(tag_key) {
     let resp = await fetch(`/api/tags/key/${tag_key}/deactivate`, {
@@ -175,6 +177,9 @@ async function play(tag_key, player_id) {
         throw error
     }
     let response = await resp.json();
+    modal_success.style.display = "flex";
+    modal_overlay.style.display = "flex";
+    setTimeout(() => { hideModal(modal_success) }, 2000);
     if (response.remaining_plays == 0) {
         return true;
     }
