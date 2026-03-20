@@ -2,20 +2,24 @@ from core.redis import redis
 class RedisService:
 
     @staticmethod
-    def add_to_redis_set(key: str, value: str):
-        redis.sadd(key, value)
+    async def add_to_redis_set(key: str, value: str):
+        await redis.sadd(key, value)
     
     @staticmethod
-    def get_list(key: str):
-        return list(redis.smembers(key))
+    async def get_list(key: str):
+        list_members = await redis.smembers(key)
+        if list_members is None:
+            return None
+        print(list_members)
+        return list(list_members)
     
     @staticmethod
-    def is_value_present(key: str, value: str):        
-        return list(redis.sismember(key, value))
+    async def is_value_present(key: str, value: str):        
+        return await redis.sismember(key, value)
         
     @staticmethod
-    def remove_from_redis_set(key: str, value: str):
-        redis.srem(key, value)
+    async def remove_from_redis_set(key: str, value: str):
+        await redis.srem(key, value)
 
         
     

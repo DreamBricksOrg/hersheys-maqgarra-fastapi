@@ -12,7 +12,6 @@ from services.observability_service import ObservabilityService
 from services.parser_service import ParserService
 from services.product_matching_service import ProductMatchingService
 from services.receipt_validation_service import ReceiptValidationService
-from services.redis_service import RedisService
 
 
 class ReceiptImageService:
@@ -23,8 +22,7 @@ class ReceiptImageService:
         receipt_validation_service: ReceiptValidationService,
         receipt_repository: ReceiptRepository,
         raw_payload_repository: RawPayloadRepository,
-        observability_service: ObservabilityService,
-        redisService: RedisService
+        observability_service: ObservabilityService
     ):
         self.parser_service = parser_service
         self.product_matching_service = product_matching_service
@@ -32,7 +30,6 @@ class ReceiptImageService:
         self.receipt_repository = receipt_repository
         self.raw_payload_repository = raw_payload_repository
         self.observability_service = observability_service
-        self.redisService = redisService
 
     async def execute(
         self,
@@ -103,7 +100,6 @@ class ReceiptImageService:
             "image_path": image_path_str,
         }
         created = await self.receipt_repository.create(payload)
-        self.redisService.add_to_redis_set("receipt_key", raw_payload.get("chave"))
         await self.observability_service.emit("receipt-image-audited", {"receipt_id": str(created["_id"]), "image_path": str(output_path)})
 
         return ReceiptResponse(

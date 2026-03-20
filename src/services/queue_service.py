@@ -18,7 +18,7 @@ from schemas.queue import (
     QueueValidateResponse,
 )
 from services.observability_service import ObservabilityService
-from utils.sms import (
+from util.sms import (
     send_queue_fifth_position_sms,
     send_queue_next_up_sms,
     send_queue_registration_sms,
