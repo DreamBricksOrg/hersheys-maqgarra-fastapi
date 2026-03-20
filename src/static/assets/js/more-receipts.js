@@ -4,6 +4,7 @@ const sorryModal = document.getElementById('sorryModal');
 const sessionErrorModal = document.getElementById('sessionErrorModal');
 const sessionErrorMessage = document.getElementById('sessionErrorMessage');
 const sessionErrorOkButton = document.getElementById('sessionErrorOkButton');
+const sorryUnderstoodButton = document.getElementById('sorryUnderstoodButton');
 
 function showSessionError(msg) {
     sessionErrorMessage.textContent = msg;
@@ -14,12 +15,29 @@ sessionErrorOkButton.addEventListener('click', () => {
     sessionErrorModal.style.display = 'none';
 });
 
+sorryUnderstoodButton.addEventListener('click', () => {
+    resetCounters();
+    clearReceiptIds();
+    clearSessionId();
+    clearQrUrl();
+    clearPlayerId();
+    clearQueueId();
+    clearQueueNumber();
+    window.location.href = '/pages/';
+});
+
 btnSim.addEventListener('click', () => {
     window.location.href = '/pages/';
 });
 
 btnNao.addEventListener('click', async () => {
     const tags = getTags();
+
+    if (tags <= 0) {
+        sorryModal.style.display = 'flex';
+        return;
+    }
+
     const receiptIds = getReceiptIds();
     let playerId = getPlayerId();
 
@@ -61,15 +79,5 @@ btnNao.addEventListener('click', async () => {
         }
     }
 
-    if (tags <= 0) {
-        sorryModal.style.display = 'flex';
-        resetCounters();
-        clearReceiptIds();
-        clearSessionId();
-        setTimeout(() => {
-            window.location.href = '/pages/';
-        }, 3000);
-    } else {
-        window.location.href = '/pages/tag-type';
-    }
+    window.location.href = '/pages/tag-type';
 });
