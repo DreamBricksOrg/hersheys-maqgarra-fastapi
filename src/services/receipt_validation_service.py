@@ -1,15 +1,19 @@
 from core.exceptions import AppError
 from repositories.receipt_repository import ReceiptRepository
-
+from services.redis_service import RedisService
 
 class ReceiptValidationService:
-    def __init__(self, receipt_repository: ReceiptRepository):
+    def __init__(self, receipt_repository: ReceiptRepository, redisService: RedisService):
         self.receipt_repository = receipt_repository
+        self.redisService = redisService
 
     async def ensure_not_duplicate(self, receipt_key: str | None) -> None:
         if not receipt_key:
             return
-        existing = await self.receipt_repository.find_by_key(receipt_key)
+        if self.redisService.is_value_present("receipt_key", receipt_key):
+           existing = True 
+        else :
+            existing = await self.receipt_repository.find_by_key(receipt_key)
         if existing:
             raise AppError(
                 message="Esta nota já foi utilizada",

@@ -3,7 +3,7 @@
     }
 
     :root {
-        --header-height: 15svh;
+        --header-height: 10svh;
     }
 
     body {
@@ -45,9 +45,59 @@
         gap: 20px;
     }
 
+    #Qr-reader-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 50%;
+    }
+
+    #queue_container {
+        width: 50%;
+    }
+
+    .queue_background {
+        background-color: #5d2a21;
+        height: 100%;
+        margin-right: 30px;
+        border-radius: 20px;
+        padding: 15px;
+        padding-top: 0;
+    }
+
     #reader {
         width: 80%;
         /* height: 80%; */
+    }
+
+    table {
+        border-collapse: separate;
+        width: 100%;
+        table-layout: fixed;
+        border-spacing: 0;
+        table-layout: fixed;
+    }
+
+    thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background-color: #5d2a21;
+        /* Ensures header stays on top */
+        border-bottom: 2px solid white;
+
+    }
+
+    tbody {
+        overflow-y: scroll;
+        text-align: center;
+    }
+
+    table>* {
+        font-size: 25;
+        color: white;
+        font-family: "SharpGrotesk-Medium20";
     }
 
     #reader-border {
@@ -76,15 +126,19 @@
     }
 
     @font-face {
-        font-family: 'SharpGroteskPETrialBold-14';
-        /* A name to be used later in your CSS */
-        src: url('../fonts/SharpGroteskPETrialBold-14-BF646589ddc1331.ttf');
+        font-family: 'SharpGrotesk-Medium20';
+        src: url('../fonts/SharpGrotesk-Medium20.otf');
+    }
+
+    @font-face {
+        font-family: 'SharpGroteskPETrial-Bold15';
+        src: url('../fonts/SharpGrotesk-Bold15.otf');
     }
 
     span {
         color: white;
         font-size: 64;
-        font-family: 'SharpGroteskPETrialBold-14';
+        font-family: 'SharpGroteskPETrial-Bold15';
     }
 
     .footer_capibarra {
@@ -95,20 +149,11 @@
     #capivara {
         position: fixed;
         height: auto;
-        bottom: -20svh;
-        left: -7svw;
+        bottom: 0;
+        left: 0;
         z-index: 100;
-        width: clamp(260px, 25svw, 320px);
-    }
-
-    #btn_scan {
-        width: 20svw;
-        height: 5svh;
-        border-radius: 50px;
-        background-color: #532e26;
-        border: 0px;
-        color: white;
-        font-size: 30px;
+        width: 25svw;
+        max-width: 220px;
     }
 
     #modal_alert,
@@ -124,6 +169,7 @@
         transform: translate(-50%, -50%);
         justify-content: center;
         align-items: center;
+        z-index: 9999;
     }
 
     #modal_success {
@@ -136,4 +182,60 @@
 
     #modal_error {
         background: linear-gradient(39deg, #c32258 0%, #b62b3b 34%, #d50707 100%);
+    }
+
+    #btn_scan,
+    #btn_next {
+        height: 100px;
+        width: 200px;
+        border-radius: 20px;
+        background-color: #5d2a21;
+        border: 0px;
+        color: white;
+        font-size: 32;
+        font-family: 'SharpGroteskPETrial-Bold15';
+    }
+
+    #display-next-inline {
+        height: 70px;
+        background-color: #5d2a21;
+        font-size: 36;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 40px;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.85);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    #spinner {
+        border: 6px solid #f3f3f3;
+        border-top: 6px solid rgb(83, 46, 38);
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+        margin-top: 15px;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
     }

@@ -1,7 +1,7 @@
 from core.exceptions import AppError
 from repositories.session_repository import SessionRepository
 from repositories.tag_repository import TagRepository
-from schemas.tags import SessionTagsResponse, TagResponse
+from schemas.tags import SessionTagsResponse, TagResponse, SessionWithTagResponse
 
 
 class SessionTagsService:
@@ -28,4 +28,24 @@ class SessionTagsService:
         return SessionTagsResponse(
             session_id=session_id,
             tags=[TagResponse.model_validate(item) for item in tags],
+        )
+
+    async def get_session_with_tags(self, tag_key: str) -> SessionWithTagResponse:
+        tags = await self.tag_repository.find_by_key(tag_key)
+        if not tags:
+            raise AppError(
+                "Tag não encontrada",
+                "tag_not_found",
+                404,
+                {"tag_key": tag_key},
+            )
+        if tags["session_id"] is None:
+            raise AppError(
+                "Tag não possui sessão",
+                "tag_does_not_have_session",
+                409,
+                {"tag_key": tag_key},
+            )
+        return SessionWithTagResponse(
+            session_id=tags["session_id"]
         )

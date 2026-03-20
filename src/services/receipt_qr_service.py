@@ -9,7 +9,7 @@ from services.observability_service import ObservabilityService
 from services.parser_service import ParserService
 from services.product_matching_service import ProductMatchingService
 from services.receipt_validation_service import ReceiptValidationService
-
+from services.redis_service import RedisService
 
 class ReceiptQRService:
     def __init__(
@@ -20,6 +20,7 @@ class ReceiptQRService:
         receipt_repository: ReceiptRepository,
         raw_payload_repository: RawPayloadRepository,
         observability_service: ObservabilityService,
+        redisService: RedisService
     ):
         self.parser_service = parser_service
         self.product_matching_service = product_matching_service
@@ -27,6 +28,7 @@ class ReceiptQRService:
         self.receipt_repository = receipt_repository
         self.raw_payload_repository = raw_payload_repository
         self.observability_service = observability_service
+        self.redisService = redisService
 
     async def execute(
         self,
@@ -89,6 +91,7 @@ class ReceiptQRService:
         }
 
         created = await self.receipt_repository.create(payload)
+        self.redisService.add_to_redis_set("receipt_key", receipt_key)
         await self.observability_service.emit(
             "receipt-validation-finished",
             {"receipt_id": str(created["_id"]), "status": status},

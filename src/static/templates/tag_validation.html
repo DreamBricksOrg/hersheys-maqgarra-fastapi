@@ -1,43 +1,86 @@
 <html lang="pt-br">
+
 <head>
     <link rel="stylesheet" href="{{ url_for('static', path='assets/css/tag_validation.css') }}" />
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="{{ url_for('static', path='assets/js/tag_validation.js') }}"></script>
 </head>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
 <body>
     <div class="header">
         <div class="header-content">
             <div class="logo-container">
-                <img src="{{ url_for('static', path='assets/images/logo_capi.png') }}" alt="Logo" id="logo">
+                <img src="{{ url_for('static', path='assets/images/titulo.png') }}" alt="Logo" id="logo">
 
             </div>
         </div>
     </div>
     <div class="content">
-        <span>Passe o QR Code</span>
-        <div id="reader_container">
-            <div id="reader-border"></div>
-            <div id="reader"></div>
+        <div>
+            <span>Próximo da fila</span>
+            <div id="display-next-inline">
+                <span id="current-player-id"></span>
+            </div>
+            <div id="spinner"></div>
+        </div>
+        <div style="display: flex; width: 100%; height: 50%;">
+            <div id="Qr-reader-container">
+                <div id="reader_container">
+                    <div id="reader-border">
+                    </div>
+                    <div id="reader"></div>
+                </div>
+            </div>
+            <div id="queue_container">
+                <div class="queue_background">
+                    <div style="max-height: 100%; overflow-y: auto; border-radius: 20px;">
+                        <table id="queue_table">
+                            <colgroup>
+                                <col style="width: 15%;">
+                                <col style="width: 45%;">
+                                <col style="width: 5%;">
+                                <col style="width: 35%;">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Código</th>
+                                    <th>-</th>
+                                    <th>Tags</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 20px">
+            <button id="btn_scan">Escanear</button>
+            <button id="btn_next" onclick="getNextInline()">Próximo Jogador</button>
         </div>
     </div>
-    <img src="" alt="" id="capivara">
     <div class="footer">
-        <img src="{{ url_for('static', path='assets/images/quadrados_inferiores.png') }}" alt="" class="footer_capibarra">
+        <img src="{{ url_for('static', path='assets/images/capivara.png') }}" alt="" id="capivara">
+        <img src="{{ url_for('static', path='assets/images/quadrados_inferiores.png') }}" alt=""
+            class="footer_capibarra">
+    </div>
+    <div class="modal-overlay">
+        <div style="display: none;" id="modal_error">
+            <span style="text-align: center;">TAG NÃO HABILITADA</span>
+        </div>
+
+        <div style="display: none;" id="modal_success">
+            <span style="text-align: center;">TAG ESCANEADA COM SUCESSO</span>
+        </div>
+
+        <div style="display: none;" id="modal_alert">
+            <span style="text-align: center;">ERRO AO ESCANEAR TAG TENTE NOVAMENTE</span>
+        </div>
     </div>
 
-    <div style="display: none;" id="modal_error">
-        <span style="text-align: center;">TAG NAO HABILITADA</span>
-    </div>
-
-    <div style="display: none;" id="modal_success">
-        <span style="text-align: center;">TAG ESCANEADA COM SUCESSO</span>
-    </div>
-
-    <div style="display: none;" id="modal_alert">
-        <span style="text-align: center;">ERRO AO ESCANEAR TAG TENTE NOVAMENTE</span>
-    </div>
 </body>
-
+<script src="{{ url_for('static', path='assets/js/tag_validation.js') }}"></script>
 
 </html>
