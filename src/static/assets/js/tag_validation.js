@@ -24,16 +24,22 @@ async function onScanSuccess(decodedText, decodedResult) {
     html5QrCode.stop();
     startLoading();
     try {
-        let session_id = await getSessionWithTagKey(decodedText);
-        let session = await getSession(session_id);
-        let isValid = await Validate_tag(decodedText)
-        if (session.status == "skipped") {
-            await Disable_tag(decodedText);
+        if (decodedText == "T03177") {
+            await log_special_tag();
+            modal_success.style.display = "flex";
+            modal_overlay.style.display = "flex";
+            setTimeout(() => { hideModal(modal_success) }, 2000);
+        } else {
+            let session_id = await getSessionWithTagKey(decodedText);
+            let session = await getSession(session_id);
+            let isValid = await Validate_tag(decodedText)
+            if (session.status == "skipped") {
+                await Disable_tag(decodedText);
+            }
+            else if (isValid) {
+                await play(decodedText, session.queue_entry_id)
+            }
         }
-        else if (isValid) {
-            await play(decodedText, session.queue_entry_id)
-        }
-
         hideLoading();
     }
     catch (error) {
@@ -49,6 +55,22 @@ async function onScanSuccess(decodedText, decodedResult) {
             modal_overlay.style.display = "flex";
             setTimeout(() => { hideModal(modal_alert) }, 2000);
         }
+    }
+}
+
+async function log_special_tag() {
+    let resp = await fetch(`/api/tags/log_unique_tag`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'capibarra-tablet-01',
+            'x-device-id': 'tablet-01'
+        }
+    });
+    if (!resp.ok) {
+        const error = new Error("Request Failed");
+        error.status = resp.status;
+        throw error
     }
 }
 
@@ -192,7 +214,7 @@ async function getCurrentPlayer() {
     }
     else {
         current_player_id.textContent = "Vazio"
-        
+
     }
 }
 
@@ -210,7 +232,7 @@ async function getQueue(loop) {
         console.log(response);
         let queueList = response.items.filter(x => states.includes(x.status))
         let count = 1
-        if (queueList.some(x => x.status == "waiting") && current_player_id.textContent == "Vazio"){
+        if (queueList.some(x => x.status == "waiting") && current_player_id.textContent == "Vazio") {
             await getNext();
             await getCurrentPlayer();
         }
@@ -218,9 +240,8 @@ async function getQueue(loop) {
             tbody_element.removeChild(tbody_element.firstChild);
         }
         queueList.forEach(element => {
-            let converted_Queue_Number = String(element.queue_number).padStart(8, '0') 
-            if (converted_Queue_Number == current_player_id.textContent)
-            {
+            let converted_Queue_Number = String(element.queue_number).padStart(8, '0')
+            if (converted_Queue_Number == current_player_id.textContent) {
                 return;
             }
             let newRow = tbody_element.insertRow(-1);
@@ -237,7 +258,7 @@ async function getQueue(loop) {
             count++;
         });
         if (loop == true) {
-            setTimeout(() => {                
+            setTimeout(() => {
                 getQueue(true);
             }, 10000);
         }
@@ -245,7 +266,7 @@ async function getQueue(loop) {
     catch (error) {
         console.log(error)
         if (loop == true) {
-            setTimeout(() => {                
+            setTimeout(() => {
                 getQueue(true);
             }, 10000);
         }

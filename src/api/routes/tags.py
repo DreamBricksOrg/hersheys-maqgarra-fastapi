@@ -22,6 +22,7 @@ from schemas.tags import (
     TagUpdateRequest,
     TagUseRequest,
     TagGenerateRequest,
+    LogSpecialTagResponse
 )
 from services.session_tags_service import SessionTagsService
 from services.tag_association_service import TagAssociationService
@@ -170,3 +171,10 @@ async def get_tags_by_session(
     service: SessionTagsService = Depends(get_session_tags_service),
 ) -> SessionTagsResponse:
     return await service.get_tags(session_id)
+
+@router.post("/log_unique_tag", response_model=LogSpecialTagResponse, status_code=status.HTTP_201_CREATED)
+async def log_unique_tag(    
+    auth: AuthContext = Depends(require_auth),
+    service: TagUsageService = Depends(get_tag_usage_service),
+) -> TagUsageService:
+    return await service.log_unique_tag()
