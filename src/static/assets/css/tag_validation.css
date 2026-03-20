@@ -95,7 +95,7 @@
     }
 
     table>* {
-        font-size: 25;
+        font-size: 20;
         color: white;
         font-family: "SharpGrotesk-Medium20";
     }
@@ -137,7 +137,7 @@
 
     span {
         color: white;
-        font-size: 64;
+        font-size: 50;
         font-family: 'SharpGroteskPETrial-Bold15';
     }
 

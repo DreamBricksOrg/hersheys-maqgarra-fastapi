@@ -26,16 +26,14 @@ async function onScanSuccess(decodedText, decodedResult) {
     try {
         let session_id = await getSessionWithTagKey(decodedText);
         let session = await getSession(session_id);
-        let validation = await validatePlayer(session.queue_entry_id)
-        if (validation.allowed) {
-            let isValid = await Validate_tag(decodedText)
-            if (isValid) {
-                let hasMoreTags = await play(decodedText, session.queue_entry_id)
-                if (hasMoreTags) {
-                    getNextInline();
-                }
-            }
+        let isValid = await Validate_tag(decodedText)
+        if (session.status == "skipped") {
+            await Disable_tag(decodedText);
         }
+        else if (isValid) {
+            await play(decodedText, session.queue_entry_id)
+        }
+
         hideLoading();
     }
     catch (error) {
@@ -69,8 +67,6 @@ async function Validate_tag(tag_key) {
         throw error
     }
     let response = await resp.json()
-
-    hideLoading()
     console.log(response);
     if (response.available_for_play) {
         modal_success.style.display = "flex";
@@ -85,7 +81,22 @@ async function Validate_tag(tag_key) {
         return false;
     }
 }
+async function Disable_tag(tag_key) {
+    let resp = await fetch(`/api/tags/key/${tag_key}/deactivate`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'capibarra-tablet-01',
+            'x-device-id': 'tablet-01'
+        }
+    });
+    if (!resp.ok) {
+        const error = new Error("Request Failed");
+        error.status = resp.status;
+        throw error
+    }
 
+}
 async function getSessionWithTagKey(tag_key) {
 
     const resp = await fetch(`/api/sessions/session/${tag_key}`, {
@@ -115,26 +126,6 @@ async function getSession(session_id) {
             'x-device-id': 'tablet-01'
         }
     })
-    if (!resp.ok) {
-        const error = new Error("Request Failed");
-        error.status = resp.status;
-        throw error
-    }
-    const response = await resp.json();
-    console.log(response);
-    return response
-}
-
-async function validatePlayer(player_id) {
-    const resp = await fetch(`/api/queue/validate?player_id=${player_id}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': 'capibarra-tablet-01',
-            'x-device-id': 'tablet-01'
-        },
-        body: JSON.stringify({ "player_id": player_id })
-    });
     if (!resp.ok) {
         const error = new Error("Request Failed");
         error.status = resp.status;
@@ -194,10 +185,15 @@ async function getCurrentPlayer() {
         }
     })
     const response = await resp.json()
-    hideLoading()
     console.log(response);
-    let formatted = String(response.current_queue_number).padStart(8, '0');
-    current_player_id.textContent = formatted
+    if (response.current_queue_number != null) {
+        let formatted = String(response.current_queue_number).padStart(8, '0');
+        current_player_id.textContent = formatted
+    }
+    else {
+        current_player_id.textContent = "Vazio"
+        
+    }
 }
 
 async function getQueue(loop) {
@@ -211,14 +207,22 @@ async function getQueue(loop) {
             }
         })
         const response = await resp.json()
-        hideLoading()
         console.log(response);
         let queueList = response.items.filter(x => states.includes(x.status))
         let count = 1
+        if (queueList.some(x => x.status == "waiting") && current_player_id.textContent == "Vazio"){
+            await getNext();
+            await getCurrentPlayer();
+        }
         while (tbody_element.firstChild) {
             tbody_element.removeChild(tbody_element.firstChild);
         }
         queueList.forEach(element => {
+            let converted_Queue_Number = String(element.queue_number).padStart(8, '0') 
+            if (converted_Queue_Number == current_player_id.textContent)
+            {
+                return;
+            }
             let newRow = tbody_element.insertRow(-1);
 
             // 3. Insert cells (<td>) into the new row
@@ -233,23 +237,23 @@ async function getQueue(loop) {
             count++;
         });
         if (loop == true) {
-            setTimeout(() => {
+            setTimeout(() => {                
                 getQueue(true);
-            }, 60000);
+            }, 10000);
         }
     }
     catch (error) {
         console.log(error)
         if (loop == true) {
-            setTimeout(() => {
+            setTimeout(() => {                
                 getQueue(true);
-            }, 60000);
+            }, 10000);
         }
     }
 }
 
 async function getNextInline() {
-    const resp = await fetch(`/api/queue/next`, {
+    const resp = await fetch(`/api/queue/skip`, {
         method: 'Post',
         headers: {
             'Content-Type': 'application/json',
@@ -263,7 +267,19 @@ async function getNextInline() {
     getQueue(false);
     hideLoading()
 }
-
+async function getNext() {
+    const resp = await fetch(`/api/queue/next`, {
+        method: 'Post',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'capibarra-tablet-01',
+            'x-device-id': 'tablet-01'
+        }
+    })
+    const response = await resp.json();
+    console.log(response);
+    hideLoading()
+}
 
 // 4. Add text or HTML to the cell
 function hideModal(element) {
