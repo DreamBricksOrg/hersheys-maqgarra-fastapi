@@ -1,6 +1,6 @@
 from core.exceptions import AppError
 from repositories.tag_repository import TagRepository
-from schemas.tags import TagResponse
+from schemas.tags import TagResponse, LogSpecialTagResponse
 from services.observability_service import ObservabilityService
 
 
@@ -122,3 +122,14 @@ class TagUsageService:
         )
 
         return TagResponse.model_validate(updated)
+    
+    async def log_unique_tag(self) -> LogSpecialTagResponse:
+        await self.observability_service.emit(
+            "special-tag-used",
+            {
+                "tag_key": "T03177",
+            },
+        )
+        return LogSpecialTagResponse.model_validate({"success": True})
+        
+    

@@ -18,9 +18,42 @@
 
             <input type="text" inputmode="numeric" pattern="[0-9]*" id="phone-input" maxlength="15"  placeholder="Digite seu telefone" autofocus oninput="mascaraTelefone(this)">
             <div class="buttons">
-                <button class="button">Processar</button>
+                <button class="button" id="btnProcessar">Processar</button>
             </div>
             <span class="info_text">Enviaremos uma mensagem de SMS quando for a sua vez.</span>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" style="display: none;">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Modal Sucesso -->
+    <div id="successModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <svg viewBox="0 0 24 24" style="width: 70px; height: 70px; fill: #28a745; margin-bottom: 15px;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            <h2>Sucesso!</h2>
+            <p>Seu telefone foi cadastrado com sucesso. Você receberá um SMS quando chegar sua vez.</p>
+            <div class="modal-actions">
+                <button id="btnSuccess" class="button">Ver QR Codes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Erro -->
+    <div id="errorModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <svg viewBox="0 0 24 24" style="width: 70px; height: 70px; fill: #dc3545; margin-bottom: 15px;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+            <h2>Ops!</h2>
+            <p id="errorMessage">Ocorreu um erro ao processar sua solicitação. Tente novamente.</p>
+            <div class="modal-actions">
+                <button id="btnError" class="button">Entendido</button>
+            </div>
         </div>
     </div>
 

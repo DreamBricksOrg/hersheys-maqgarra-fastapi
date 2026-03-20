@@ -109,3 +109,6 @@ class SessionTagsResponse(BaseModel):
 
 class SessionWithTagResponse(BaseModel):
     session_id: ObjectIdStr
+
+class LogSpecialTagResponse(BaseModel):
+    success: bool

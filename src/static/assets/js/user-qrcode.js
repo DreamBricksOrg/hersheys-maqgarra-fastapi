@@ -11,6 +11,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     const posicaoContainer = document.getElementById('posicaoContainer');
     const calledContainer = document.getElementById('calledContainer');
     const buttonsContainer = document.getElementById('buttonsContainer');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const disclaimerOverlay = document.getElementById('disclaimerOverlay');
+    const disclaimerUnderstoodButton = document.getElementById('disclaimerUnderstoodButton');
+
+    let isDataReady = false;
+    let isDisclaimerDismissed = localStorage.getItem('disclaimer_dismissed') === 'true';
+
+    function checkAllReady() {
+        if (isDataReady && isDisclaimerDismissed) {
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
+            if (disclaimerOverlay) disclaimerOverlay.style.display = 'none';
+        }
+    }
+
+    // Se já foi dispensado anteriormente, esconde o overlay imediatamente
+    if (isDisclaimerDismissed && disclaimerOverlay) {
+        disclaimerOverlay.style.display = 'none';
+    }
+
+    if (disclaimerUnderstoodButton) {
+        disclaimerUnderstoodButton.addEventListener('click', () => {
+            isDisclaimerDismissed = true;
+            localStorage.setItem('disclaimer_dismissed', 'true');
+            if (disclaimerOverlay) disclaimerOverlay.style.display = 'none';
+            checkAllReady();
+        });
+    }
 
     let qid = params.get('qid');
     let sid = params.get('sid');
@@ -23,6 +50,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!qid || !sid) {
         console.error('Missing qid or sid parameters');
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
+        if (disclaimerOverlay) disclaimerOverlay.style.display = 'none';
         return;
     }
 
@@ -54,15 +83,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Update UI elements
         chancesEl.textContent = tagsCount;
-        numeroEl.textContent = queueData.queue_number || '--';
-        posicaoEl.textContent = (queueData.people_ahead !== undefined) ? (queueData.people_ahead + 1) : '--';
+        
+        // Initial UI update based on status
+        updateUIByStatus(queueData);
 
         // Generate QR codes based on tag_key
         tagsArray.forEach((tag, index) => {
             const i = index + 1;
             const tagKey = tag.tag_key;
 
-            // Slide
             const slide = document.createElement('div');
             slide.className = 'carousel-slide';
 
@@ -90,13 +119,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const label = document.createElement('span');
             label.className = 'qr-label';
-            // label.textContent = `TAG ${i}`; // Opcional: mostrar número da tag
 
             slide.appendChild(qrBox);
             slide.appendChild(label);
             carousel.appendChild(slide);
 
-            // Dot
             const dot = document.createElement('span');
             dot.className = 'dot' + (i === 1 ? ' active' : '');
             dot.dataset.index = i - 1;
@@ -107,15 +134,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             dotsContainer.appendChild(dot);
         });
 
-        // Track active slide via IntersectionObserver
         setupCarouselObserver();
+
+        // Data is ready
+        isDataReady = true;
+        checkAllReady();
+
+        // Polling de status a cada 10 segundos
+        setInterval(updateQueueStatus, 10000);
 
     } catch (err) {
         console.error('Erro ao inicializar página de QR Codes:', err);
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
+        if (disclaimerOverlay) disclaimerOverlay.style.display = 'none';
+        // Opcional: mostrar erro na tela
     }
-
-    // Polling de status a cada 5 segundos
-    setInterval(updateQueueStatus, 5000);
 
     async function updateQueueStatus() {
         try {
@@ -136,6 +169,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (posicaoEl) posicaoEl.textContent = (people_ahead !== undefined) ? (people_ahead + 1) : '--';
 
         if (status === 'called' || status === 'playing') {
+            if (pageWrapper) {
+                pageWrapper.style.display = 'flex';
+                document.body.style.overflow = '';
+            }
+            if (doneWrapper) doneWrapper.style.display = 'none';
             if (posicaoContainer) posicaoContainer.style.display = 'none';
             if (calledContainer) calledContainer.style.display = 'flex';
             if (buttonsContainer) buttonsContainer.style.display = 'none';
@@ -145,8 +183,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.body.style.overflow = 'hidden'; // Evita scroll na tela de agradecimento
         } else {
             // "waiting" ou outro
+            if (pageWrapper) {
+                pageWrapper.style.display = 'flex';
+                document.body.style.overflow = '';
+            }
+            if (doneWrapper) doneWrapper.style.display = 'none';
             if (posicaoContainer) posicaoContainer.style.display = 'flex';
             if (calledContainer) calledContainer.style.display = 'none';
+            if (buttonsContainer) buttonsContainer.style.display = 'flex';
         }
     }
 
