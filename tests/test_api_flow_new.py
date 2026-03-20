@@ -96,6 +96,11 @@ def api_get(path: str, params: dict[str, Any] | None = None, expected_status: in
     return assert_status(response, expected_status)
 
 
+def raw_post(path: str, payload: dict[str, Any] | None = None, params: dict[str, Any] | None = None) -> requests.Response:
+    url = f"{BASE_URL}{path}"
+    return requests.post(url, headers=headers(), json=payload, params=params, timeout=TIMEOUT)
+
+
 def get_db():
     client = MongoClient(MONGO_URI)
     return client[DB_NAME]
@@ -156,7 +161,7 @@ def create_fake_player_id() -> str:
     return str(ObjectId())
 
 
-def call_next_until_player(queue_player_id: str, max_attempts: int = 20) -> dict[str, Any]:
+def call_next_until_player(queue_player_id: str, max_attempts: int = 50) -> dict[str, Any]:
     current = api_get("/api/queue/current")
     if current.get("current_player_id") == queue_player_id:
         return current
@@ -170,24 +175,34 @@ def call_next_until_player(queue_player_id: str, max_attempts: int = 20) -> dict
     raise TestFailure("Fila não chegou no player esperado dentro do número máximo de tentativas")
 
 
-def run_multi_tag_digital_flow() -> dict[str, Any]:
+def make_session_and_join(total_plays: int = 1, phone: str | None = None) -> dict[str, Any]:
     db = get_db()
-
     receipt_id = seed_receipt(db, "valid")
     player_id = create_fake_player_id()
+    session_payload = {
+        "receipt_ids": [receipt_id],
+        "player_id": player_id,
+        "total_plays": total_plays,
+    }
+    if phone is not None:
+        session_payload["phone"] = phone
 
-    session = api_post(
-        "/api/sessions",
-        {
-            "receipt_ids": [receipt_id],
-            "player_id": player_id,
-            "total_plays": 2,
-            "phone": "5511999999999",
-        },
-    )
+    session = api_post("/api/sessions", session_payload)
+    joined = api_post("/api/queue/join", {"session_id": session["session_id"], "total_plays": total_plays})
+
+    return {
+        "receipt_id": receipt_id,
+        "player_id": player_id,
+        "session": session,
+        "join_queue": joined,
+    }
+
+
+def run_multi_tag_digital_flow() -> dict[str, Any]:
+    created = make_session_and_join(total_plays=2, phone="5511999999999")
+    session = created["session"]
+    joined = created["join_queue"]
     session_id = session["session_id"]
-
-    joined = api_post("/api/queue/join", {"session_id": session_id, "total_plays": 2})
     queue_player_id = joined["player_id"]
 
     tag1 = api_post("/api/tags/generate", {"session_id": session_id, "delivery_mode": "digital"})
@@ -225,10 +240,7 @@ def run_multi_tag_digital_flow() -> dict[str, Any]:
     assert_true(session_after["total_plays"] == 2, "Session deveria manter total_plays=2")
 
     return {
-        "receipt_id": receipt_id,
-        "player_id": player_id,
-        "session": session,
-        "join_queue": joined,
+        **created,
         "tag1": tag1,
         "tag2": tag2,
         "mobile_before": mobile_before,
@@ -244,24 +256,14 @@ def run_multi_tag_digital_flow() -> dict[str, Any]:
 
 def run_multi_tag_physical_flow() -> dict[str, Any]:
     db = get_db()
-
-    receipt_id = seed_receipt(db, "valid")
-    player_id = create_fake_player_id()
     seed_physical_tag(db, "T1284", "available")
     seed_physical_tag(db, "T2309", "available")
     seed_physical_tag(db, "T9998", "available")
 
-    session = api_post(
-        "/api/sessions",
-        {
-            "receipt_ids": [receipt_id],
-            "player_id": player_id,
-            "total_plays": 2,
-        },
-    )
+    created = make_session_and_join(total_plays=2)
+    session = created["session"]
+    joined = created["join_queue"]
     session_id = session["session_id"]
-
-    joined = api_post("/api/queue/join", {"session_id": session_id, "total_plays": 2})
     queue_player_id = joined["player_id"]
 
     assoc1 = api_post("/api/tags/associate", {"session_id": session_id, "delivery_mode": "physical"})
@@ -297,10 +299,7 @@ def run_multi_tag_physical_flow() -> dict[str, Any]:
     assert_true(session_after["status"] == "finished", "Session física deveria terminar como finished")
 
     return {
-        "receipt_id": receipt_id,
-        "player_id": player_id,
-        "session": session,
-        "join_queue": joined,
+        **created,
         "assoc1": assoc1,
         "assoc2": assoc2,
         "mobile_before": mobile_before,
@@ -338,12 +337,7 @@ def run_negative_checks() -> list[dict[str, Any]]:
     assert_digital_tag_format(tag1["tag_key"])
     assert_physical_tag_format(tag2["tag"]["tag_key"])
 
-    third_attempt = requests.post(
-        f"{BASE_URL}/api/tags/generate",
-        headers=headers(),
-        json={"session_id": session_id, "delivery_mode": "digital"},
-        timeout=TIMEOUT,
-    )
+    third_attempt = raw_post("/api/tags/generate", {"session_id": session_id, "delivery_mode": "digital"})
     third_data = assert_status(third_attempt, 409)
     results.append(
         {
@@ -354,11 +348,9 @@ def run_negative_checks() -> list[dict[str, Any]]:
         }
     )
 
-    reuse_attempt = requests.post(
-        f"{BASE_URL}/api/sessions",
-        headers=headers(),
-        json={"receipt_ids": [receipt_id], "player_id": create_fake_player_id(), "total_plays": 1},
-        timeout=TIMEOUT,
+    reuse_attempt = raw_post(
+        "/api/sessions",
+        {"receipt_ids": [receipt_id], "player_id": create_fake_player_id(), "total_plays": 1},
     )
     reuse_data = assert_status(reuse_attempt, 409)
     results.append(
@@ -381,17 +373,112 @@ def run_negative_checks() -> list[dict[str, Any]]:
     call_next_until_player(queue_a["player_id"])
     api_post("/api/queue/validate", params={"player_id": queue_a["player_id"]})
 
-    wrong_play_resp = requests.post(
-        f"{BASE_URL}/api/queue/play",
-        headers=headers(),
-        json={"player_id": queue_a["player_id"], "tag_key": wrong_tag},
-        timeout=TIMEOUT,
-    )
+    wrong_play_resp = raw_post("/api/queue/play", {"player_id": queue_a["player_id"], "tag_key": wrong_tag})
     wrong_play_data = assert_status(wrong_play_resp, 409)
     results.append(
         {
             "name": "block_tag_from_other_session",
             "response": wrong_play_data,
+        }
+    )
+
+    current = make_session_and_join(total_plays=1)
+    future = make_session_and_join(total_plays=1)
+
+    current_queue_id = current["join_queue"]["player_id"]
+    future_queue_id = future["join_queue"]["player_id"]
+
+    current_tag = api_post("/api/tags/generate", {"session_id": current["session"]["session_id"], "delivery_mode": "digital"})
+    future_tag = api_post("/api/tags/generate", {"session_id": future["session"]["session_id"], "delivery_mode": "digital"})
+
+    call_next_until_player(current_queue_id)
+    api_post("/api/queue/validate", params={"player_id": current_queue_id})
+
+    out_of_order_resp = raw_post("/api/queue/play", {"player_id": future_queue_id, "tag_key": future_tag["tag_key"]})
+    out_of_order_data = assert_status(out_of_order_resp, 409)
+    results.append(
+        {
+            "name": "block_future_player_out_of_order",
+            "response": out_of_order_data,
+        }
+    )
+
+    return results
+
+
+def run_late_play_checks() -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+
+    skipped = make_session_and_join(total_plays=1)
+    next_one = make_session_and_join(total_plays=1)
+
+    skipped_queue_id = skipped["join_queue"]["player_id"]
+    next_queue_id = next_one["join_queue"]["player_id"]
+
+    skipped_tag = api_post("/api/tags/generate", {"session_id": skipped["session"]["session_id"], "delivery_mode": "digital"})
+    next_tag = api_post("/api/tags/generate", {"session_id": next_one["session"]["session_id"], "delivery_mode": "digital"})
+    assert_digital_tag_format(skipped_tag["tag_key"])
+    assert_digital_tag_format(next_tag["tag_key"])
+
+    call_next_until_player(skipped_queue_id)
+    skip_resp = api_post("/api/queue/skip", {})
+    current_after_skip = api_get("/api/queue/current")
+
+    validate_skipped = api_post("/api/queue/validate", params={"player_id": skipped_queue_id})
+    play_skipped = api_post("/api/queue/play", {"player_id": skipped_queue_id, "tag_key": skipped_tag["tag_key"]})
+    skipped_session_after = api_get(f"/api/sessions/{skipped['session']['session_id']}")
+
+    assert_true(skip_resp["skipped_player_id"] == skipped_queue_id, "Skip deveria pular o jogador esperado")
+    assert_true(current_after_skip["current_player_id"] == next_queue_id, "Após skip, o próximo deveria ser chamado")
+    assert_true(validate_skipped["allowed"] is True, "Jogador skipado deveria poder validar depois")
+    assert_true(play_skipped["allowed"] is True, "Jogador skipado deveria conseguir jogar depois")
+    assert_true(play_skipped["finished"] is True, "Jogador skipado com 1 jogada deveria finalizar")
+    assert_true(skipped_session_after["status"] == "finished", "Sessão do jogador skipado deveria finalizar")
+
+    results.append(
+        {
+            "name": "skipped_player_can_play_late",
+            "skip_response": skip_resp,
+            "current_after_skip": current_after_skip,
+            "validate": validate_skipped,
+            "play": play_skipped,
+        }
+    )
+
+    requeued = make_session_and_join(total_plays=1)
+    after_requeue = make_session_and_join(total_plays=1)
+
+    requeued_queue_id = requeued["join_queue"]["player_id"]
+    after_requeue_queue_id = after_requeue["join_queue"]["player_id"]
+
+    requeued_tag = api_post("/api/tags/generate", {"session_id": requeued["session"]["session_id"], "delivery_mode": "digital"})
+    after_requeue_tag = api_post("/api/tags/generate", {"session_id": after_requeue["session"]["session_id"], "delivery_mode": "digital"})
+    assert_digital_tag_format(requeued_tag["tag_key"])
+    assert_digital_tag_format(after_requeue_tag["tag_key"])
+
+    call_next_until_player(requeued_queue_id)
+    requeue_resp = api_post("/api/queue/requeue", params={"player_id": requeued_queue_id})
+    current_after_requeue = api_get("/api/queue/current")
+
+    validate_requeued = api_post("/api/queue/validate", params={"player_id": requeued_queue_id})
+    play_requeued = api_post("/api/queue/play", {"player_id": requeued_queue_id, "tag_key": requeued_tag["tag_key"]})
+    requeued_session_after = api_get(f"/api/sessions/{requeued['session']['session_id']}")
+
+    assert_true(requeue_resp["player_id"] == requeued_queue_id, "Requeue deveria mover o jogador esperado")
+    assert_true(requeue_resp["status"] == "requeued", "Status do requeue deveria ser requeued")
+    assert_true(current_after_requeue["current_player_id"] == after_requeue_queue_id, "Após requeue do atual, o próximo deveria ser chamado")
+    assert_true(validate_requeued["allowed"] is True, "Jogador requeueado deveria poder validar depois")
+    assert_true(play_requeued["allowed"] is True, "Jogador requeueado deveria conseguir jogar depois")
+    assert_true(play_requeued["finished"] is True, "Jogador requeueado com 1 jogada deveria finalizar")
+    assert_true(requeued_session_after["status"] == "finished", "Sessão do jogador requeueado deveria finalizar")
+
+    results.append(
+        {
+            "name": "requeued_player_can_play_late",
+            "requeue_response": requeue_resp,
+            "current_after_requeue": current_after_requeue,
+            "validate": validate_requeued,
+            "play": play_requeued,
         }
     )
 
@@ -416,6 +503,9 @@ def main() -> int:
         negative = run_negative_checks()
         log("Validações negativas OK", negative)
 
+        late_play = run_late_play_checks()
+        log("Validações de atraso OK", late_play)
+
         summary = {
             "result": "success",
             "digital_session_id": digital["session"]["session_id"],
@@ -423,23 +513,24 @@ def main() -> int:
             "digital_tag_keys": [digital["tag1"]["tag_key"], digital["tag2"]["tag_key"]],
             "physical_tag_keys": [physical["assoc1"]["tag"]["tag_key"], physical["assoc2"]["tag"]["tag_key"]],
             "negative_checks": [item["name"] for item in negative],
+            "late_play_checks": [item["name"] for item in late_play],
         }
         log("Resumo final", summary)
-        print("\\nTeste concluído com sucesso.")
+        print("\nTeste concluído com sucesso.")
         return 0
 
     except TestFailure as exc:
-        print("\\nFALHA NO TESTE:")
+        print("\nFALHA NO TESTE:")
         print(str(exc))
         return 1
 
     except requests.RequestException as exc:
-        print("\\nERRO HTTP:")
+        print("\nERRO HTTP:")
         print(str(exc))
         return 1
 
     except Exception as exc:
-        print("\\nERRO INESPERADO:")
+        print("\nERRO INESPERADO:")
         print(repr(exc))
         return 1
 
