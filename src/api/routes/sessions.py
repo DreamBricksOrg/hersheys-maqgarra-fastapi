@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, status
 from api.dependencies import get_session_service, get_session_tags_service, require_auth
 from schemas.auth import AuthContext
 from schemas.sessions import SessionCreateRequest, SessionResponse
-from schemas.tags import SessionTagsResponse
+from schemas.tags import SessionTagsResponse, SessionWithTagResponse
 from services.session_service import SessionService
 from services.session_tags_service import SessionTagsService
 
@@ -35,3 +35,11 @@ async def get_session_tags(
     service: SessionTagsService = Depends(get_session_tags_service),
 ) -> SessionTagsResponse:
     return await service.get_tags(session_id)
+
+@router.get("/session/{tag_key}", response_model=SessionWithTagResponse)
+async def get_session_with_tags(
+    tag_key: str,
+    auth: AuthContext = Depends(require_auth),
+    service: SessionTagsService = Depends(get_session_tags_service),
+) -> SessionWithTagResponse:
+    return await service.get_session_with_tags(tag_key)

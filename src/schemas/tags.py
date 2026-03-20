@@ -105,3 +105,7 @@ class TagListResponse(BaseModel):
 class SessionTagsResponse(BaseModel):
     session_id: ObjectIdStr
     tags: list[TagResponse] = Field(default_factory=list)
+
+
+class SessionWithTagResponse(BaseModel):
+    session_id: ObjectIdStr

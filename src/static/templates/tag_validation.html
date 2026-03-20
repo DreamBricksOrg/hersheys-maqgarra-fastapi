@@ -1,17 +1,16 @@
 <html lang="pt-br">
+
 <head>
     <link rel="stylesheet" href="{{ url_for('static', path='assets/css/tag_validation.css') }}" />
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="{{ url_for('static', path='assets/js/tag_validation.js') }}"></script>
 </head>
-<link rel="stylesheet" href="/src/static/css/tag_validation.css" />
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
 <body>
     <div class="header">
         <div class="header-content">
             <div class="logo-container">
-                <img src="{{ url_for('static', path='assets/images/logo_capi.png') }}" alt="Logo" id="logo">
+                <img src="{{ url_for('static', path='assets/images/titulo.png') }}" alt="Logo" id="logo">
 
             </div>
         </div>
@@ -20,13 +19,15 @@
         <div>
             <span>Próximo da fila</span>
             <div id="display-next-inline">
-                <span class="player-count">10000</span>
+                <span id="current-player-id"></span>
             </div>
+            <div id="spinner"></div>
         </div>
         <div style="display: flex; width: 100%; height: 50%;">
             <div id="Qr-reader-container">
                 <div id="reader_container">
-                    <div id="reader-border"></div>
+                    <div id="reader-border">
+                    </div>
                     <div id="reader"></div>
                 </div>
             </div>
@@ -57,26 +58,29 @@
         </div>
         <div style="display: flex; gap: 20px">
             <button id="btn_scan">Escanear</button>
-            <button id="btn_next">Próximo Jogador</button>
+            <button id="btn_next" onclick="getNextInline()">Próximo Jogador</button>
         </div>
     </div>
     <div class="footer">
-        <img src="/src/static/images/capivara.png" alt="" id="capivara">
-        <img src="/src/static/images/quadrados_inferiores.png" alt="" class="footer_capibarra">
+        <img src="{{ url_for('static', path='assets/images/capivara.png') }}" alt="" id="capivara">
+        <img src="{{ url_for('static', path='assets/images/quadrados_inferiores.png') }}" alt=""
+            class="footer_capibarra">
+    </div>
+    <div class="modal-overlay">
+        <div style="display: none;" id="modal_error">
+            <span style="text-align: center;">TAG NÃO HABILITADA</span>
+        </div>
+
+        <div style="display: none;" id="modal_success">
+            <span style="text-align: center;">TAG ESCANEADA COM SUCESSO</span>
+        </div>
+
+        <div style="display: none;" id="modal_alert">
+            <span style="text-align: center;">ERRO AO ESCANEAR TAG TENTE NOVAMENTE</span>
+        </div>
     </div>
 
-    <div style="display: none;" id="modal_error">
-        <span style="text-align: center;">TAG NAO HABILITADA</span>
-    </div>
-
-    <div style="display: none;" id="modal_success">
-        <span style="text-align: center;">TAG ESCANEADA COM SUCESSO</span>
-    </div>
-
-    <div style="display: none;" id="modal_alert">
-        <span style="text-align: center;">ERRO AO ESCANEAR TAG TENTE NOVAMENTE</span>
-    </div>
 </body>
+<script src="{{ url_for('static', path='assets/js/tag_validation.js') }}"></script>
 
 </html>
-<script src="/src/static/js/tag_validation.js"></script>
