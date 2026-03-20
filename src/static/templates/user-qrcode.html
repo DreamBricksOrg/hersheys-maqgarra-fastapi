@@ -31,18 +31,36 @@
             <div class="carousel-dots" id="carouselDots"></div>
         </div>
 
-        <div class="posicao-container">
+        <div class="posicao-container" id="posicaoContainer">
             <p>Sua <b>POSIÇÃO</b> é:</p>
             <div class="posicao-box">
                 <span class="posicao-value" id="posicaoValue">--</span>
             </div>
         </div>
 
-        <div class="buttons">
+        <div class="called-container" id="calledContainer" style="display: none;">
+            <div class="called-box">
+                <span class="called-value">A SUA VEZ CHEGOU!</span>
+            </div>
+        </div>
+
+        <div class="buttons" id="buttonsContainer">
             <button class="button" onclick="window.location.reload()">RECARREGAR</button>
             <button class="button" id="btn_warn_me">ME AVISE</button>
         </div>
     
+    </div>
+
+    <!-- Mensagem de agradecimento (Finalizado) -->
+    <div class="done-wrapper" id="doneWrapper" style="display: none;">
+        <img src="/static/assets/images/titulo.png" class="page-logo" alt="Logo">
+        <img src="/static/assets/images/capivara2.png" class="page-capivara" alt="Capivara">
+        
+        <div class="done-container">
+            <div class="done-box">
+                <p class="done-text">MUITO OBRIGADO POR PARTICIPAR DA <b>CAPIGARRA!</b></p>
+            </div>
+        </div>
     </div>
 
      <div class="page-footer">
