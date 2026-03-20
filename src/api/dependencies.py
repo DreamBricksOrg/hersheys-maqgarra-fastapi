@@ -35,9 +35,10 @@ async def get_database() -> AsyncIOMotorDatabase:
     return await get_db()
 
 
-def get_observability_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> ObservabilityService:
+def get_observability_service(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> ObservabilityService:
     return ObservabilityService(AuditRepository(db))
-
 
 def get_bars_name_repository(db: AsyncIOMotorDatabase = Depends(get_database)) -> BarsNameRepository:
     return BarsNameRepository(db)
@@ -49,18 +50,55 @@ def get_product_matching_service(
     return ProductMatchingService(repo)
 
 
+def get_queue_repository(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> QueueRepository:
+    return QueueRepository(db)
+
+
+def get_queue_service(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> QueueService:
+    return QueueService(
+        queue_repository=QueueRepository(db),
+        session_repository=SessionRepository(db),
+        tag_repository=TagRepository(db),
+        observability_service=ObservabilityService(AuditRepository(db)),
+        mobile_base_url=settings.BASE_URL,
+    )
+
+
+def get_session_service(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    queue_service: QueueService = Depends(get_queue_service),
+) -> SessionService:
+    return SessionService(
+        session_repository=SessionRepository(db),
+        receipt_repository=ReceiptRepository(db),
+        observability_service=ObservabilityService(AuditRepository(db)),
+        queue_service=queue_service,
+    )
+
+
 async def require_auth(
     db: AsyncIOMotorDatabase = Depends(get_database),
     api_key: str | None = Header(default=None, alias=settings.API_KEY_HEADER),
     device_id: str | None = Header(default=None, alias=settings.DEVICE_ID_HEADER),
 ) -> AuthContext:
-    auth_service = ApiKeyAuthService(ApiKeyRepository(db), ObservabilityService(AuditRepository(db)))
+    auth_service = ApiKeyAuthService(
+        ApiKeyRepository(db),
+        ObservabilityService(AuditRepository(db)),
+    )
+
     if not api_key:
         return await auth_service.authenticate("", device_id)
+
     return await auth_service.authenticate(api_key, device_id)
 
 
-def get_receipt_qr_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> ReceiptQRService:
+def get_receipt_qr_service(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> ReceiptQRService:
     observability = ObservabilityService(AuditRepository(db))
     return ReceiptQRService(
         parser_service=ParserService(),
@@ -72,7 +110,9 @@ def get_receipt_qr_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> 
     )
 
 
-def get_receipt_image_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> ReceiptImageService:
+def get_receipt_image_service(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> ReceiptImageService:
     observability = ObservabilityService(AuditRepository(db))
     return ReceiptImageService(
         parser_service=ParserService(),
@@ -84,60 +124,41 @@ def get_receipt_image_service(db: AsyncIOMotorDatabase = Depends(get_database)) 
     )
 
 
-def get_receipt_override_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> ReceiptOverrideService:
+def get_receipt_override_service(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> ReceiptOverrideService:
     return ReceiptOverrideService(
         ReceiptRepository(db),
         ObservabilityService(AuditRepository(db)),
     )
 
 
-def get_queue_repository(db: AsyncIOMotorDatabase = Depends(get_database)) -> QueueRepository:
-    return QueueRepository(db)
-
-
-def get_queue_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> QueueService:
-    return QueueService(
-        queue_repository=QueueRepository(db),
-        session_repository=SessionRepository(db),
-        tag_repository=TagRepository(db),
-        observability_service=ObservabilityService(AuditRepository(db)),
-        mobile_base_url=settings.BASE_URL,
-    )
-
-
-def get_queue_intake_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> QueueIntakeService:
-    return QueueIntakeService(
-        receipt_repository=ReceiptRepository(db),
-        session_repository=SessionRepository(db),
-        queue_repository=QueueRepository(db),
-        queue_service=QueueService(
-            queue_repository=QueueRepository(db),
-            session_repository=SessionRepository(db),
-            tag_repository=TagRepository(db),
-            observability_service=ObservabilityService(AuditRepository(db)),
-            mobile_base_url=settings.BASE_URL,
-        ),
-        observability_service=ObservabilityService(AuditRepository(db)),
-        mobile_base_url=settings.BASE_URL,
-    )
-
-
-def get_receipt_manual_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> ReceiptManualService:
+def get_receipt_manual_service(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> ReceiptManualService:
     return ReceiptManualService(
         receipt_repository=ReceiptRepository(db),
         observability_service=ObservabilityService(AuditRepository(db)),
     )
 
 
-def get_session_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> SessionService:
-    return SessionService(
-        session_repository=SessionRepository(db),
+def get_queue_intake_service(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    queue_service: QueueService = Depends(get_queue_service),
+) -> QueueIntakeService:
+    return QueueIntakeService(
         receipt_repository=ReceiptRepository(db),
+        session_repository=SessionRepository(db),
+        queue_repository=QueueRepository(db),
+        queue_service=queue_service,  # ✅ reutiliza
         observability_service=ObservabilityService(AuditRepository(db)),
+        mobile_base_url=settings.BASE_URL,
     )
 
 
-def get_tag_association_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> TagAssociationService:
+def get_tag_association_service(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> TagAssociationService:
     return TagAssociationService(
         session_repository=SessionRepository(db),
         tag_repository=TagRepository(db),
@@ -145,25 +166,33 @@ def get_tag_association_service(db: AsyncIOMotorDatabase = Depends(get_database)
     )
 
 
-def get_tag_state_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> TagStateService:
+def get_tag_state_service(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> TagStateService:
     return TagStateService(TagRepository(db))
 
 
-def get_tag_crud_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> TagCrudService:
+def get_tag_crud_service(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> TagCrudService:
     return TagCrudService(
         tag_repository=TagRepository(db),
         observability_service=ObservabilityService(AuditRepository(db)),
     )
 
 
-def get_tag_usage_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> TagUsageService:
+def get_tag_usage_service(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> TagUsageService:
     return TagUsageService(
         tag_repository=TagRepository(db),
         observability_service=ObservabilityService(AuditRepository(db)),
     )
 
 
-def get_session_tags_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> SessionTagsService:
+def get_session_tags_service(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> SessionTagsService:
     return SessionTagsService(
         session_repository=SessionRepository(db),
         tag_repository=TagRepository(db),

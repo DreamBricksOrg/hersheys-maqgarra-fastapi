@@ -109,3 +109,15 @@ class SessionRepository:
             {"$set": update_data},
         )
         return await self.find_by_id(session_id)
+
+    async def update_phone(self, session_id: str, phone: str) -> dict | None:
+        await self.collection.update_one(
+            {"_id": ObjectId(session_id)},
+            {
+                "$set": {
+                    "phone": phone,
+                    "last_updated_at": datetime.now(timezone.utc),
+                }
+            },
+        )
+        return await self.find_by_id(session_id)
