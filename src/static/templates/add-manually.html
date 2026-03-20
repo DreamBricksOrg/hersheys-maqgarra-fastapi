@@ -79,6 +79,21 @@
         </div>
     </div>
 
+    <!-- Modal de Erro -->
+    <div id="errorModal" class="modal-overlay" style="display: none;">
+        <div class="modal-confirm-content" style="text-align: center;">
+            <svg viewBox="0 0 24 24" style="width: 70px; height: 70px; fill: #dc3545; margin-bottom: 15px;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+            <h2 id="errorTitle">Erro ao enviar nota</h2>
+            <p id="errorSubtitle" style="color: #666; margin: 8px 0 16px; font-size: 14px; display: none;"></p>
+            <div class="modal-actions">
+                <button id="retryBtn" class="btn btn-secondary">Tentar Novamente</button>
+                <button id="dismissBtn" class="btn btn-primary" style="background-color: var(--chocolate-color);">Entendido</button>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', path='assets/js/counter.js') }}"></script>
     <script src="{{ url_for('static', path='assets/js/add-manually.js') }}"></script>
 </body>
