@@ -130,7 +130,7 @@ def send_sms_message(message: str, destination_number: str) -> bool:
     return False
 
 
-def send_queue_registration_sms(destination_number: str, queue_number: int) -> bool:
+def send_queue_registration_sms(destination_number: str, queue_number: int, qr_code_url: str | None = None) -> bool:
     """
     Enviar quando a pessoa entra na fila.
     """
@@ -138,6 +138,9 @@ def send_queue_registration_sms(destination_number: str, queue_number: int) -> b
         "Você entrou na fila da Capigarra.\n"
         f"Seu número na fila é {queue_number}."
     )
+    if qr_code_url:
+        body += f"\nAcompanhe sua posição em: {qr_code_url}"
+
     return send_sms_message(body, destination_number)
 
 

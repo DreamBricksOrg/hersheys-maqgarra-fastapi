@@ -43,7 +43,7 @@ class QueueService:
         self.observability_service = observability_service
         self.mobile_base_url = mobile_base_url.rstrip("/")
 
-    async def _send_registration_sms_if_possible(self, session: dict, queue_entry: dict) -> bool:
+    async def _send_registration_sms_if_possible(self, session: dict, queue_entry: dict, qr_code_url: str | None = None) -> bool:
         phone = session.get("phone")
         if not phone:
             return False
@@ -54,6 +54,7 @@ class QueueService:
         sent = send_queue_registration_sms(
             destination_number=phone,
             queue_number=queue_entry["queue_number"],
+            qr_code_url=qr_code_url,
         )
         if sent:
             await self.queue_repository.mark_registration_sms_sent(str(queue_entry["_id"]))
@@ -69,7 +70,7 @@ class QueueService:
         )
         return False
 
-    async def send_registration_sms_for_session(self, session_id: str) -> dict:
+    async def send_registration_sms_for_session(self, session_id: str, qr_code_url: str | None = None) -> dict:
         session = await self.session_repository.find_by_id(session_id)
         if not session:
             raise AppError(
@@ -88,7 +89,7 @@ class QueueService:
                 {"session_id": session_id},
             )
 
-        sms_sent = await self._send_registration_sms_if_possible(session, queue_entry)
+        sms_sent = await self._send_registration_sms_if_possible(session, queue_entry, qr_code_url=qr_code_url)
 
         people_ahead = await self.queue_repository.count_people_ahead(queue_entry["queue_number"])
 

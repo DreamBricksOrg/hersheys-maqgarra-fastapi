@@ -17,6 +17,8 @@ const errorTitle = document.getElementById('errorTitle');
 const errorSubtitle = document.getElementById('errorSubtitle');
 const errorDefaultActions = document.getElementById('errorDefaultActions');
 const errorDuplicateActions = document.getElementById('errorDuplicateActions');
+const invalidModal = document.getElementById('invalidModal');
+const invalidOkBtn = document.getElementById('invalidOkBtn');
 
 let currentFile = null;       // arquivo original da câmera
 let processedCdn = null;      // URL CDN da imagem processada
@@ -288,9 +290,14 @@ addBarrasBtn.addEventListener('click', async () => {
 
         const receipt = await resp.json();
         console.log("[DEBUG] Nota salva:", receipt);
-        addReceiptId(receipt.receipt_id);
-        addBarras(totalBars);
-        saveSuccess = true;
+
+        if (receipt.status === 'valid') {
+            addReceiptId(receipt.receipt_id);
+            addBarras(totalBars);
+            saveSuccess = true;
+        } else {
+            invalidModal.style.display = 'flex';
+        }
 
     } catch (err) {
         console.error("[DEBUG] Erro ao salvar nota:", err);
@@ -303,4 +310,8 @@ addBarrasBtn.addEventListener('click', async () => {
         currentFile = null;
         if (saveSuccess) window.location.href = '/pages/more-receipts';
     }
+});
+
+invalidOkBtn.addEventListener('click', () => {
+    invalidModal.style.display = 'none';
 });

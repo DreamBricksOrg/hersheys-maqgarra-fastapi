@@ -21,6 +21,8 @@ const errorTitle = document.getElementById('errorTitle');
 const errorSubtitle = document.getElementById('errorSubtitle');
 const errorDefaultActions = document.getElementById('errorDefaultActions');
 const errorDuplicateActions = document.getElementById('errorDuplicateActions');
+const invalidModal = document.getElementById('invalidModal');
+const invalidOkBtn = document.getElementById('invalidOkBtn');
 
 function showError(title, subtitle, isDuplicate) {
     errorTitle.textContent = title || 'Erro ao ler nota';
@@ -248,9 +250,14 @@ addBarrasBtn.addEventListener('click', async () => {
 
         const receipt = await saveResp.json();
         console.log('[DEBUG] Nota salva:', receipt);
-        addReceiptId(receipt.receipt_id);
-        addBarras(totalBars);
-        saveSuccess = true;
+
+        if (receipt.status === 'valid') {
+            addReceiptId(receipt.receipt_id);
+            addBarras(totalBars);
+            saveSuccess = true;
+        } else {
+            invalidModal.style.display = 'flex';
+        }
 
     } catch (err) {
         console.error('[DEBUG] Erro:', err);
@@ -261,6 +268,11 @@ addBarrasBtn.addEventListener('click', async () => {
         qrUrl = null;
         if (saveSuccess) window.location.href = '/pages/more-receipts';
     }
+});
+
+invalidOkBtn.addEventListener('click', () => {
+    invalidModal.style.display = 'none';
+    qrInput.focus();
 });
 
 btnVoltar.addEventListener('click', () => {
