@@ -162,7 +162,9 @@ class SessionService:
                 {"session_id": session_id},
             )
 
-        sms_result = await self.queue_service.send_registration_sms_for_session(session_id)
+        sms_result = await self.queue_service.send_registration_sms_for_session(
+            session_id, qr_code_url=payload.qr_code_url
+        )
 
         await self.observability_service.emit(
             "session-phone-updated",

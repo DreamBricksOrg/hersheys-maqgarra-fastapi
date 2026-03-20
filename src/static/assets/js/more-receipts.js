@@ -6,6 +6,11 @@ const sessionErrorMessage = document.getElementById('sessionErrorMessage');
 const sessionErrorOkButton = document.getElementById('sessionErrorOkButton');
 const sorryUnderstoodButton = document.getElementById('sorryUnderstoodButton');
 
+const confirmReceiptsModal = document.getElementById('confirmReceiptsModal');
+const confirmReceiptsCount = document.getElementById('confirm-receipts-count');
+const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
+const proceedConfirmBtn = document.getElementById('proceedConfirmBtn');
+
 function showSessionError(msg) {
     sessionErrorMessage.textContent = msg;
     sessionErrorModal.style.display = 'flex';
@@ -30,14 +35,8 @@ btnSim.addEventListener('click', () => {
     window.location.href = '/pages/';
 });
 
-btnNao.addEventListener('click', async () => {
+async function createSessionAndProceed() {
     const tags = getTags();
-
-    if (tags <= 0) {
-        sorryModal.style.display = 'flex';
-        return;
-    }
-
     const receiptIds = getReceiptIds();
     let playerId = getPlayerId();
 
@@ -80,4 +79,28 @@ btnNao.addEventListener('click', async () => {
     }
 
     window.location.href = '/pages/tag-type';
+}
+
+btnNao.addEventListener('click', () => {
+    const tags = getTags();
+
+    if (tags <= 0) {
+        sorryModal.style.display = 'flex';
+        return;
+    }
+
+    const receiptIds = getReceiptIds();
+    const count = receiptIds ? receiptIds.length : 0;
+    
+    confirmReceiptsCount.textContent = count;
+    confirmReceiptsModal.style.display = 'flex';
+});
+
+cancelConfirmBtn.addEventListener('click', () => {
+    confirmReceiptsModal.style.display = 'none';
+});
+
+proceedConfirmBtn.addEventListener('click', async () => {
+    confirmReceiptsModal.style.display = 'none';
+    await createSessionAndProceed();
 });

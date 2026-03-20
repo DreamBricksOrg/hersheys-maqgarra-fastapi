@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnProcessar.addEventListener('click', async () => {
         const phone = phoneInput.value.replace(/\D/g, "");
+        const qrCodeUrl = `${window.location.origin}/pages/user-qrcode?sid=${sid}&qid=${qid}`;
 
         if (phone.length < 10) {
             errorMessage.textContent = 'Por favor, insira um número de telefone válido com DDD.';
@@ -49,7 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     'x-api-key': 'capibarra-tablet-01',
                     'x-device-id': 'tablet-01'
                 },
-                body: JSON.stringify({ phone: phone })
+                body: JSON.stringify({ 
+                    phone: phone,
+                    qr_code_url: qrCodeUrl
+                })
             });
 
             if (!response.ok) {

@@ -25,6 +25,7 @@ class SessionCreateRequest(BaseModel):
 
 class SessionPhoneUpdateRequest(BaseModel):
     phone: str = Field(min_length=8, max_length=20)
+    qr_code_url: str | None = None
 
 
 class SessionPhoneUpdateResponse(BaseModel):
