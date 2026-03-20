@@ -1,94 +1,126 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
     const chancesEl = document.getElementById('chancesCount');
     const carousel = document.getElementById('carousel');
     const dotsContainer = document.getElementById('carouselDots');
     const numeroEl = document.getElementById('numeroValue');
     const posicaoEl = document.getElementById('posicaoValue');
-    const btnWarnMe = document.getElementById('btn_warn_me')
+    const btnWarnMe = document.getElementById('btn_warn_me');
+
+    const qid = params.get('qid'); // Queue Entry ID
+    const sid = params.get('sid'); // Session ID
+
+    if (!qid || !sid) {
+        console.error('Missing qid or sid parameters');
+        return;
+    }
+
+    const AUTH_HEADERS = {
+        'Content-Type': 'application/json',
+        'x-api-key': 'capibarra-tablet-01',
+        'x-device-id': 'tablet-01'
+    };
 
     btnWarnMe.addEventListener('click', () => {
         window.location.href = '/pages/user-terms';
     });
-    // Expected tags format: ?tags=KEY1,KEY2,KEY3
-    const tagsParam = params.get('tags');
-    const tagsArray = tagsParam ? tagsParam.split(',') : ['QRCODE-1'];
-    const tagsCount = tagsArray.length;
 
-    // Update title with number of chances
-    chancesEl.textContent = tagsCount;
+    try {
+        // Parallel fetch for session tags and queue state
+        const [tagsResp, queueResp] = await Promise.all([
+            fetch(`/api/sessions/${sid}/tags`, { headers: AUTH_HEADERS }),
+            fetch(`/api/queue/${qid}`, { headers: AUTH_HEADERS })
+        ]);
 
-    // Generate real QR codes based on tags keys
-    tagsArray.forEach((tagKey, index) => {
-        const i = index + 1;
-        // Slide
-        const slide = document.createElement('div');
-        slide.className = 'carousel-slide';
+        if (!tagsResp.ok || !queueResp.ok) {
+            throw new Error('Falha ao carregar dados do servidor');
+        }
 
-        const qrBox = document.createElement('div');
-        qrBox.className = 'qr-container';
+        const tagsData = await tagsResp.json();
+        const queueData = await queueResp.json();
 
-        const img = document.createElement('img');
-        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${tagKey}`;
-        img.alt = `QR Code ${tagKey}`;
-        qrBox.appendChild(img);
+        const tagsArray = tagsData.tags || [];
+        const tagsCount = tagsArray.length;
 
-        const overlay = document.createElement('div');
-        overlay.className = 'scanned-overlay';
-        const overlayText = document.createElement('span');
-        overlayText.textContent = 'escaneado';
-        overlay.appendChild(overlayText);
-        qrBox.appendChild(overlay);
+        // Update UI elements
+        chancesEl.textContent = tagsCount;
+        numeroEl.textContent = queueData.queue_number || '--';
+        posicaoEl.textContent = (queueData.people_ahead !== undefined) ? (queueData.people_ahead + 1) : '--';
 
-        const hotspot = document.createElement('div');
-        hotspot.className = 'longpress-hotspot';
-        qrBox.appendChild(hotspot);
-        setupLongPress(hotspot, qrBox);
+        // Generate QR codes based on tag_key
+        tagsArray.forEach((tag, index) => {
+            const i = index + 1;
+            const tagKey = tag.tag_key;
 
-        qrBox.addEventListener('contextmenu', (e) => e.preventDefault());
+            // Slide
+            const slide = document.createElement('div');
+            slide.className = 'carousel-slide';
 
-        const label = document.createElement('span');
-        label.className = 'qr-label';
+            const qrBox = document.createElement('div');
+            qrBox.className = 'qr-container';
 
-        slide.appendChild(qrBox);
-        slide.appendChild(label);
-        carousel.appendChild(slide);
+            const img = document.createElement('img');
+            img.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(tagKey)}`;
+            img.alt = `QR Code ${tagKey}`;
+            qrBox.appendChild(img);
 
-        // Dot
-        const dot = document.createElement('span');
-        dot.className = 'dot' + (i === 1 ? ' active' : '');
-        dot.dataset.index = i - 1;
-        dot.addEventListener('click', () => {
-            const target = carousel.children[dot.dataset.index];
-            target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            const overlay = document.createElement('div');
+            overlay.className = 'scanned-overlay';
+            const overlayText = document.createElement('span');
+            overlayText.textContent = 'escaneado';
+            overlay.appendChild(overlayText);
+            qrBox.appendChild(overlay);
+
+            const hotspot = document.createElement('div');
+            hotspot.className = 'longpress-hotspot';
+            qrBox.appendChild(hotspot);
+            setupLongPress(hotspot, qrBox);
+
+            qrBox.addEventListener('contextmenu', (e) => e.preventDefault());
+
+            const label = document.createElement('span');
+            label.className = 'qr-label';
+            // label.textContent = `TAG ${i}`; // Opcional: mostrar número da tag
+
+            slide.appendChild(qrBox);
+            slide.appendChild(label);
+            carousel.appendChild(slide);
+
+            // Dot
+            const dot = document.createElement('span');
+            dot.className = 'dot' + (i === 1 ? ' active' : '');
+            dot.dataset.index = i - 1;
+            dot.addEventListener('click', () => {
+                const target = carousel.children[dot.dataset.index];
+                target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            });
+            dotsContainer.appendChild(dot);
         });
-        dotsContainer.appendChild(dot);
-        dotsContainer.appendChild(dot);
-    });
 
-    // Track active slide via IntersectionObserver
-    const slides = carousel.querySelectorAll('.carousel-slide');
-    const dots = dotsContainer.querySelectorAll('.dot');
+        // Track active slide via IntersectionObserver
+        setupCarouselObserver();
 
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const idx = Array.from(slides).indexOf(entry.target);
-                dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-            }
-        });
-    }, { root: carousel, threshold: 0.6 });
+    } catch (err) {
+        console.error('Erro ao inicializar página de QR Codes:', err);
+    }
 
-    slides.forEach(slide => observer.observe(slide));
+    function setupCarouselObserver() {
+        const slides = carousel.querySelectorAll('.carousel-slide');
+        const dots = dotsContainer.querySelectorAll('.dot');
+        if (slides.length === 0) return;
 
-    // Mocked values
-    const numero = Math.floor(Math.random() * 900) + 100;
-    numeroEl.textContent = numero;
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const idx = Array.from(slides).indexOf(entry.target);
+                    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+                }
+            });
+        }, { root: carousel, threshold: 0.6 });
 
-    const posicao = Math.floor(Math.random() * 50) + 1;
-    posicaoEl.textContent = posicao;
+        slides.forEach(slide => observer.observe(slide));
+    }
 
-    // Long-press (1s) on center hotspot to toggle scanned state
     function setupLongPress(hotspot, container) {
         let timer = null;
         const HOLD_MS = 1000;

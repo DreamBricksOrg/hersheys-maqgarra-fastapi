@@ -58,7 +58,7 @@ async function generateVirtualTags() {
         
 
         const baseUrl = window.location.origin;
-        const finalUrl = `${baseUrl}/pages/user-qrcode?pid=${queueId}`;
+        const finalUrl = `${baseUrl}/pages/user-qrcode?qid=${queueId}&sid=${sessionId}`;
         dynamicQRCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(finalUrl)}`;
         dynamicQRCode.style.display = 'block';
 
