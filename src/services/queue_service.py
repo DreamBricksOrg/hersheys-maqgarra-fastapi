@@ -338,28 +338,30 @@ class QueueService:
             )
 
         current_queue_number = await self.queue_repository.get_current_queue_number()
-        if current_queue_number is None:
-            raise AppError(
-                "A fila ainda não foi iniciada no tablet",
-                "queue_not_started",
-                409,
-            )
-
         player_queue_number = entry["queue_number"]
-        is_current_player = player_queue_number == current_queue_number
         is_late_allowed = bool(entry.get("late_play_allowed"))
 
-        if not is_current_player and not is_late_allowed:
-            raise AppError(
-                "Ainda não é a vez deste jogador",
-                "queue_not_current_player",
-                409,
-                {
-                    "player_id": player_id,
-                    "queue_number": player_queue_number,
-                    "current_queue_number": current_queue_number,
-                },
-            )
+        if current_queue_number is None:
+            if not is_late_allowed:
+                raise AppError(
+                    "A fila ainda não foi iniciada no tablet",
+                    "queue_not_started",
+                    409,
+                )
+        else:
+            is_current_player = player_queue_number == current_queue_number
+
+            if not is_current_player and not is_late_allowed:
+                raise AppError(
+                    "Ainda não é a vez deste jogador",
+                    "queue_not_current_player",
+                    409,
+                    {
+                        "player_id": player_id,
+                        "queue_number": player_queue_number,
+                        "current_queue_number": current_queue_number,
+                    },
+                )
 
         playing = await self.queue_repository.mark_playing(player_id)
         await self.queue_repository.set_current_queue_number(
@@ -375,7 +377,13 @@ class QueueService:
                 "player_id": player_id,
                 "queue_number": player_queue_number,
                 "current_queue_number": current_queue_number,
-                "reason": "current_player" if is_current_player else "late_play_allowed",
+                "reason": (
+                    "late_play_allowed_without_current"
+                    if current_queue_number is None and is_late_allowed
+                    else "current_player"
+                    if current_queue_number is not None and player_queue_number == current_queue_number
+                    else "late_play_allowed"
+                ),
             },
         )
 
@@ -416,28 +424,30 @@ class QueueService:
             )
 
         current_queue_number = await self.queue_repository.get_current_queue_number()
-        if current_queue_number is None:
-            raise AppError(
-                "A fila ainda não foi iniciada no tablet",
-                "queue_not_started",
-                409,
-            )
-
         player_queue_number = entry["queue_number"]
-        is_current_player = player_queue_number == current_queue_number
         is_late_allowed = bool(entry.get("late_play_allowed"))
 
-        if not is_current_player and not is_late_allowed:
-            raise AppError(
-                "Ainda não é a vez deste jogador",
-                "queue_not_current_player",
-                409,
-                {
-                    "player_id": player_id,
-                    "queue_number": player_queue_number,
-                    "current_queue_number": current_queue_number,
-                },
-            )
+        if current_queue_number is None:
+            if not is_late_allowed:
+                raise AppError(
+                    "A fila ainda não foi iniciada no tablet",
+                    "queue_not_started",
+                    409,
+                )
+        else:
+            is_current_player = player_queue_number == current_queue_number
+
+            if not is_current_player and not is_late_allowed:
+                raise AppError(
+                    "Ainda não é a vez deste jogador",
+                    "queue_not_current_player",
+                    409,
+                    {
+                        "player_id": player_id,
+                        "queue_number": player_queue_number,
+                        "current_queue_number": current_queue_number,
+                    },
+                )
 
         if entry["status"] != "playing":
             entry = await self.queue_repository.mark_playing(player_id)

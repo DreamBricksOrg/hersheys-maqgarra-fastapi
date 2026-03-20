@@ -321,3 +321,77 @@ button{
 .done-text b {
     font-family: 'SharpGroteskPETrialBold', sans-serif;
 }
+
+#buttonsContainer{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    gap: 1rem;
+}
+
+/* ========== Loading Overlay ========== */
+#loadingOverlay {
+    position: fixed;
+    inset: 0;
+    background: var(--chocolate-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9998; /* Under disclaimer */
+}
+
+/* ========== Disclaimer Overlay ========== */
+#disclaimerOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    z-index: 9999;
+    padding: 2rem;
+}
+
+.loading-disclaimer {
+    max-width: 500px;
+    background: #fff;
+    border-radius: 1.5rem;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.loading-disclaimer p {
+    font-family: 'SharpGroteskPETrialBook', sans-serif;
+    font-size: 1rem;
+    color: var(--chocolate-color);
+    line-height: 1.5;
+    hyphens: auto;
+    margin: 0;
+    text-align: justify;
+}
+
+#disclaimerUnderstoodButton {
+    background: var(--warning-color);
+    color: var(--chocolate-color);
+    font-family: 'SharpGroteskPETrialBold', sans-serif;
+    padding: 1rem 3rem;
+    font-size: 1.3rem;
+}
+
+.loader {
+    width: 60px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 8px solid lightblue;
+    border-right-color: orange;
+    animation: l2 1s infinite linear;
+}
+
+@keyframes l2 {
+    to { transform: rotate(1turn); }
+}

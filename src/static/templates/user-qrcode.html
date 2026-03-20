@@ -9,7 +9,19 @@
 </head>
 <body>
 
-    <div class="page-wrapper" id="pageWrapper">
+    <div id="loadingOverlay">
+        <div class="loader"></div>
+    </div>
+
+    <div id="disclaimerOverlay">
+        <div class="loading-disclaimer">
+            <p>QRCode disponível para utilização <b>até às 17h do dia de hoje.</b> <br>
+               Caso não tenha participado no dia, é necessário cadastrar novamente as NFs.</p>
+        </div>
+        <button id="disclaimerUnderstoodButton" class="button">Entendido</button>
+    </div>
+
+    <div class="page-wrapper" id="pageWrapper" style="display: none;">
     <img src="{{ url_for('static', path='assets/images/titulo.png') }}" class="page-logo" alt="Logo">
     <img src="{{ url_for('static', path='assets/images/capivara2.png') }}" class="page-capivara" alt="Capivara">
 

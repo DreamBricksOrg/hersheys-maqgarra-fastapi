@@ -42,19 +42,40 @@ body {
     background-color: white;
     width: 70svw;
     height: 55svh;
-    display: block;
+    display: flex;
+    flex-direction: column;
     border-radius: 10px;
-    padding: 20px;
+    padding: 24px;
     overflow-y: auto;
-    font-size: 10px;
-    text-align: start;
+    font-size: 14px;
+    text-align: left;
+    color: #333;
 }
 
-#terms_container>* {
-    font-family: "arial";
-    display: inline-block;
-    white-space: pre-line;
-    color: #000000;
+#terms_container h3 {
+    font-family: 'SharpGroteskPETrialBold', Arial, sans-serif;
+    font-size: 16px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: var(--chocolate-color);
+}
+
+#terms_container h4 {
+    font-family: 'SharpGroteskPETrialBold', Arial, sans-serif;
+    font-size: 14px;
+    margin-top: 15px;
+    margin-bottom: 8px;
+    color: #000;
+}
+
+#terms_container p {
+    font-family: Arial, sans-serif;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.terms-section {
+    margin-bottom: 15px;
 }
 
 /* ========== Title ========== */
