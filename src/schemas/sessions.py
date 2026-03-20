@@ -23,6 +23,18 @@ class SessionCreateRequest(BaseModel):
     phone: str | None = None
 
 
+class SessionPhoneUpdateRequest(BaseModel):
+    phone: str = Field(min_length=8, max_length=20)
+
+
+class SessionPhoneUpdateResponse(BaseModel):
+    session_id: str
+    phone: str
+    queue_number: int
+    people_ahead: int
+    sms_sent: bool
+
+
 class SessionResponse(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,

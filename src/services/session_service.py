@@ -1,8 +1,14 @@
 from core.exceptions import AppError
 from repositories.receipt_repository import ReceiptRepository
 from repositories.session_repository import SessionRepository
-from schemas.sessions import SessionCreateRequest, SessionResponse
+from schemas.sessions import (
+    SessionCreateRequest,
+    SessionPhoneUpdateRequest,
+    SessionPhoneUpdateResponse,
+    SessionResponse,
+)
 from services.observability_service import ObservabilityService
+from services.queue_service import QueueService
 
 
 class SessionService:
@@ -11,10 +17,12 @@ class SessionService:
         session_repository: SessionRepository,
         receipt_repository: ReceiptRepository,
         observability_service: ObservabilityService,
+        queue_service: QueueService,
     ):
         self.session_repository = session_repository
         self.receipt_repository = receipt_repository
         self.observability_service = observability_service
+        self.queue_service = queue_service
 
     async def create(self, payload: SessionCreateRequest) -> SessionResponse:
         if not payload.receipt_ids:
@@ -130,3 +138,47 @@ class SessionService:
             )
 
         return SessionResponse.model_validate(session)
+
+    async def update_phone(
+        self,
+        session_id: str,
+        payload: SessionPhoneUpdateRequest,
+    ) -> SessionPhoneUpdateResponse:
+        session = await self.session_repository.find_by_id(session_id)
+        if not session:
+            raise AppError(
+                "Sessão não encontrada",
+                "session_not_found",
+                404,
+                {"session_id": session_id},
+            )
+
+        updated = await self.session_repository.update_phone(session_id, payload.phone)
+        if not updated:
+            raise AppError(
+                "Não foi possível atualizar o telefone da sessão",
+                "session_phone_update_failed",
+                500,
+                {"session_id": session_id},
+            )
+
+        sms_result = await self.queue_service.send_registration_sms_for_session(session_id)
+
+        await self.observability_service.emit(
+            "session-phone-updated",
+            {
+                "session_id": session_id,
+                "phone": payload.phone,
+                "sms_sent": sms_result["sms_sent"],
+                "queue_number": sms_result["queue_number"],
+                "people_ahead": sms_result["people_ahead"],
+            },
+        )
+
+        return SessionPhoneUpdateResponse(
+            session_id=session_id,
+            phone=payload.phone,
+            queue_number=sms_result["queue_number"],
+            people_ahead=sms_result["people_ahead"],
+            sms_sent=sms_result["sms_sent"],
+        )

@@ -1,16 +1,19 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 
-from api.dependencies import get_session_service, get_session_tags_service, require_auth
+from api.dependencies import get_session_service, require_auth
 from schemas.auth import AuthContext
-from schemas.sessions import SessionCreateRequest, SessionResponse
-from schemas.tags import SessionTagsResponse, SessionWithTagResponse
+from schemas.sessions import (
+    SessionCreateRequest,
+    SessionPhoneUpdateRequest,
+    SessionPhoneUpdateResponse,
+    SessionResponse,
+)
 from services.session_service import SessionService
-from services.session_tags_service import SessionTagsService
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 
 
-@router.post("", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=SessionResponse, status_code=201)
 async def create_session(
     payload: SessionCreateRequest,
     auth: AuthContext = Depends(require_auth),
@@ -28,18 +31,11 @@ async def get_session(
     return await service.get_by_id(session_id)
 
 
-@router.get("/{session_id}/tags", response_model=SessionTagsResponse)
-async def get_session_tags(
+@router.post("/{session_id}/phone", response_model=SessionPhoneUpdateResponse)
+async def update_session_phone(
     session_id: str,
+    payload: SessionPhoneUpdateRequest,
     auth: AuthContext = Depends(require_auth),
-    service: SessionTagsService = Depends(get_session_tags_service),
-) -> SessionTagsResponse:
-    return await service.get_tags(session_id)
-
-@router.get("/session/{tag_key}", response_model=SessionWithTagResponse)
-async def get_session_with_tags(
-    tag_key: str,
-    auth: AuthContext = Depends(require_auth),
-    service: SessionTagsService = Depends(get_session_tags_service),
-) -> SessionWithTagResponse:
-    return await service.get_session_with_tags(tag_key)
+    service: SessionService = Depends(get_session_service),
+) -> SessionPhoneUpdateResponse:
+    return await service.update_phone(session_id, payload)

@@ -43,13 +43,13 @@ class QueueService:
         self.observability_service = observability_service
         self.mobile_base_url = mobile_base_url.rstrip("/")
 
-    async def _send_registration_sms_if_possible(self, session: dict, queue_entry: dict) -> None:
+    async def _send_registration_sms_if_possible(self, session: dict, queue_entry: dict) -> bool:
         phone = session.get("phone")
         if not phone:
-            return
+            return False
 
         if queue_entry.get("registration_sms_sent_at"):
-            return
+            return False
 
         sent = send_queue_registration_sms(
             destination_number=phone,
@@ -57,15 +57,49 @@ class QueueService:
         )
         if sent:
             await self.queue_repository.mark_registration_sms_sent(str(queue_entry["_id"]))
-        else:
-            logger.warning(
-                "queue.sms_registration_failed",
-                extra={
-                    "session_id": str(session["_id"]),
-                    "player_id": str(queue_entry["_id"]),
-                    "queue_number": queue_entry["queue_number"],
-                },
+            return True
+
+        logger.warning(
+            "queue.sms_registration_failed",
+            extra={
+                "session_id": str(session["_id"]),
+                "player_id": str(queue_entry["_id"]),
+                "queue_number": queue_entry["queue_number"],
+            },
+        )
+        return False
+
+    async def send_registration_sms_for_session(self, session_id: str) -> dict:
+        session = await self.session_repository.find_by_id(session_id)
+        if not session:
+            raise AppError(
+                "Sessão não encontrada",
+                "session_not_found",
+                404,
+                {"session_id": session_id},
             )
+
+        queue_entry = await self.queue_repository.find_active_by_session_id(session_id)
+        if not queue_entry:
+            raise AppError(
+                "Sessão não possui entrada ativa na fila",
+                "queue_entry_not_found_for_session",
+                404,
+                {"session_id": session_id},
+            )
+
+        sms_sent = await self._send_registration_sms_if_possible(session, queue_entry)
+
+        people_ahead = await self.queue_repository.count_people_ahead(queue_entry["queue_number"])
+
+        return {
+            "session_id": str(session["_id"]),
+            "player_id": str(queue_entry["_id"]),
+            "queue_number": queue_entry["queue_number"],
+            "people_ahead": people_ahead,
+            "phone": session.get("phone"),
+            "sms_sent": sms_sent,
+        }
 
     async def _send_fifth_position_sms_if_needed(self) -> None:
         waiting_entries = await self.queue_repository.list_waiting_queue()
@@ -194,8 +228,6 @@ class QueueService:
                 "total_plays": effective_total_plays,
             },
         )
-
-        await self._send_registration_sms_if_possible(session, created)
 
         return QueueJoinResponse(
             player_id=str(created["_id"]),
