@@ -450,7 +450,7 @@ class QueueService:
                     },
                 )
 
-        if entry["status"] != "playing":
+        if entry["status"] != "playing" and entry["status"] != "skipped" :
             entry = await self.queue_repository.mark_playing(player_id)
             await self.session_repository.update_status(str(entry["session_id"]), "playing")
             await self.queue_repository.set_current_queue_number(
