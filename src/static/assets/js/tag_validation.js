@@ -218,10 +218,7 @@ async function getQueue(loop) {
         console.log(response);
         let queueList = response.items.filter(x => states.includes(x.status))
         let count = 1
-        if (queueList.some(x => x.status == "waiting") && response.current_queue_number == null) {
-            await getNext();
-            await getCurrentPlayer();
-        }
+        await getCurrentPlayer();
         while (tbody_element.firstChild) {
             tbody_element.removeChild(tbody_element.firstChild);
         }
