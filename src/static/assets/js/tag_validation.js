@@ -33,10 +33,7 @@ async function onScanSuccess(decodedText, decodedResult) {
             let session_id = await getSessionWithTagKey(decodedText);
             let session = await getSession(session_id);
             let isValid = await Validate_tag(decodedText)
-            if (session.status == "skipped" && isValid) {
-                await Disable_tag(decodedText);
-            }
-            else if (isValid) {
+            if (isValid) {
                 let goNext = await play(decodedText, session.queue_entry_id)
                 if (goNext) {
                     await getNext();
@@ -105,22 +102,6 @@ async function Validate_tag(tag_key) {
     else
         return false;
 }
-async function Disable_tag(tag_key) {
-    let resp = await fetch(`/api/tags/key/${tag_key}/deactivate`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': 'capibarra-tablet-01',
-            'x-device-id': 'tablet-01'
-        }
-    });
-    if (!resp.ok) {
-        const error = new Error("Request Failed");
-        error.status = resp.status;
-        throw error
-    }
-
-}
 async function getSessionWithTagKey(tag_key) {
 
     const resp = await fetch(`/api/sessions/session/${tag_key}`, {
@@ -180,7 +161,7 @@ async function play(tag_key, player_id) {
     modal_success.style.display = "flex";
     modal_overlay.style.display = "flex";
     setTimeout(() => { hideModal(modal_success) }, 2000);
-    if (response.remaining_plays == 0) {
+    if (response.remaining_plays == 0 && response.current_queue_number == response.queue_number) {
         return true;
     }
     return false;
@@ -237,7 +218,7 @@ async function getQueue(loop) {
         console.log(response);
         let queueList = response.items.filter(x => states.includes(x.status))
         let count = 1
-        if (queueList.some(x => x.status == "waiting") && current_player_id.textContent == "Vazio") {
+        if (queueList.some(x => x.status == "waiting") && response.current_queue_number == null) {
             await getNext();
             await getCurrentPlayer();
         }
