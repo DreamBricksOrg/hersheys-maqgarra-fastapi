@@ -179,7 +179,7 @@ async function startScan() {
     }
     const config = { fps: 10, qrbox: qrboxFunction };
 
-    html5QrCode.start({ facingMode: "user" }, config, onScanSuccess);
+    html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
 }
 
 async function getCurrentPlayer() {
@@ -257,6 +257,13 @@ async function getQueue(loop) {
 }
 
 async function getNextInline() {
+    if(current_player_id.textContent == "Vazio")
+    {  
+      await getNext();
+      await getCurrentPlayer();
+      await getQueue(false);
+      return;
+    }
     const resp = await fetch(`/api/queue/skip`, {
         method: 'Post',
         headers: {
