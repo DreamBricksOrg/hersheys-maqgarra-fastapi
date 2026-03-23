@@ -10,6 +10,8 @@ const STORAGE_KEYS = {
     QUEUE_NUMBER: 'queue_number',
 };
 
+const COUNT_BARS = 6;
+
 // ── Receipt IDs ──────────────────────────────────────────────────────────────
 
 function getReceiptIds() {
@@ -132,7 +134,7 @@ function addBarras(amount = 1) {
     const newBarras = getBarras() + amount;
     localStorage.setItem(STORAGE_KEYS.BARRAS, newBarras.toString());
     // A cada 6 barras = 1 tag
-    localStorage.setItem(STORAGE_KEYS.TAGS, Math.floor(newBarras / 6).toString());
+    localStorage.setItem(STORAGE_KEYS.TAGS, Math.floor(newBarras / COUNT_BARS).toString());
     updateCounterDisplay();
 }
 
@@ -151,7 +153,7 @@ function updateCounterDisplay() {
     const tagsEl = document.getElementById('tagsCount');
     if (barrasEl) barrasEl.textContent = getBarras();
     if (tagsEl) tagsEl.textContent = getTags();
-    localStorage.setItem(STORAGE_KEYS.TAGS, Math.floor(getBarras() / 6).toString());
+    localStorage.setItem(STORAGE_KEYS.TAGS, Math.floor(getBarras() / COUNT_BARS).toString());
 }
 
 function getQrUrl() {

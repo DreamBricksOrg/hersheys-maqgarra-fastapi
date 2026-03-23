@@ -211,3 +211,10 @@ src/util/nfce_scrapper/output
 
 docs/
 .agent/
+
+# uploads
+src/static/upload/
+src/static/uploads/
+
+# logs
+nohup.out
