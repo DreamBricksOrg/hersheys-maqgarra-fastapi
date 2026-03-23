@@ -1,8 +1,22 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-router = APIRouter(tags=["health"])
+from api.dependencies import get_observability_service
+from services.observability_service import ObservabilityService
+
+
+router = APIRouter()
 
 
 @router.get("/alive")
-async def alive() -> dict[str, str]:
+async def alive(
+    observability_service: ObservabilityService = Depends(get_observability_service),
+):
+    await observability_service.emit(
+        "alive-called",
+        {
+            "route": "/alive",
+            "status": "ok"
+        },
+        tags=["health", "alive", "status"],
+    )
     return {"status": "ok"}

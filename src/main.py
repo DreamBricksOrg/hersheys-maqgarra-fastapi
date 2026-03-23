@@ -54,12 +54,11 @@ structlog.configure(
 log = structlog.get_logger(__name__)
 
 cfg = LogCenterConfig(
-    base_url=settings.LOG_API.rstrip("/"),
+    base_url=(settings.LOG_API or "").rstrip("/"),
     project_id=settings.LOG_PROJECT_ID,
     api_key=settings.LOG_API_KEY,
     enabled=True,
 )
-
 sender = LogCenterSender(cfg)
 
 try:
