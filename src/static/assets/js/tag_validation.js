@@ -205,12 +205,13 @@ async function getCurrentPlayer() {
         }, 10000);
     }
 
-    if (current_Queue != null && current_Queue != "") {
-        current_player_id.textContent = String(current_Queue).padStart(8, '0');
-    }
-    else {
+   
+    if (response.current_queue_number == null) {
         current_player_id.textContent = "Vazio"
 
+    }
+    else  if (current_Queue != null && current_Queue != "") {
+        current_player_id.textContent = String(current_Queue).padStart(8, '0');
     }
 }
 
