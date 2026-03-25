@@ -36,7 +36,7 @@ async function onScanSuccess(decodedText, decodedResult) {
             if (isValid) {
                 let goNext = await play(decodedText, session.queue_entry_id)
                 if (goNext) {
-                    await getNext();
+                    await complete(session_id);
                     await getCurrentPlayer()
                 }
             }
@@ -194,9 +194,19 @@ async function getCurrentPlayer() {
     })
     const response = await resp.json()
     console.log(response);
-    if (response.current_queue_number != null) {
-        let formatted = String(response.current_queue_number).padStart(8, '0');
-        current_player_id.textContent = formatted
+    const current_Queue = localStorage.getItem("current_queue_number");
+    if (response.current_queue_number != null && current_Queue != response.current_queue_number) {
+        localStorage.setItem("current_queue_number", response.current_queue_number)
+    }
+    else if (response.current_queue_number == null) {
+        await getNext();
+        setTimeout(() => {
+            getCurrentPlayer();
+        }, 10000);
+    }
+
+    if (current_player_id.textContent == "" && current_Queue != null && current_Queue != "") {
+        current_player_id.textContent = current_Queue;
     }
     else {
         current_player_id.textContent = "Vazio"
@@ -218,7 +228,6 @@ async function getQueue(loop) {
         console.log(response);
         let queueList = response.items.filter(x => states.includes(x.status))
         let count = 1
-        await getCurrentPlayer();
         while (tbody_element.firstChild) {
             tbody_element.removeChild(tbody_element.firstChild);
         }
@@ -257,13 +266,6 @@ async function getQueue(loop) {
 }
 
 async function getNextInline() {
-    if(current_player_id.textContent == "Vazio")
-    {  
-      await getNext();
-      await getCurrentPlayer();
-      await getQueue(false);
-      return;
-    }
     const resp = await fetch(`/api/queue/skip`, {
         method: 'Post',
         headers: {
@@ -291,7 +293,20 @@ async function getNext() {
     console.log(response);
     hideLoading()
 }
-
+async function complete(player_id) {
+    const resp = await fetch(`/api/queue/complete`, {
+        method: 'Post',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'capibarra-tablet-01',
+            'x-device-id': 'tablet-01'
+        },
+        body: { "player_id": player_id }
+    })
+    const response = await resp.json();
+    console.log(response);
+    hideLoading()
+}
 // 4. Add text or HTML to the cell
 function hideModal(element) {
     element.style.display = "none";
