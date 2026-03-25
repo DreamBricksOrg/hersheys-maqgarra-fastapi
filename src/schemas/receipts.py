@@ -80,5 +80,13 @@ class ReceiptCheckResponse(BaseModel):
     is_duplicate: bool
 
 
+class ReceiptUnusedRequest(BaseModel):
+    receipt_ids: list[str]
+    
+class ReceiptUnusedResponse(BaseModel):
+    success: bool
+
+
+
 class ReceiptLookupQueryResponse(ReceiptResponse):
     pass

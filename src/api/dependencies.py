@@ -23,6 +23,7 @@ from services.queue_service import QueueService
 from services.receipt_image_service import ReceiptImageService
 from services.receipt_manual_service import ReceiptManualService
 from services.receipt_override_service import ReceiptOverrideService
+from services.receipt_unused_service import ReceiptUnusedService
 from services.receipt_qr_service import ReceiptQRService
 from services.receipt_validation_service import ReceiptValidationService
 from services.session_service import SessionService
@@ -151,6 +152,15 @@ def get_receipt_override_service(
     observability_service: ObservabilityService = Depends(get_observability_service),
 ) -> ReceiptOverrideService:
     return ReceiptOverrideService(
+        ReceiptRepository(db),
+        observability_service,
+    )
+
+def get_receipt_unused_service(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    observability_service: ObservabilityService = Depends(get_observability_service),
+) -> ReceiptUnusedService:
+    return ReceiptUnusedService(
         ReceiptRepository(db),
         observability_service,
     )

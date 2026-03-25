@@ -6,17 +6,19 @@ from api.dependencies import (
     get_receipt_image_service,
     get_receipt_manual_service,
     get_receipt_override_service,
+    get_receipt_unused_service,
     get_receipt_qr_service,
     require_auth,
 )
 from repositories.receipt_repository import ReceiptRepository
 from schemas.auth import AuthContext
-from schemas.receipts import ReceiptCheckRequest, ReceiptCheckResponse, ReceiptOverrideRequest, ReceiptQRRequest, ReceiptResponse
+from schemas.receipts import ReceiptCheckRequest, ReceiptCheckResponse, ReceiptOverrideRequest, ReceiptQRRequest, ReceiptResponse, ReceiptUnusedRequest, ReceiptUnusedResponse
 from core.exceptions import AppError
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from services.receipt_image_service import ReceiptImageService
 from services.receipt_manual_service import ReceiptManualService
 from services.receipt_override_service import ReceiptOverrideService
+from services.receipt_unused_service import ReceiptUnusedService
 from services.receipt_qr_service import ReceiptQRService
 
 router = APIRouter(prefix="/api/receipts", tags=["receipts"])
@@ -103,4 +105,12 @@ async def override_receipt(
     service: ReceiptOverrideService = Depends(get_receipt_override_service),
 ) -> ReceiptResponse:
     return await service.execute(payload.receipt_id, payload.final_bars, payload.reason)
+
+@router.post("/unused", response_model=ReceiptUnusedResponse)
+async def unused(
+    payload: ReceiptUnusedRequest,
+    auth: AuthContext = Depends(require_auth),
+    service: ReceiptUnusedService = Depends(get_receipt_unused_service),
+) -> ReceiptUnusedResponse:
+    return await service.execute(payload.receipt_ids)
 
