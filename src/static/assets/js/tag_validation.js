@@ -205,8 +205,8 @@ async function getCurrentPlayer() {
         }, 10000);
     }
 
-    if (current_player_id.textContent == "" && current_Queue != null && current_Queue != "") {
-        current_player_id.textContent = current_Queue;
+    if ((current_player_id.textContent == "" || current_player_id.textContent == "Vazio") && current_Queue != null && current_Queue != "") {
+        current_player_id.textContent = String(current_Queue).padStart(8, '0');
     }
     else {
         current_player_id.textContent = "Vazio"
