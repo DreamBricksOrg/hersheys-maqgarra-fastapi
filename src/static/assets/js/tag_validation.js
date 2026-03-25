@@ -36,8 +36,10 @@ async function onScanSuccess(decodedText, decodedResult) {
             if (isValid) {
                 let goNext = await play(decodedText, session.queue_entry_id)
                 if (goNext) {
-                    await complete(session_id);
+                    await complete(session.queue_entry_id);
+                    await getNext();
                     await getCurrentPlayer()
+                    await getQueue(false)
                 }
             }
             else if (isValid == false) {
@@ -206,14 +208,15 @@ async function getCurrentPlayer() {
         }, 10000);
     }
 
-   
+
     if (response.current_queue_number == null) {
         current_player_id.textContent = "Vazio"
 
     }
-    else  if (current_Queue != null && current_Queue != "") {
+    else if (current_Queue != null && current_Queue != "") {
         current_player_id.textContent = String(current_Queue).padStart(8, '0');
     }
+    return;
 }
 
 async function getQueue(loop) {
@@ -294,16 +297,16 @@ async function getNext() {
     const response = await resp.json();
     console.log(response);
     hideLoading()
+    return;
 }
 async function complete(player_id) {
-    const resp = await fetch(`/api/queue/complete`, {
+    const resp = await fetch(`/api/queue/complete?player_id=${player_id}`, {
         method: 'Post',
         headers: {
             'Content-Type': 'application/json',
             'x-api-key': 'capibarra-tablet-01',
             'x-device-id': 'tablet-01'
-        },
-        body: { "player_id": player_id }
+        }
     })
     const response = await resp.json();
     console.log(response);
