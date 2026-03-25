@@ -13,7 +13,7 @@ def parse_object_id_to_str(value: Any) -> str:
 
 ObjectIdStr = Annotated[str, BeforeValidator(parse_object_id_to_str)]
 
-SessionStatus = Literal["created", "queued", "called", "playing", "done", "cancelled"]
+SessionStatus = Literal["created", "queued", "called", "playing", "finished", "cancelled"]
 
 
 class SessionCreateRequest(BaseModel):
