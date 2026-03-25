@@ -194,9 +194,10 @@ async function getCurrentPlayer() {
     })
     const response = await resp.json()
     console.log(response);
-    const current_Queue = localStorage.getItem("current_queue_number");
+    let current_Queue = localStorage.getItem("current_queue_number");
     if (response.current_queue_number != null && current_Queue != response.current_queue_number) {
         localStorage.setItem("current_queue_number", response.current_queue_number)
+        current_Queue = response.current_queue_number;
     }
     else if (response.current_queue_number == null) {
         await getNext();
