@@ -45,7 +45,7 @@ class ReceiptRepository:
             ).to_list(length=None)
         )
 
-    async def mark_session_receipts_as_replaced(self, session_id: str) -> int:
+    async def mark_receipts_as_replaced_for_session(self, session_id: str) -> int:
         receipts = await self.find_by_session_id(session_id)
         modified = 0
 
@@ -56,17 +56,14 @@ class ReceiptRepository:
             if not receipt_key:
                 continue
 
-            replaced_key = (
-                receipt_key
-                if receipt_key.endswith("-D")
-                else f"{receipt_key}-D"
-            )
+            replaced_key = receipt_key if receipt_key.endswith("-D") else f"{receipt_key}-D"
 
             result = await self.collection.update_one(
                 {"_id": receipt_id},
                 {
                     "$set": {
                         "receipt_key": replaced_key,
+                        "replaced_original_receipt_key": receipt_key,
                         "is_replaced": True,
                     }
                 },

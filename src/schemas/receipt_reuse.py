@@ -39,5 +39,4 @@ class CancelSessionForReuseResponse(BaseModel):
     session_id: str
     status: str
     invalidated_tags: int
-    invalidated_receipts: int
-  
+    marked_receipts_as_replaced: int

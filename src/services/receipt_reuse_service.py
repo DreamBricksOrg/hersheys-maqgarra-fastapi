@@ -30,12 +30,15 @@ class ReceiptReuseService:
         self,
         receipt_key: str,
     ) -> ReceiptReuseCheckResponse:
-        receipt = await self.receipt_repository.find_latest_by_receipt_key(receipt_key)
+        receipt = await self.receipt_repository.find_by_key(receipt_key)
 
         if not receipt:
             await self.observability_service.emit(
                 "receipt-reuse-check-valid",
-                {"receipt_key": receipt_key, "reason": "receipt_not_found"},
+                {
+                    "receipt_key": receipt_key,
+                    "reason": "receipt_not_found",
+                },
                 tags=["receipt-reuse", "valid"],
             )
             return ReceiptReuseCheckResponse(
@@ -45,7 +48,7 @@ class ReceiptReuseService:
             )
 
         session_id = receipt.get("session_id")
-        receipt_id = str(receipt.get("_id"))
+        receipt_id = str(receipt["_id"])
 
         if not session_id:
             await self.observability_service.emit(
@@ -64,7 +67,7 @@ class ReceiptReuseService:
                 receipt_id=receipt_id,
             )
 
-        session = await self.session_repository.find_by_id(session_id)
+        session = await self.session_repository.find_by_id(str(session_id))
 
         if not session:
             await self.observability_service.emit(
@@ -72,7 +75,7 @@ class ReceiptReuseService:
                 {
                     "receipt_key": receipt_key,
                     "receipt_id": receipt_id,
-                    "session_id": session_id,
+                    "session_id": str(session_id),
                     "reason": "session_not_found",
                 },
                 tags=["receipt-reuse", "valid"],
@@ -81,7 +84,7 @@ class ReceiptReuseService:
                 status="valid",
                 can_reuse=True,
                 action="create_new_session",
-                session_id=session_id,
+                session_id=str(session_id),
                 receipt_id=receipt_id,
             )
 
@@ -93,7 +96,7 @@ class ReceiptReuseService:
                 {
                     "receipt_key": receipt_key,
                     "receipt_id": receipt_id,
-                    "session_id": session_id,
+                    "session_id": str(session["_id"]),
                     "session_status": session_status,
                     "reason": "cancelled_session",
                 },
@@ -103,7 +106,7 @@ class ReceiptReuseService:
                 status="valid",
                 can_reuse=True,
                 action="create_new_session",
-                session_id=session_id,
+                session_id=str(session["_id"]),
                 session_status=session_status,
                 receipt_id=receipt_id,
             )
@@ -114,7 +117,7 @@ class ReceiptReuseService:
                 {
                     "receipt_key": receipt_key,
                     "receipt_id": receipt_id,
-                    "session_id": session_id,
+                    "session_id": str(session["_id"]),
                     "session_status": session_status,
                 },
                 tags=["receipt-reuse", "already-used-not-played"],
@@ -123,7 +126,7 @@ class ReceiptReuseService:
                 status="already_used_not_played",
                 can_reuse=True,
                 action="invalidate_previous_session",
-                session_id=session_id,
+                session_id=str(session["_id"]),
                 session_status=session_status,
                 receipt_id=receipt_id,
             )
@@ -134,7 +137,7 @@ class ReceiptReuseService:
                 {
                     "receipt_key": receipt_key,
                     "receipt_id": receipt_id,
-                    "session_id": session_id,
+                    "session_id": str(session["_id"]),
                     "session_status": session_status,
                 },
                 tags=["receipt-reuse", "already-used-and-played"],
@@ -143,7 +146,7 @@ class ReceiptReuseService:
                 status="already_used_and_played",
                 can_reuse=False,
                 action="deny",
-                session_id=session_id,
+                session_id=str(session["_id"]),
                 session_status=session_status,
                 receipt_id=receipt_id,
             )
@@ -153,7 +156,7 @@ class ReceiptReuseService:
             {
                 "receipt_key": receipt_key,
                 "receipt_id": receipt_id,
-                "session_id": session_id,
+                "session_id": str(session["_id"]),
                 "session_status": session_status,
             },
             tags=["receipt-reuse", "deny", "unknown-status"],
@@ -162,7 +165,7 @@ class ReceiptReuseService:
             status="already_used_and_played",
             can_reuse=False,
             action="deny",
-            session_id=session_id,
+            session_id=str(session["_id"]),
             session_status=session_status,
             receipt_id=receipt_id,
         )
@@ -186,7 +189,7 @@ class ReceiptReuseService:
 
         if session_status not in REUSABLE_SESSION_STATUSES:
             raise AppError(
-                "Sessão não pode ser cancelada para reuso da nota",
+                "Sessão não pode ser cancelada para reuso",
                 "session_cannot_be_cancelled_for_reuse",
                 409,
                 {
@@ -196,8 +199,8 @@ class ReceiptReuseService:
             )
 
         invalidated_tags = await self.tag_repository.invalidate_by_session_id(session_id)
-        invalidated_receipts = await self.receipt_repository.mark_session_receipts_as_replaced(
-            session_id
+        marked_receipts_as_replaced = (
+            await self.receipt_repository.mark_receipts_as_replaced_for_session(session_id)
         )
         cancelled_session = await self.session_repository.cancel(session_id)
 
@@ -206,10 +209,10 @@ class ReceiptReuseService:
             {
                 "session_id": session_id,
                 "receipt_key": receipt_key,
-                "invalidated_tags": invalidated_tags,
-                "invalidated_receipts": invalidated_receipts,
                 "previous_status": session_status,
                 "new_status": cancelled_session.get("status"),
+                "invalidated_tags": invalidated_tags,
+                "marked_receipts_as_replaced": marked_receipts_as_replaced,
             },
             tags=["receipt-reuse", "session-cancelled"],
         )
@@ -218,5 +221,5 @@ class ReceiptReuseService:
             session_id=session_id,
             status=cancelled_session.get("status"),
             invalidated_tags=invalidated_tags,
-            invalidated_receipts=invalidated_receipts,
+            marked_receipts_as_replaced=marked_receipts_as_replaced,
         )

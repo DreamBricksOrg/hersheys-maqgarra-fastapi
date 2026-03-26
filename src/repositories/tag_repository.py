@@ -235,13 +235,14 @@ class TagRepository:
 
         result = await self.collection.update_many(
             {
-                "session_id": session_id,
-                "is_valid": True,
+                "session_id": ObjectId(session_id),
+                "status": "valid",
             },
             {
                 "$set": {
-                    "is_valid": False,
-                    "invalidated_at": now,
+                    "status": "invalid",
+                    "invalid_reason": "session_cancelled_for_reuse",
+                    "last_updated_at": now,
                 }
             },
         )
