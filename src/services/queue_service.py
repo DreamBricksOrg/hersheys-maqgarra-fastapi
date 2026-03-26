@@ -283,8 +283,8 @@ class QueueService:
         )
 
     async def next(self) -> QueueNextResponse:
-        next_entry = await self.queue_repository.get_next_waiting_entry()
-        if not next_entry:
+        called = await self.queue_repository.get_and_mark_called()
+        if not called:
             await self.queue_repository.clear_current_queue_number()
             raise AppError(
                 "Não há mais pessoas aguardando na fila",
@@ -292,7 +292,6 @@ class QueueService:
                 404,
             )
 
-        called = await self.queue_repository.mark_called(str(next_entry["_id"]))
         await self.queue_repository.clear_late_play_allowed(str(called["_id"]))
         await self.queue_repository.set_current_queue_number(
             queue_number=called["queue_number"],
@@ -570,9 +569,8 @@ class QueueService:
 
         current_state = await self.queue_repository.get_current_state()
         if current_state and current_state.get("player_id") and str(current_state["player_id"]) == player_id:
-            next_player = await self.queue_repository.get_next_waiting_entry()
-            if next_player:
-                called = await self.queue_repository.mark_called(str(next_player["_id"]))
+            called = await self.queue_repository.get_and_mark_called()
+            if called:
                 await self.queue_repository.clear_late_play_allowed(str(called["_id"]))
                 await self.queue_repository.set_current_queue_number(
                     queue_number=called["queue_number"],
@@ -664,8 +662,8 @@ class QueueService:
             },
         )
 
-        next_player = await self.queue_repository.get_next_waiting_entry()
-        if not next_player:
+        called = await self.queue_repository.get_and_mark_called()
+        if not called:
             await self.queue_repository.clear_current_queue_number()
             return QueueSkipResponse(
                 skipped_player_id=str(skipped["_id"]),
@@ -673,7 +671,6 @@ class QueueService:
                 next_player=None,
             )
 
-        called = await self.queue_repository.mark_called(str(next_player["_id"]))
         await self.queue_repository.clear_late_play_allowed(str(called["_id"]))
         await self.queue_repository.set_current_queue_number(
             queue_number=called["queue_number"],
