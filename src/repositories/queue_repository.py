@@ -81,6 +81,9 @@ class QueueRepository:
             sort=[("queue_number", 1)],
         )
 
+    async def find_by_queue_number(self, queue_number: int) -> dict | None:
+        return await self.collection.find_one({"queue_number": queue_number})
+
     async def find_called_entry(self) -> dict | None:
         return await self.collection.find_one(
             {"status": "called"},

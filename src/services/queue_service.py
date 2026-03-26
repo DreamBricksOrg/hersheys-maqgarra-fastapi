@@ -290,21 +290,22 @@ class QueueService:
             QueueService._next_lock = asyncio.Semaphore(1)
 
         async with QueueService._next_lock:
-            already_called = await self.queue_repository.find_called_entry()
-            if already_called:
-                current_state = await self.queue_repository.get_current_state()
-                current_queue_number = current_state.get("queue_number") if current_state else None
-                current_player_id = current_state.get("player_id") if current_state else None
-                current_player = (
-                    await self.queue_repository.find_by_id(str(current_player_id))
-                    if current_player_id else None
-                )
-                waiting = await self.queue_repository.list_waiting_queue()
-                return QueueNextResponse(
-                    current_queue_number=current_queue_number,
-                    player=QueueEntryResponse.model_validate(current_player or already_called),
-                    people_still_waiting=max(len(waiting) - 1, 0),
-                )
+            current_state = await self.queue_repository.get_current_state()
+            current_queue_number = current_state.get("queue_number") if current_state else None
+            if current_queue_number is not None:
+                current_entry = await self.queue_repository.find_by_queue_number(current_queue_number)
+                if current_entry and current_entry["status"] in {"called", "playing"}:
+                    current_player_id = current_state.get("player_id") if current_state else None
+                    current_player = (
+                        await self.queue_repository.find_by_id(str(current_player_id))
+                        if current_player_id else None
+                    )
+                    waiting = await self.queue_repository.list_waiting_queue()
+                    return QueueNextResponse(
+                        current_queue_number=current_queue_number,
+                        player=QueueEntryResponse.model_validate(current_player or current_entry),
+                        people_still_waiting=max(len(waiting) - 1, 0),
+                    )
 
             called = await self.queue_repository.get_and_mark_called()
             if not called:
