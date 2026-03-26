@@ -81,6 +81,12 @@ class QueueRepository:
             sort=[("queue_number", 1)],
         )
 
+    async def find_called_entry(self) -> dict | None:
+        return await self.collection.find_one(
+            {"status": "called"},
+            sort=[("queue_number", 1)],
+        )
+
     async def get_and_mark_called(self) -> dict | None:
         now = datetime.now(timezone.utc)
         return await self.collection.find_one_and_update(
