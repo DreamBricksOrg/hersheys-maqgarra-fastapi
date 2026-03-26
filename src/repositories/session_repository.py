@@ -121,3 +121,18 @@ class SessionRepository:
             },
         )
         return await self.find_by_id(session_id)
+
+    async def cancel(self, session_id: str) -> dict | None:
+        now = datetime.now(timezone.utc)
+
+        await self.collection.update_one(
+            {"_id": ObjectId(session_id)},
+            {
+                "$set": {
+                    "status": "cancelled",
+                    "cancelled_at": now,
+                    "last_updated_at": now,
+                }
+            },
+        )
+        return await self.find_by_id(session_id)
