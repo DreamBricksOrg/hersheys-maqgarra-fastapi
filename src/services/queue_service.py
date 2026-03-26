@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from core.exceptions import AppError
@@ -29,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 class QueueService:
+    _next_lock: asyncio.Semaphore | None = None
+
     def __init__(
         self,
         queue_repository: QueueRepository,
@@ -283,41 +286,45 @@ class QueueService:
         )
 
     async def next(self) -> QueueNextResponse:
-        called = await self.queue_repository.get_and_mark_called()
-        if not called:
-            await self.queue_repository.clear_current_queue_number()
-            raise AppError(
-                "Não há mais pessoas aguardando na fila",
-                "queue_empty",
-                404,
+        if QueueService._next_lock is None:
+            QueueService._next_lock = asyncio.Semaphore(1)
+
+        async with QueueService._next_lock:
+            called = await self.queue_repository.get_and_mark_called()
+            if not called:
+                await self.queue_repository.clear_current_queue_number()
+                raise AppError(
+                    "Não há mais pessoas aguardando na fila",
+                    "queue_empty",
+                    404,
+                )
+
+            await self.queue_repository.clear_late_play_allowed(str(called["_id"]))
+            await self.queue_repository.set_current_queue_number(
+                queue_number=called["queue_number"],
+                player_id=str(called["_id"]),
+                status=called["status"],
+            )
+            await self.session_repository.update_status(str(called["session_id"]), "called")
+
+            waiting = await self.queue_repository.list_waiting_queue()
+
+            await self.observability_service.emit(
+                "queue-next-called",
+                {
+                    "player_id": str(called["_id"]),
+                    "queue_number": called["queue_number"],
+                },
             )
 
-        await self.queue_repository.clear_late_play_allowed(str(called["_id"]))
-        await self.queue_repository.set_current_queue_number(
-            queue_number=called["queue_number"],
-            player_id=str(called["_id"]),
-            status=called["status"],
-        )
-        await self.session_repository.update_status(str(called["session_id"]), "called")
+            await self._send_fifth_position_sms_if_needed()
+            await self._send_next_up_sms_if_needed()
 
-        waiting = await self.queue_repository.list_waiting_queue()
-
-        await self.observability_service.emit(
-            "queue-next-called",
-            {
-                "player_id": str(called["_id"]),
-                "queue_number": called["queue_number"],
-            },
-        )
-
-        await self._send_fifth_position_sms_if_needed()
-        await self._send_next_up_sms_if_needed()
-
-        return QueueNextResponse(
-            current_queue_number=called["queue_number"],
-            player=QueueEntryResponse.model_validate(called),
-            people_still_waiting=max(len(waiting) - 1, 0),
-        )
+            return QueueNextResponse(
+                current_queue_number=called["queue_number"],
+                player=QueueEntryResponse.model_validate(called),
+                people_still_waiting=max(len(waiting) - 1, 0),
+            )
 
     async def validate_for_play(self, player_id: str) -> QueueValidateResponse:
         entry = await self.queue_repository.find_by_id(player_id)
