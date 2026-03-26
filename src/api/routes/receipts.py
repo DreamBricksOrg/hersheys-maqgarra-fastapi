@@ -8,11 +8,26 @@ from api.dependencies import (
     get_receipt_override_service,
     get_receipt_unused_service,
     get_receipt_qr_service,
+    get_receipt_reuse_service,
     require_auth,
 )
 from repositories.receipt_repository import ReceiptRepository
 from schemas.auth import AuthContext
-from schemas.receipts import ReceiptCheckRequest, ReceiptCheckResponse, ReceiptOverrideRequest, ReceiptQRRequest, ReceiptResponse, ReceiptUnusedRequest, ReceiptUnusedResponse
+from schemas.receipts import (
+    ReceiptCheckRequest,
+    ReceiptCheckResponse,
+    ReceiptOverrideRequest,
+    ReceiptQRRequest,
+    ReceiptResponse,
+    ReceiptUnusedRequest,
+    ReceiptUnusedResponse,
+)
+from schemas.receipt_reuse import (
+    CancelSessionForReuseRequest,
+    CancelSessionForReuseResponse,
+    ReceiptReuseCheckRequest,
+    ReceiptReuseCheckResponse,
+)
 from core.exceptions import AppError
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from services.receipt_image_service import ReceiptImageService
@@ -20,6 +35,7 @@ from services.receipt_manual_service import ReceiptManualService
 from services.receipt_override_service import ReceiptOverrideService
 from services.receipt_unused_service import ReceiptUnusedService
 from services.receipt_qr_service import ReceiptQRService
+from services.receipt_reuse_service import ReceiptReuseService
 
 router = APIRouter(prefix="/api/receipts", tags=["receipts"])
 
@@ -114,3 +130,26 @@ async def unused(
 ) -> ReceiptUnusedResponse:
     return await service.execute(payload.receipt_ids)
 
+@router.post(
+    "/reuse-check",
+    response_model=ReceiptReuseCheckResponse,
+)
+async def receipt_reuse_check(
+    payload: ReceiptReuseCheckRequest,
+    receipt_reuse_service: ReceiptReuseService = Depends(get_receipt_reuse_service),
+):
+    return await receipt_reuse_service.check_receipt_reuse(payload.receipt_key)
+
+
+@router.post(
+    "/cancel-session-for-reuse",
+    response_model=CancelSessionForReuseResponse,
+)
+async def cancel_session_for_reuse(
+    payload: CancelSessionForReuseRequest,
+    receipt_reuse_service: ReceiptReuseService = Depends(get_receipt_reuse_service),
+):
+    return await receipt_reuse_service.cancel_session_for_reuse(
+        session_id=payload.session_id,
+        receipt_key=payload.receipt_key,
+    )

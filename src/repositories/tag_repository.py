@@ -229,3 +229,20 @@ class TagRepository:
     async def find_by_status(self, limit: int) -> list[dict]:
         cursor = self.collection.find({"status": {"$in": ["invalid", "available"]}}).limit(limit)
         return await cursor.to_list(length=limit)
+
+    async def invalidate_by_session_id(self, session_id: str) -> int:
+        now = datetime.now(timezone.utc)
+
+        result = await self.collection.update_many(
+            {
+                "session_id": session_id,
+                "is_valid": True,
+            },
+            {
+                "$set": {
+                    "is_valid": False,
+                    "invalidated_at": now,
+                }
+            },
+        )
+        return result.modified_count

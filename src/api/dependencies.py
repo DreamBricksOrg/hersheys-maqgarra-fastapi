@@ -32,7 +32,7 @@ from services.tag_association_service import TagAssociationService
 from services.tag_crud_service import TagCrudService
 from services.tag_state_service import TagStateService
 from services.tag_usage_service import TagUsageService
-
+from services.receipt_reuse_service import ReceiptReuseService
 
 async def get_database() -> AsyncIOMotorDatabase:
     return await get_db()
@@ -234,4 +234,15 @@ def get_session_tags_service(
     return SessionTagsService(
         session_repository=SessionRepository(db),
         tag_repository=TagRepository(db),
+    )
+
+def get_receipt_reuse_service(
+    db=Depends(get_database),
+    observability_service: ObservabilityService = Depends(get_observability_service),
+) -> ReceiptReuseService:
+    return ReceiptReuseService(
+        receipt_repository=ReceiptRepository(db),
+        session_repository=SessionRepository(db),
+        tag_repository=TagRepository(db),
+        observability_service=observability_service,
     )
