@@ -25,7 +25,39 @@ const confirmTypeDesc = document.getElementById("confirmTypeDesc");
 const cancelTypeBtn = document.getElementById("cancelTypeBtn");
 const confirmTypeBtn = document.getElementById("confirmTypeBtn");
 
+const preferentialModal = document.getElementById("preferentialModal");
+const preferentialNoBtn = document.getElementById("preferentialNoBtn");
+const preferentialYesBtn = document.getElementById("preferentialYesBtn");
+
 let selectedTagType = null;
+let pendingPlayerId = null;
+let pendingRedirectHref = null;
+
+preferentialNoBtn.addEventListener('click', () => {
+    preferentialModal.style.display = 'none';
+    if (pendingRedirectHref) {
+        window.location.href = pendingRedirectHref;
+    }
+});
+
+preferentialYesBtn.addEventListener('click', async () => {
+    preferentialModal.style.display = 'none';
+    showLoading();
+    try {
+        const response = await fetch(`/api/queue/${pendingPlayerId}/preferential`, {
+            method: 'POST',
+            headers: AUTH_HEADERS
+        });
+        if (response.ok) {
+            console.log('[DEBUG] Preferencial sucesso');
+        } else {
+            console.error('[ERRO] Falha ao marcar preferencial HTTP:', response.status);
+        }
+    } catch (error) {
+        console.error('[ERRO] Falha ao marcar preferencial:', error);
+    }
+    window.location.href = pendingRedirectHref;
+});
 
 tagVirtual.addEventListener('click', () => {
     selectedTagType = 'virtual';
@@ -68,7 +100,9 @@ confirmTypeBtn.addEventListener('click', async () => {
                     localStorage.setItem('virtual_qr_url', data.mobile_payload.qr_url);
                     setQueueId(data.player_id);
                     setQueueNumber(data.queue_number);
-                    window.location.href = '/pages/associate-tag';
+                    pendingPlayerId = data.player_id;
+                    pendingRedirectHref = '/pages/associate-tag';
+                    preferentialModal.style.display = 'flex';
                 } else {
                     console.error('[ERRO] Falha no intake HTTP:', response.status);
                     hideLoading();
@@ -98,7 +132,9 @@ confirmTypeBtn.addEventListener('click', async () => {
                     console.log('[DEBUG] Join sucesso');
                     setQueueId(data.player_id);
                     setQueueNumber(data.queue_number);
-                    window.location.href = '/pages/associate-tag-physical';
+                    pendingPlayerId = data.player_id;
+                    pendingRedirectHref = '/pages/associate-tag-physical';
+                    preferentialModal.style.display = 'flex';
                 } else {
                     console.error('[ERRO] Falha no join HTTP:', response.status);
                     hideLoading();

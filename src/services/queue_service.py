@@ -389,11 +389,12 @@ class QueueService:
                 )
 
         playing = await self.queue_repository.mark_playing(player_id)
-        await self.queue_repository.set_current_queue_number(
-            queue_number=playing["queue_number"],
-            player_id=str(playing["_id"]),
-            status=playing["status"],
-        )
+        if current_queue_number is None or is_current_player:
+            await self.queue_repository.set_current_queue_number(
+                queue_number=playing["queue_number"],
+                player_id=str(playing["_id"]),
+                status=playing["status"],
+            )
         await self.session_repository.update_status(str(playing["session_id"]), "playing")
 
         await self.observability_service.emit(
@@ -421,6 +422,33 @@ class QueueService:
             new_queue_number=None,
             message="Jogador liberado para jogar.",
         )
+
+    async def mark_preferential(self, player_id: str) -> dict:
+        entry = await self.queue_repository.find_by_id(player_id)
+        if not entry:
+            raise AppError(
+                "Entrada da fila não encontrada",
+                "queue_entry_not_found",
+                404,
+                {"player_id": player_id},
+            )
+
+        updated = await self.queue_repository.allow_late_play(player_id)
+        
+        await self.observability_service.emit(
+            "queue-marked-preferential",
+            {
+                "player_id": player_id,
+                "queue_number": updated["queue_number"],
+            },
+        )
+        
+        return {
+            "player_id": str(updated["_id"]),
+            "queue_number": updated["queue_number"],
+            "status": updated["status"],
+            "message": "Jogador marcado como preferencial com sucesso."
+        }
 
     async def play(self, player_id: str, tag_key: str) -> dict:
         entry = await self.queue_repository.find_by_id(player_id)
@@ -477,11 +505,12 @@ class QueueService:
         if entry["status"] != "playing" and entry["status"] != "skipped" :
             entry = await self.queue_repository.mark_playing(player_id)
             await self.session_repository.update_status(str(entry["session_id"]), "playing")
-            await self.queue_repository.set_current_queue_number(
-                queue_number=entry["queue_number"],
-                player_id=str(entry["_id"]),
-                status=entry["status"],
-            )
+            if current_queue_number is None or is_current_player:
+                await self.queue_repository.set_current_queue_number(
+                    queue_number=entry["queue_number"],
+                    player_id=str(entry["_id"]),
+                    status=entry["status"],
+                )
 
         tag = await self.tag_repository.find_by_key(tag_key)
         if not tag:

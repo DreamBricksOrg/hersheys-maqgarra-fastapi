@@ -15,6 +15,7 @@ from schemas.queue import (
     QueueStateResponse,
     QueueValidateResponse,
     QueueRequeueResponse,
+    QueuePreferentialResponse,
 )
 from services.queue_intake_service import QueueIntakeService
 from services.queue_service import QueueService
@@ -98,6 +99,15 @@ async def validate_queue_player(
     service: QueueService = Depends(get_queue_service),
 ) -> QueueValidateResponse:
     return await service.validate_for_play(player_id)
+
+
+@router.post("/{player_id}/preferential", response_model=QueuePreferentialResponse)
+async def mark_preferential(
+    player_id: str,
+    auth: AuthContext = Depends(require_auth),
+    service: QueueService = Depends(get_queue_service),
+) -> QueuePreferentialResponse:
+    return await service.mark_preferential(player_id)
 
 
 @router.post("/play")
