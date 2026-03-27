@@ -10,7 +10,7 @@ const spinner = document.getElementById("spinner")
 const states = ["waiting", "requeued"]
 hideLoading();
 const tbody_element = document.getElementById('queue_table').getElementsByTagName('tbody')[0];
-
+let timeoutId = null;
 async function start() {
     startScan()
     getCurrentPlayer();
@@ -185,7 +185,6 @@ async function startScan() {
 }
 
 async function getCurrentPlayer() {
-
     const resp = await fetch(`/api/queue/current`, {
         method: 'GET',
         headers: {
@@ -202,10 +201,13 @@ async function getCurrentPlayer() {
         current_Queue = response.current_queue_number;
     }
     else if (response.current_queue_number == null) {
+        if (timeoutId == null) {
+            timeoutId = setTimeout(() => {
+                timeoutId = null;
+                getCurrentPlayer();
+            }, 10000);
+        }
         await getNext();
-        setTimeout(() => {
-            getCurrentPlayer();
-        }, 10000);
     }
 
 
@@ -306,6 +308,7 @@ async function complete(player_id) {
             'Content-Type': 'application/json',
             'x-api-key': 'capibarra-tablet-01',
             'x-device-id': 'tablet-01'
+
         }
     })
     const response = await resp.json();
