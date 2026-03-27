@@ -64,6 +64,7 @@ async def page_user_phone(request: Request):
 async def page_tag_validation(request: Request):
     return templates.TemplateResponse("tag_validation.html", {"request": request})
 
-
-
+@router.get("/dashboard", response_class=HTMLResponse, include_in_schema=False)
+async def page_dashboard(request: Request):
+    return templates.TemplateResponse("dashboard.html", {"request": request})
 

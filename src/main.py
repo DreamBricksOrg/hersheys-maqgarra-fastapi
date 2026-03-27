@@ -33,6 +33,7 @@ from api.uploads import router as uploads_router
 from api.webmanianfe import router as webmanianfe_router
 from api.nfce import router as nfce_router
 from api.pages import router as pages_router
+from api.routes.stats import router as stats_router
 
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -133,6 +134,7 @@ def create_app() -> FastAPI:
     app.include_router(uploads_router)
     app.include_router(webmanianfe_router)
     app.include_router(nfce_router)
+    app.include_router(stats_router)
 
     @app.exception_handler(AppError)
     async def app_error_handler(request: Request, exc: AppError):

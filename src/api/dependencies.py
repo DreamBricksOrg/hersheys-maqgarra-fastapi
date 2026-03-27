@@ -75,6 +75,11 @@ def get_queue_repository(
 ) -> QueueRepository:
     return QueueRepository(db)
 
+def get_audit_repository(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> AuditRepository:
+    return AuditRepository(db)
+
 
 def get_queue_service(
     db: AsyncIOMotorDatabase = Depends(get_database),

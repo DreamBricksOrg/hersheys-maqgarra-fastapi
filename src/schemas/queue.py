@@ -160,3 +160,10 @@ class QueueListResponse(BaseModel):
     items: list[QueueEntryResponse] = Field(default_factory=list)
     current_queue_number: int | None = None
     total_waiting: int = 0
+
+
+class QueuePreferentialResponse(BaseModel):
+    player_id: str
+    queue_number: int
+    status: str
+    message: str
