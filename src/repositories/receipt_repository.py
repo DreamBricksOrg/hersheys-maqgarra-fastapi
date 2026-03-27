@@ -1,6 +1,6 @@
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
-
+from datetime import datetime
 
 class ReceiptRepository:
     def __init__(self, db: AsyncIOMotorDatabase):
@@ -41,7 +41,7 @@ class ReceiptRepository:
     async def find_by_session_id(self, session_id: str) -> list[dict]:
         return (
             await self.collection.find(
-                {"session_id": session_id}
+                {"session_id": ObjectId(session_id)}
             ).to_list(length=None)
         )
 
@@ -55,8 +55,9 @@ class ReceiptRepository:
 
             if not receipt_key:
                 continue
-
-            replaced_key = receipt_key if receipt_key.endswith("-D") else f"{receipt_key}-D"
+            now = datetime.now()
+            formatted_ts = now.strftime("%Y-%m-%d %H:%M:%S")
+            replaced_key = f"{receipt_key}-D-{formatted_ts}"
 
             result = await self.collection.update_one(
                 {"_id": receipt_id},

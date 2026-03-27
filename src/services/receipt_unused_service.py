@@ -16,7 +16,7 @@ class ReceiptUnusedService:
                 raise AppError("Nota não encontrada", "receipt_not_found", 404)
             now = datetime.now()
             formatted_ts = now.strftime("%Y-%m-%d %H:%M:%S")
-            receipt_key_formatted = receipt["receipt_key"] + "D_" + formatted_ts
+            receipt_key_formatted = receipt["receipt_key"] + "-D-" + formatted_ts
             
             await self.receipt_repository.update_by_id(
                 receipt_id,

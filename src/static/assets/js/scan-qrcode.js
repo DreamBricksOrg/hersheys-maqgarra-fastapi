@@ -64,7 +64,6 @@ qrInput.addEventListener('keydown', async (e) => {
 
     qrInput.style.display = 'none';
     inputSpinner.style.display = 'flex';
-
     try {
         // Passo 1: Scrape da NFC-e
         const scrapeResp = await fetch('/api/nfce/scrape', {
@@ -83,15 +82,31 @@ qrInput.addEventListener('keydown', async (e) => {
 
         const chave = scrapedData.chave;
         if (chave) {
-            const checkResp = await fetch('/api/receipts/check', {
+            const checkResp = await fetch('/api/receipts/reuse-check', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...AUTH_HEADERS },
                 body: JSON.stringify({ receipt_key: chave })
             });
             if (checkResp.ok) {
-                const { is_duplicate } = await checkResp.json();
-                if (is_duplicate) {
+                const checkJson = await checkResp.json();
+                if (checkJson.action == "deny") {
                     throw { title: 'Nota duplicada', subtitle: 'Esta nota já foi lida anteriormente.', isDuplicate: true };
+                }
+                else if (checkJson.action == "invalidate_previous_session") {
+                    let response = await openReuseModal()
+                    if (response) {
+                        const cancelResp = await fetch('/api/receipts/cancel-session-for-reuse', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', ...AUTH_HEADERS },
+                            body: JSON.stringify({ receipt_key: chave, session_id: checkJson.session_id })
+                        });
+                        if (!cancelResp.ok) {
+                            throw { title: 'Erro ao invalidar a tag.', subtitle: 'Ocorreu um erro ao tentar invalidar a tag, por favor tente novamente.' };
+                        }
+                    }
+                    else {
+                        return;
+                    }
                 }
             }
         }
@@ -125,6 +140,38 @@ qrInput.addEventListener('keydown', async (e) => {
         qrInput.focus();
     }
 });
+
+function openReuseModal() {
+    return new Promise((resolve) => {
+        const modal = document.createElement("div");
+        modal.innerHTML = `
+        <div id="reuseModal" class="modal-overlay">
+            <div class="modal-content"> 
+                <h2>Nota Fiscal Encontrada, mas tag não utilizada</h2>
+                <p style="color: #666; margin: 8px 0 16px; font-size: 34px;">Gostaria de invalidar a tag e reutilizar a nota?</p>
+                <div class="modal-actions">
+                    <button id="noBtn">Não</button>
+                    <button id="yesBtn">Sim</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+        document.body.appendChild(modal);
+
+        modal.querySelector("#yesBtn").onclick = () => {
+            document.body.removeChild(modal);
+            modal.remove();
+            resolve(true);
+        };
+
+        modal.querySelector("#noBtn").onclick = () => {
+            document.body.removeChild(modal);
+            modal.remove();
+            resolve(false);
+        };
+    });
+}
 
 // Error modal buttons
 function resetErrorModal() {

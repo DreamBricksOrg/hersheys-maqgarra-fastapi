@@ -81,29 +81,29 @@ async function createSessionAndProceed() {
     window.location.href = '/pages/tag-type';
 }
 
-// function unusedTags() {
-//     const receiptIds = getReceiptIds();
-//     fetch('/api/receipts/unused', {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//             'x-api-key': 'capibarra-tablet-01',
-//             'x-device-id': 'tablet-01'
-//         },
-//         body: JSON.stringify({
-//             receipt_ids: receiptIds
-//         })
-//     }).then(resp => {
-//         if (!resp.ok) {
-//             throw new Error('Erro na rede');
-//         }
-//         return resp.json();
-//     }).then(data => {
-//         console.log(data); // Manipula os dados finais
-//     }).catch(error => {
-//         console.error('Houve um problema:', error); // Trata erros
-//     });
-// }
+function unusedTags() {
+    const receiptIds = getReceiptIds();
+    fetch('/api/receipts/unused', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'capibarra-tablet-01',
+            'x-device-id': 'tablet-01'
+        },
+        body: JSON.stringify({
+            receipt_ids: receiptIds
+        })
+    }).then(resp => {
+        if (!resp.ok) {
+            throw new Error('Erro na rede');
+        }
+        return resp.json();
+    }).then(data => {
+        console.log(data); // Manipula os dados finais
+    }).catch(error => {
+        console.error('Houve um problema:', error); // Trata erros
+    });
+}
 
 
 btnNao.addEventListener('click', () => {
@@ -111,7 +111,7 @@ btnNao.addEventListener('click', () => {
 
     if (tags <= 0) {
         sorryModal.style.display = 'flex';
-        //unusedTags();
+        unusedTags();
         return;
     }
 
