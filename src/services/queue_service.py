@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 class QueueService:
     _next_lock: asyncio.Semaphore | None = None
+    _skip_lock: asyncio.Semaphore | None = None
 
     def __init__(
         self,
@@ -685,6 +686,13 @@ class QueueService:
         )
 
     async def skip_current(self, reason: str | None = None) -> QueueSkipResponse:
+        if QueueService._skip_lock is None:
+            QueueService._skip_lock = asyncio.Semaphore(1)
+
+        async with QueueService._skip_lock:
+            return await self._skip_current(reason)
+
+    async def _skip_current(self, reason: str | None = None) -> QueueSkipResponse:
         state = await self.queue_repository.get_current_state()
         if not state or not state.get("player_id"):
             raise AppError(
