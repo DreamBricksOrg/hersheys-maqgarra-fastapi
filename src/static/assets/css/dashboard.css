@@ -1,0 +1,95 @@
+/* dashboard.css */
+
+body {
+    background-color: var(--secondary-color, #E5E5E5); /* Usar a cor de fundo padrão se tiver, caso contrário um cinza neutro */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.dashboard-container {
+    width: 100%;
+    max-width: 800px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.header {
+    text-align: center;
+    color: white;
+}
+
+.header h2 {
+    font-size: 2rem;
+    margin: 0;
+}
+
+.cards-wrapper {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.stat-card {
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    padding: 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.card-value {
+    font-size: 4rem;
+    font-weight: 700;
+    color: #4A2B29; /* Cor principal Hersheys */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80px;
+}
+
+/* Spinner animado enquanto carrega */
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: #4A2B29;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsividade para tablets/celulares */
+@media (max-width: 600px) {
+    .cards-wrapper {
+        flex-direction: column;
+    }
+}

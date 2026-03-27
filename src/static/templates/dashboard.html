@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estatísticas Dinâmicas - Dashboard</title>
+    <!-- Carregando CSS global e local -->
+    <link rel="stylesheet" href="/static/assets/css/root.css">
+    <link rel="stylesheet" href="/static/assets/css/dashboard.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        
+        <div class="header">
+            <h2 id="dashboard-date">Estatísticas de Hoje</h2>
+        </div>
+
+        <div class="cards-wrapper">
+            <!-- Card 1: Jogadas Concedidas -->
+            <div class="stat-card">
+                <div class="card-title">Jogadas Concedidas</div>
+                <div class="card-value" id="val-concedidas">
+                    <span class="spinner"></span>
+                </div>
+            </div>
+            
+            <!-- Card 2: Jogadas Consumidas -->
+            <div class="stat-card">
+                <div class="card-title">Jogadas Consumidas</div>
+                <div class="card-value" id="val-consumidas">
+                    <span class="spinner"></span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- Script de requisição dinâmica -->
+    <script src="/static/assets/js/dashboard.js"></script>
+</body>
+</html>
