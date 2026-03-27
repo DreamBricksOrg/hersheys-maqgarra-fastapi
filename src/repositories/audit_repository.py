@@ -106,6 +106,26 @@ class AuditRepository:
                                 "jogadas_consumidas": {"$sum": 1}
                             }
                         }
+                    ],
+                    "canceladas": [
+                        {
+                            "$match": {
+                                "event": "session-cancelled-for-reuse",
+                                "created_at": {"$gte": start_date, "$lt": end_date}
+                            }
+                        },
+                        {
+                            "$project": {
+                                "dia": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
+                                "tags_canceladas": {"$ifNull": ["$payload.invalidated_tags", 0]}
+                            }
+                        },
+                        {
+                            "$group": {
+                                "_id": "$dia",
+                                "jogadas_canceladas": {"$sum": "$tags_canceladas"}
+                            }
+                        }
                     ]
                 }
             },
@@ -192,6 +212,25 @@ class AuditRepository:
                                         },
                                         "in": {"$ifNull": ["$$item.jogadas_consumidas", 0]}
                                     }
+                                },
+                                "jogadas_canceladas": {
+                                    "$let": {
+                                        "vars": {
+                                            "item": {
+                                                "$arrayElemAt": [
+                                                    {
+                                                        "$filter": {
+                                                            "input": "$canceladas",
+                                                            "as": "ca",
+                                                            "cond": {"$eq": ["$$ca._id", "$$dia"]}
+                                                        }
+                                                    },
+                                                    0
+                                                ]
+                                            }
+                                        },
+                                        "in": {"$ifNull": ["$$item.jogadas_canceladas", 0]}
+                                    }
                                 }
                             }
                         }
@@ -204,18 +243,28 @@ class AuditRepository:
                     "_id": 0,
                     "dia": "$combinado.dia",
                     "notas": "$combinado.notas",
-                    "jogadas_concedidas": "$combinado.jogadas_concedidas",
-                    "jogadas_concedidas_ponderadas_por_notas": "$combinado.jogadas_concedidas_ponderadas_por_notas",
                     "jogadas_consumidas": "$combinado.jogadas_consumidas",
-                    "diferenca_concedidas_vs_consumidas": {
+                    "jogadas_concedidas": {
                         "$subtract": [
                             "$combinado.jogadas_concedidas",
+                            "$combinado.jogadas_canceladas"
+                        ]
+                    },
+                    "jogadas_concedidas_ponderadas_por_notas": {
+                        "$subtract": [
+                            "$combinado.jogadas_concedidas_ponderadas_por_notas",
+                            "$combinado.jogadas_canceladas"
+                        ]
+                    },
+                    "diferenca_concedidas_vs_consumidas": {
+                        "$subtract": [
+                            {"$subtract": ["$combinado.jogadas_concedidas", "$combinado.jogadas_canceladas"]},
                             "$combinado.jogadas_consumidas"
                         ]
                     },
                     "diferenca_ponderadas_vs_consumidas": {
                         "$subtract": [
-                            "$combinado.jogadas_concedidas_ponderadas_por_notas",
+                            {"$subtract": ["$combinado.jogadas_concedidas_ponderadas_por_notas", "$combinado.jogadas_canceladas"]},
                             "$combinado.jogadas_consumidas"
                         ]
                     }
