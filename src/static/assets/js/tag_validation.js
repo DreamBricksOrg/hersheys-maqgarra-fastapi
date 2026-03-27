@@ -1,6 +1,7 @@
 var html5QrCode = null;
 const qrScanContainer = document.getElementById("Qr-reader-container")
 const btn_scan = document.getElementById("btn_scan")
+const btn_next = document.getElementById("btn_next")
 const modal_alert = document.getElementById("modal_alert")
 const modal_overlay = document.getElementsByClassName("modal-overlay")[0]
 const modal_success = document.getElementById("modal_success")
@@ -11,6 +12,7 @@ const states = ["waiting", "requeued"]
 hideLoading();
 const tbody_element = document.getElementById('queue_table').getElementsByTagName('tbody')[0];
 let timeoutId = null;
+let skipping = false;
 async function start() {
     startScan()
     getCurrentPlayer();
@@ -273,19 +275,34 @@ async function getQueue(loop) {
 }
 
 async function getNextInline() {
-    const resp = await fetch(`/api/queue/skip`, {
-        method: 'Post',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': 'capibarra-tablet-01',
-            'x-device-id': 'tablet-01'
-        }
-    })
-    const response = await resp.json();
-    console.log(response);
-    getCurrentPlayer();
-    getQueue(false);
-    hideLoading()
+    if (skipping) return;
+    skipping = true;
+    try {
+        btn_next.disabled = true;
+        const resp = await fetch(`/api/queue/skip`, {
+            method: 'Post',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': 'capibarra-tablet-01',
+                'x-device-id': 'tablet-01'
+            }
+        })
+        const response = await resp.json();
+        console.log(response);
+        getCurrentPlayer();
+        getQueue(false);
+        hideLoading()
+
+    }
+    catch (error) {
+
+    }
+    finally {
+        setTimeout(() => {
+            skipping = false;
+            btn_next.disabled = false;
+        }, 1000)
+    }
 }
 async function getNext() {
     const resp = await fetch(`/api/queue/next`, {
